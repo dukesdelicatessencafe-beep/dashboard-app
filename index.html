@@ -3,11 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- APP MODE -->
 <meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -16,53 +12,60 @@ body {
   font-family:Arial;
   background:#0f172a;
   color:white;
+  overflow-x:hidden;
 }
 
 /* SPLASH */
 #splash {
   position:fixed;
-  top:0;
-  left:0;
   width:100%;
   height:100%;
   background:#0f172a;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px;
   z-index:9999;
 }
 
 /* WRAP */
-.wrap { padding:12px; }
-
-/* INPUTS */
-input {
-  width:100%;
+.wrap {
   padding:12px;
-  margin-top:6px;
-  border-radius:10px;
-  border:none;
+  padding-bottom:70px;
+  position:relative;
 }
 
-/* BUTTON */
-button {
+/* SLIDE CONTAINER */
+.slider {
+  display:flex;
+  width:300%;
+  transition:0.3s;
+}
+
+.section {
   width:100%;
-  padding:12px;
-  margin-top:8px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(135deg,#3b82f6,#2563eb);
-  color:white;
-  font-weight:bold;
+  flex-shrink:0;
 }
 
-/* LOGOUT */
-.logout {
-  background:#ef4444;
+/* NAV */
+.nav {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  background:#111827;
 }
 
-/* KPI TILES */
+.nav div {
+  flex:1;
+  text-align:center;
+  padding:10px;
+}
+
+.nav .active {
+  background:#3b82f6;
+}
+
+/* KPI */
 .tiles {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -75,24 +78,25 @@ button {
   padding:12px;
   border-radius:12px;
   text-align:center;
-  transition:0.3s;
 }
 
-.tile:hover {
-  transform:scale(1.05);
-}
-
-/* LOADING */
-#loading {
-  display:none;
-  text-align:center;
-  margin-top:10px;
-}
-
-/* TABLE */
-table {
+/* INPUT */
+input {
   width:100%;
-  font-size:14px;
+  padding:12px;
+  margin-top:6px;
+  border-radius:10px;
+  border:none;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  background:#3b82f6;
+  color:white;
 }
 
 canvas {
@@ -106,13 +110,12 @@ canvas {
 
 <body>
 
-<!-- SPLASH -->
-<div id="splash">Loading Dashboard...</div>
+<div id="splash">Loading...</div>
 
 <!-- LOGIN -->
 <div id="login" style="text-align:center;margin-top:120px;">
-  <h2>Dashboard Login</h2>
-  <input type="password" id="pw" placeholder="Enter password">
+  <h2>Login</h2>
+  <input type="password" id="pw">
   <button onclick="check()">Login</button>
 </div>
 
@@ -122,170 +125,151 @@ canvas {
 <input type="date" id="start">
 <input type="date" id="end">
 
-<button class="logout" onclick="logout()">Logout</button>
+<div id="slider" class="slider">
 
-<div class="tiles">
-  <div class="tile">
-    <div>Sales</div>
-    <div id="sales">£0</div>
+<!-- DASHBOARD -->
+<div class="section">
+  <div class="tiles">
+    <div class="tile"><div>Sales</div><div id="sales">£0</div></div>
+    <div class="tile"><div>Orders</div><div id="orders">0</div></div>
+    <div class="tile"><div>Top</div><div id="top">-</div></div>
   </div>
-  <div class="tile">
-    <div>Orders</div>
-    <div id="orders">0</div>
-  </div>
-  <div class="tile">
-    <div>Top</div>
-    <div id="top">-</div>
-  </div>
+  <canvas id="barChart"></canvas>
 </div>
 
-<div id="loading">Loading...</div>
+<!-- PRODUCTS -->
+<div class="section">
+  <div id="tableArea"></div>
+</div>
 
-<canvas id="barChart"></canvas>
-<canvas id="lineChart"></canvas>
+<!-- TRENDS -->
+<div class="section">
+  <canvas id="lineChart"></canvas>
+</div>
 
-<div id="tableArea"></div>
+</div>
 
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div onclick="goTo(0,this)" class="active">📊</div>
+  <div onclick="goTo(1,this)">📦</div>
+  <div onclick="goTo(2,this)">📈</div>
 </div>
 
 <script>
 
-let barChart, lineChart;
+let index=0;
+let startX=0;
 
-const PASSWORDS = ["1234","staff1","staff2"];
+const PASSWORDS=["1234","staff1","staff2"];
 
-/* LOGIN */
-function check() {
-  let pw = document.getElementById("pw").value;
-
-  if (PASSWORDS.includes(pw)) {
-    localStorage.setItem("loggedIn","true");
+function check(){
+  if(PASSWORDS.includes(pw.value)){
+    localStorage.setItem("login","1");
     showApp();
-  } else {
-    alert("Wrong password");
-  }
+  }else alert("Wrong");
 }
 
-function logout() {
-  localStorage.removeItem("loggedIn");
-  location.reload();
-}
-
-function showApp() {
-  document.getElementById("login").style.display="none";
-  document.getElementById("app").style.display="block";
+function showApp(){
+  login.style.display="none";
+  app.style.display="block";
   load();
 }
 
-/* AUTO LOAD */
-window.onload = () => {
+window.onload=()=>{
+  let today=new Date().toISOString().split("T")[0];
+  start.value=today;
+  end.value=today;
 
-  let today = new Date().toISOString().split("T")[0];
-  document.getElementById("start").value = today;
-  document.getElementById("end").value = today;
+  if(localStorage.getItem("login")) showApp();
 
-  if(localStorage.getItem("loggedIn")==="true"){
-    showApp();
-  }
-
-  setTimeout(()=>document.getElementById("splash").style.display="none",500);
+  setTimeout(()=>splash.style.display="none",500);
 };
 
-/* DATE CHANGE */
-document.getElementById("start").addEventListener("change",load);
-document.getElementById("end").addEventListener("change",load);
+start.onchange=load;
+end.onchange=load;
+
+/* NAV CLICK */
+function goTo(i,el){
+  index=i;
+  slider.style.transform="translateX(-"+(i*100)+"%)";
+
+  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* SWIPE */
+slider.addEventListener("touchstart",e=>{
+  startX=e.touches[0].clientX;
+});
+
+slider.addEventListener("touchend",e=>{
+  let diff=e.changedTouches[0].clientX-startX;
+
+  if(diff>50 && index>0) index--;
+  if(diff<-50 && index<2) index++;
+
+  slider.style.transform="translateX(-"+(index*100)+"%)";
+
+  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
+  document.querySelectorAll(".nav div")[index].classList.add("active");
+});
 
 /* LOAD DATA */
 async function load(){
-
-  document.getElementById("loading").style.display="block";
-
-  let start=document.getElementById("start").value;
-  let end=document.getElementById("end").value;
-
-  let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
+  let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start.value+"&end="+end.value;
 
   let res=await fetch(url);
   let map=await res.json();
 
   draw(map);
-
-  document.getElementById("loading").style.display="none";
-}
-
-/* KPI ANIMATION */
-function animateValue(id, start, end, duration, prefix=""){
-  let range=end-start;
-  let current=start;
-  let increment=range/(duration/20);
-
-  let timer=setInterval(()=>{
-    current+=increment;
-    if(current>=end){
-      current=end;
-      clearInterval(timer);
-    }
-    document.getElementById(id).innerText=prefix+Math.floor(current);
-  },20);
 }
 
 /* DRAW */
 function draw(map){
 
-  let productTotals={}, dailyTotals={}, dates=Object.keys(map).sort();
-  let totalSales=0,totalOrders=0;
+  let totals={},daily={},dates=Object.keys(map).sort();
+  let sales=0,orders=0;
 
   for(let d in map){
-    dailyTotals[d]=0;
-
+    daily[d]=0;
     for(let p in map[d]){
-      let v=Number(map[d][p])||0;
-      productTotals[p]=(productTotals[p]||0)+v;
-      dailyTotals[d]+=v;
-      totalSales+=v;
-      totalOrders++;
+      let v=map[d][p];
+      totals[p]=(totals[p]||0)+v;
+      daily[d]+=v;
+      sales+=v;
+      orders++;
     }
   }
 
-  let sorted=Object.keys(productTotals).sort((a,b)=>productTotals[b]-productTotals[a]);
+  let sorted=Object.keys(totals).sort((a,b)=>totals[b]-totals[a]);
   let top5=sorted.slice(0,5);
 
-  animateValue("sales",0,totalSales,500,"£");
-  animateValue("orders",0,totalOrders,500);
-  document.getElementById("top").innerText=top5[0]||"-";
+  salesEl.innerText="£"+sales.toFixed(0);
+  ordersEl.innerText=orders;
+  topEl.innerText=top5[0]||"-";
 
   let labels=dates.map(d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
 
-  let barData=top5.map(p=>({
-    label:p,
-    data:dates.map(d=>map[d][p]||0)
-  }));
-
-  let lineData=dates.map(d=>dailyTotals[d]);
-
-  if(barChart)barChart.destroy();
-  if(lineChart)lineChart.destroy();
-
-  barChart=new Chart(barChart=document.getElementById("barChart"),{
+  new Chart(barChart=document.getElementById("barChart"),{
     type:'bar',
-    data:{labels,datasets:barData}
+    data:{labels,datasets:top5.map(p=>({label:p,data:dates.map(d=>map[d][p]||0)}))}
   });
 
-  lineChart=new Chart(lineChart=document.getElementById("lineChart"),{
+  new Chart(lineChart=document.getElementById("lineChart"),{
     type:'line',
-    data:{labels,datasets:[{label:"Daily Sales",data:lineData,borderColor:"#3b82f6"}]}
+    data:{labels,datasets:[{label:"Sales",data:dates.map(d=>daily[d])}]}
   });
 
-  let html=`<div style="margin-top:15px;background:#1f2937;padding:10px;border-radius:10px;">
-  <h3>Products</h3><table>`;
-
-  for(let p in productTotals){
-    html+=`<tr><td>${p}</td><td style="text-align:right;">£${productTotals[p].toFixed(2)}</td></tr>`;
+  let html="<table>";
+  for(let p in totals){
+    html+=`<tr><td>${p}</td><td>£${totals[p].toFixed(2)}</td></tr>`;
   }
+  html+="</table>";
 
-  html+=`</table></div>`;
-
-  document.getElementById("tableArea").innerHTML=html;
+  tableArea.innerHTML=html;
 }
 
 </script>
