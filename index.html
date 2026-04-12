@@ -21,6 +21,10 @@ body{
   margin:auto;
 }
 
+h2{
+  margin:10px 0;
+}
+
 /* INPUTS */
 input,button{
   width:100%;
@@ -28,7 +32,6 @@ input,button{
   margin-top:6px;
   border-radius:10px;
   border:none;
-  font-size:14px;
 }
 
 input{
@@ -65,7 +68,6 @@ button{
 .tile div:last-child{
   font-size:18px;
   font-weight:600;
-  margin-top:6px;
 }
 
 /* CHART */
@@ -76,7 +78,7 @@ canvas{
   padding:10px;
 }
 
-/* PRODUCT LIST */
+/* LIST */
 #list{
   margin-top:14px;
   background:#111827;
@@ -87,11 +89,6 @@ canvas{
 #list div{
   padding:6px 0;
   border-bottom:1px solid rgba(255,255,255,0.05);
-  font-size:14px;
-}
-
-#list div:last-child{
-  border-bottom:none;
 }
 
 /* LOADER */
@@ -127,7 +124,7 @@ canvas{
 <!-- LOADER -->
 <div id="loader">
   <div class="spinner"></div>
-  <div style="margin-top:10px;opacity:0.7">Loading dashboard...</div>
+  <div style="margin-top:10px;opacity:0.7">Loading...</div>
 </div>
 
 <div class="wrap">
@@ -165,94 +162,13 @@ canvas{
 
 let chart;
 
-/* LOAD DATA */
 async function loadData(){
 
   document.getElementById("loader").style.display="flex";
 
-  let url="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?start="+start.value+"&end="+end.value;
+  let url="https://script.google.com/macros/s/AKfycbxOIPkcA0sy4rFRVutaNQtdjkx2YkYmf7xIqlKUpdBo4Vv6Xy5KtvBpyB9FQtmIzsEALw/exec?start="
+    + start.value + "&end=" + end.value;
 
   try{
-    let res=await fetch(url);
-    let map=await res.json();
 
-    draw(map);
-
-  }catch(err){
-    console.log(err);
-    alert("Failed to load data");
-  }
-
-  document.getElementById("loader").style.display="none";
-}
-
-/* DRAW */
-function draw(map){
-
-  if(!map || Object.keys(map).length===0){
-    salesEl.innerText="£0";
-    ordersEl.innerText="0";
-    topEl.innerText="-";
-    list.innerHTML="<div>No data</div>";
-    return;
-  }
-
-  let totals={};
-  let dates=Object.keys(map).sort();
-
-  let sales=0;
-  let orders=0;
-
-  for(let d in map){
-    for(let p in map[d]){
-      let v=map[d][p];
-
-      totals[p]=(totals[p]||0)+v;
-      sales+=v;
-      orders++;
-    }
-  }
-
-  let sorted=Object.keys(totals).sort((a,b)=>totals[b]-totals[a]);
-  let top5=sorted.slice(0,5);
-
-  salesEl.innerText="£"+sales.toFixed(2);
-  ordersEl.innerText=orders;
-  topEl.innerText=top5[0]||"-";
-
-  let labels=dates.map(d=>
-    new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
-  );
-
-  if(chart) chart.destroy();
-
-  chart=new Chart(document.getElementById("chart"),{
-    type:"bar",
-    data:{
-      labels,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>map[d][p]||0)
-      }))
-    }
-  });
-
-  let html="";
-  for(let p in totals){
-    html+=`<div>${p} — £${totals[p].toFixed(2)}</div>`;
-  }
-
-  list.innerHTML=html;
-}
-
-/* DEFAULT DATE */
-window.onload=()=>{
-  let today=new Date().toISOString().split("T")[0];
-  start.value=today;
-  end.value=today;
-};
-
-</script>
-
-</body>
-</html>
+    let res = await fetch(url);
