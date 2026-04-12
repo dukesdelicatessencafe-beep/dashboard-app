@@ -22,6 +22,17 @@ input {
   border:none;
 }
 
+button {
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  background:#3b82f6;
+  color:white;
+  font-weight:bold;
+}
+
 .tiles {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -47,7 +58,17 @@ canvas {
 
 <body>
 
-<div class="wrap">
+<!-- 🔐 LOGIN -->
+<div id="login" style="text-align:center;margin-top:120px;">
+  <h2>Dashboard Login</h2>
+
+  <input type="password" id="pw" placeholder="Enter password">
+
+  <button onclick="check()">Login</button>
+</div>
+
+<!-- 📊 APP -->
+<div id="app" style="display:none;" class="wrap">
 
 <input type="date" id="start">
 <input type="date" id="end">
@@ -78,18 +99,37 @@ canvas {
 
 let barChart, lineChart;
 
-// AUTO LOAD TODAY
+/* ================= LOGIN ================= */
+const PASSWORDS = [
+  "1234",
+  "staff1",
+  "staff2"
+];
+
+function check() {
+  let pw = document.getElementById("pw").value;
+
+  if (PASSWORDS.includes(pw)) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    load();
+  } else {
+    alert("Wrong password");
+  }
+}
+
+/* ================= AUTO DATE ================= */
 window.onload = () => {
   let today = new Date().toISOString().split("T")[0];
   document.getElementById("start").value = today;
   document.getElementById("end").value = today;
-  load();
 };
 
-// AUTO UPDATE ON DATE CHANGE
+/* ================= AUTO REFRESH ================= */
 document.getElementById("start").addEventListener("change", load);
 document.getElementById("end").addEventListener("change", load);
 
+/* ================= LOAD API ================= */
 async function load() {
 
   let start = document.getElementById("start").value;
@@ -99,12 +139,16 @@ async function load() {
 
   let url = "https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
 
-  let res = await fetch(url);
-  let map = await res.json();
-
-  draw(map);
+  try {
+    let res = await fetch(url);
+    let map = await res.json();
+    draw(map);
+  } catch (e) {
+    alert("Failed to load data");
+  }
 }
 
+/* ================= DRAW DASHBOARD ================= */
 function draw(map) {
 
   if (!map || Object.keys(map).length === 0) return;
@@ -116,9 +160,6 @@ function draw(map) {
   let totalSales = 0;
   let totalOrders = 0;
 
-  // =====================
-  // AGGREGATE DATA
-  // =====================
   for (let d in map) {
 
     dailyTotals[d] = 0;
@@ -136,93 +177,63 @@ function draw(map) {
     }
   }
 
-  // =====================
-  // TOP 5 PRODUCTS
-  // =====================
   let sorted = Object.keys(productTotals)
     .sort((a,b)=>productTotals[b]-productTotals[a]);
 
   let top5 = sorted.slice(0,5);
 
-  // =====================
-  // KPI UPDATE
-  // =====================
   document.getElementById("sales").innerText = "£" + totalSales.toFixed(2);
   document.getElementById("orders").innerText = totalOrders;
   document.getElementById("top").innerText = top5[0] || "-";
 
-  // =====================
-  // LABELS
-  // =====================
   let labels = dates.map(d =>
     new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
   );
 
-  // =====================
-  // BAR CHART (TOP 5)
-  // =====================
   let barData = top5.map(p => ({
     label: p,
-    data: dates.map(d => {
-      return map[d] && map[d][p] ? map[d][p] : 0;
-    })
+    data: dates.map(d => map[d] && map[d][p] ? map[d][p] : 0)
   }));
 
-  // =====================
-  // LINE CHART (DAILY TOTAL)
-  // =====================
   let lineData = dates.map(d => dailyTotals[d]);
 
   if (barChart) barChart.destroy();
   if (lineChart) lineChart.destroy();
 
   barChart = new Chart(document.getElementById("barChart"), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: barData
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          ticks: {
-            callback: v => "£" + v
-          }
-        }
+    type:'bar',
+    data:{ labels, datasets: barData },
+    options:{
+      responsive:true,
+      scales:{
+        y:{ ticks:{ callback:v=>"£"+v } }
       }
     }
   });
 
   lineChart = new Chart(document.getElementById("lineChart"), {
-    type: 'line',
-    data: {
+    type:'line',
+    data:{
       labels,
-      datasets: [{
-        label: "Daily Sales",
+      datasets:[{
+        label:"Daily Sales",
         data: lineData,
-        borderColor: "#3b82f6",
-        fill: false
+        borderColor:"#3b82f6",
+        fill:false
       }]
     },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          ticks: {
-            callback: v => "£" + v
-          }
-        }
+    options:{
+      responsive:true,
+      scales:{
+        y:{ ticks:{ callback:v=>"£"+v } }
       }
     }
   });
 
-  // =====================
-  // FULL PRODUCT TABLE
-  // =====================
-  let tableHtml = `
+  // PRODUCT TABLE
+  let html = `
   <div style="margin-top:15px;background:#1f2937;padding:10px;border-radius:10px;">
-    <h3>All Products (Period Total)</h3>
+    <h3>All Products</h3>
     <table style="width:100%;color:white;font-size:14px;">
       <tr>
         <th style="text-align:left;">Product</th>
@@ -230,18 +241,18 @@ function draw(map) {
       </tr>
   `;
 
-  for (let product in productTotals) {
-    tableHtml += `
+  for (let p in productTotals) {
+    html += `
       <tr>
-        <td>${product}</td>
-        <td style="text-align:right;">£${productTotals[product].toFixed(2)}</td>
+        <td>${p}</td>
+        <td style="text-align:right;">£${productTotals[p].toFixed(2)}</td>
       </tr>
     `;
   }
 
-  tableHtml += `</table></div>`;
+  html += `</table></div>`;
 
-  document.getElementById("tableArea").innerHTML = tableHtml;
+  document.getElementById("tableArea").innerHTML = html;
 }
 
 </script>
