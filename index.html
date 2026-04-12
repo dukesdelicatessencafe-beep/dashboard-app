@@ -3,77 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
+body{
   margin:0;
   font-family:Arial;
   background:#0f172a;
   color:white;
-  overflow-x:hidden;
 }
 
-/* SPLASH */
-#splash {
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:#0f172a;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-
-/* OFFLINE */
-#offline {
-  display:none;
-  background:#ef4444;
-  text-align:center;
-  padding:6px;
-}
-
-/* WRAP */
-.wrap {
+.wrap{
   padding:12px;
-  padding-bottom:70px;
 }
 
-/* SLIDER */
-.slider {
-  display:flex;
-  width:300%;
-  transition:0.3s;
-}
-
-.section {
-  width:100%;
-  flex-shrink:0;
-}
-
-/* TILES */
-.tiles {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-top:10px;
-}
-
-.tile {
-  background:#1f2937;
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-}
-
-/* INPUT */
-input {
+input,button{
   width:100%;
   padding:12px;
   margin-top:6px;
@@ -81,195 +27,113 @@ input {
   border:none;
 }
 
-/* BUTTON */
-button {
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border:none;
-  border-radius:12px;
+button{
   background:#3b82f6;
   color:white;
 }
 
-/* NAV */
-.nav {
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  background:#111827;
+.tiles{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:10px;
 }
 
-.nav div {
-  flex:1;
+.tile{
+  background:#1f2937;
+  padding:12px;
+  border-radius:12px;
   text-align:center;
-  padding:10px;
 }
 
-.nav .active {
-  background:#3b82f6;
-}
-
-canvas {
+canvas{
   margin-top:15px;
   background:#111827;
   border-radius:12px;
   padding:10px;
 }
 </style>
-
 </head>
 
 <body>
 
-<div id="splash">Loading...</div>
-<div id="offline">Offline mode</div>
+<div class="wrap">
 
-<!-- LOGIN -->
-<div id="login" style="text-align:center;margin-top:120px;">
-  <h2>Login</h2>
-  <input type="password" id="pw">
-  <button onclick="check()">Login</button>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;" class="wrap">
+<h2>Sales Dashboard</h2>
 
 <input type="date" id="start">
 <input type="date" id="end">
+<button onclick="loadData()">Load</button>
 
-<div id="slider" class="slider">
-
-<!-- DASHBOARD -->
-<div class="section">
-  <div class="tiles">
-    <div class="tile"><div>Sales</div><div id="salesEl">£0</div></div>
-    <div class="tile"><div>Orders</div><div id="ordersEl">0</div></div>
-    <div class="tile"><div>Top</div><div id="topEl">-</div></div>
+<div class="tiles">
+  <div class="tile">
+    <div>Sales</div>
+    <div id="salesEl">£0</div>
   </div>
 
-  <canvas id="barChart"></canvas>
+  <div class="tile">
+    <div>Orders</div>
+    <div id="ordersEl">0</div>
+  </div>
+
+  <div class="tile">
+    <div>Top</div>
+    <div id="topEl">-</div>
+  </div>
 </div>
 
-<!-- PRODUCTS -->
-<div class="section">
-  <div id="tableArea"></div>
-</div>
+<canvas id="chart"></canvas>
 
-<!-- TRENDS -->
-<div class="section">
-  <canvas id="lineChart"></canvas>
-</div>
+<div id="list" style="margin-top:15px;"></div>
 
-</div>
-
-</div>
-
-<!-- NAV -->
-<div class="nav">
-  <div onclick="goTo(0,this)" class="active">📊</div>
-  <div onclick="goTo(1,this)">📦</div>
-  <div onclick="goTo(2,this)">📈</div>
 </div>
 
 <script>
 
-let index=0;
-let startX=0;
-let barChart,lineChart;
+let chart;
 
-const PASSWORDS=["1234","staff1","staff2"];
+/* LOAD DATA */
+async function loadData(){
 
-/* LOGIN */
-function check(){
-  if(PASSWORDS.includes(pw.value)){
-    localStorage.setItem("login","1");
-    showApp();
-  } else alert("Wrong password");
-}
+  let start=document.getElementById("start").value;
+  let end=document.getElementById("end").value;
 
-function showApp(){
-  login.style.display="none";
-  app.style.display="block";
-  load();
-}
-
-/* INIT */
-window.onload=()=>{
-  let today=new Date().toISOString().split("T")[0];
-  start.value=today;
-  end.value=today;
-
-  if(localStorage.getItem("login")) showApp();
-
-  setTimeout(()=>splash.style.display="none",500);
-};
-
-/* NAV */
-function goTo(i,el){
-  index=i;
-  slider.style.transform="translateX(-"+(i*100)+"%)";
-
-  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
-  el.classList.add("active");
-}
-
-/* SWIPE */
-slider.addEventListener("touchstart",e=>{
-  startX=e.touches[0].clientX;
-});
-
-slider.addEventListener("touchend",e=>{
-  let diff=e.changedTouches[0].clientX-startX;
-
-  if(diff>50 && index>0) index--;
-  if(diff<-50 && index<2) index++;
-
-  slider.style.transform="translateX(-"+(index*100)+"%)";
-
-  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
-  document.querySelectorAll(".nav div")[index].classList.add("active");
-});
-
-/* LOAD */
-async function load(){
-
-  let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start.value+"&end="+end.value;
+  let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
 
   try{
     let res=await fetch(url);
     let map=await res.json();
 
-    localStorage.setItem("lastData",JSON.stringify(map));
-
     draw(map);
-    showOnline(true);
 
-  } catch {
-    let saved=localStorage.getItem("lastData");
-    if(saved) draw(JSON.parse(saved));
-    showOnline(false);
+  }catch(err){
+    alert("API error");
+    console.log(err);
   }
 }
 
-/* OFFLINE */
-function showOnline(state){
-  offline.style.display = state ? "none" : "block";
-}
-
-/* DRAW */
+/* DRAW FUNCTION */
 function draw(map){
 
-  let totals={},daily={},dates=Object.keys(map).sort();
-  let sales=0,orders=0;
+  if(!map || Object.keys(map).length === 0){
+    salesEl.innerText="£0";
+    ordersEl.innerText="0";
+    topEl.innerText="-";
+    list.innerHTML="No data";
+    return;
+  }
+
+  let totals={};
+  let dates=Object.keys(map).sort();
+
+  let sales=0;
+  let orders=0;
 
   for(let d in map){
-    daily[d]=0;
     for(let p in map[d]){
       let v=map[d][p];
+
       totals[p]=(totals[p]||0)+v;
-      daily[d]+=v;
       sales+=v;
       orders++;
     }
@@ -278,37 +142,42 @@ function draw(map){
   let sorted=Object.keys(totals).sort((a,b)=>totals[b]-totals[a]);
   let top5=sorted.slice(0,5);
 
-  salesEl.innerText="£"+sales.toFixed(0);
+  salesEl.innerText="£"+sales.toFixed(2);
   ordersEl.innerText=orders;
   topEl.innerText=top5[0]||"-";
 
-  let labels=dates.map(d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
+  let labels=dates.map(d =>
+    new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
+  );
 
-  if(barChart) barChart.destroy();
-  barChart=new Chart(document.getElementById("barChart"),{
-    type:'bar',
-    data:{labels,datasets:top5.map(p=>({label:p,data:dates.map(d=>map[d][p]||0)}))}
+  if(chart) chart.destroy();
+
+  chart=new Chart(document.getElementById("chart"),{
+    type:"bar",
+    data:{
+      labels,
+      datasets:top5.map(p=>({
+        label:p,
+        data:dates.map(d=>map[d][p]||0)
+      }))
+    }
   });
 
-  if(lineChart) lineChart.destroy();
-  lineChart=new Chart(document.getElementById("lineChart"),{
-    type:'line',
-    data:{labels,datasets:[{label:"Sales",data:dates.map(d=>daily[d])}]}
-  });
+  let html="<h3>Product Sales</h3>";
 
-  let html="<table style='width:100%'>";
   for(let p in totals){
-    html+=`<tr><td>${p}</td><td style="text-align:right">£${totals[p].toFixed(2)}</td></tr>`;
+    html+=`<div style="padding:4px 0">${p} — £${totals[p].toFixed(2)}</div>`;
   }
-  html+="</table>";
 
-  tableArea.innerHTML=html;
+  list.innerHTML=html;
 }
 
-/* SERVICE WORKER */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+/* DEFAULT DATE */
+window.onload=()=>{
+  let today=new Date().toISOString().split("T")[0];
+  start.value=today;
+  end.value=today;
+};
 
 </script>
 
