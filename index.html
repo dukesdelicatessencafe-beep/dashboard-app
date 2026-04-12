@@ -163,20 +163,35 @@ canvas{
 let chart;
 
 /* LOAD DATA (JSONP - NO CORS ISSUES) */
-function loadData(){
+async function loadData(){
 
   document.getElementById("loader").style.display="flex";
 
-  let url =
-    "https://script.google.com/macros/s/AKfycbz3lRWiS1iXV0lfh6xFsE4m815aEWJP9vNsfmTJ6_1qtO3AaC5f9G1cXILQv3w4upzXXw/exec"
-    + "?start=" + start.value
-    + "&end=" + end.value
-    + "&callback=handleData";
+  try{
 
-  let script = document.createElement("script");
-  script.src = url;
+    let url =
+      "https://script.google.com/macros/s/AKfycbxOIPkcA0sy4rFRVutaNQtdjkx2YkYmf7xIqlKUpdBo4Vv6Xy5KtvBpyB9FQtmIzsEALw/exec"
+      + "?start=" + start.value
+      + "&end=" + end.value;
 
-  document.body.appendChild(script);
+    let res = await fetch(url, {
+      method: "GET",
+      cache: "no-cache"
+    });
+
+    let data = await res.json();
+
+    draw(data);
+
+  }catch(err){
+
+    console.log("ERROR:", err);
+    alert("Failed to load data");
+
+  }finally{
+
+    document.getElementById("loader").style.display="none";
+  }
 }
 
 /* CALLBACK FROM APPS SCRIPT */
