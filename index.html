@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+.wrap { padding:12px; }
+
+input {
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  border-radius:8px;
+  border:none;
+}
+
+.tiles {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+
+.tile {
+  background:#1f2937;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+}
+
+canvas {
+  margin-top:15px;
+  background:#111827;
+  border-radius:10px;
+  padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<input type="date" id="start">
+<input type="date" id="end">
+
+<div class="tiles">
+  <div class="tile">
+    <div>Sales</div>
+    <div id="sales">£0</div>
+  </div>
+  <div class="tile">
+    <div>Orders</div>
+    <div id="orders">0</div>
+  </div>
+  <div class="tile">
+    <div>Top</div>
+    <div id="top">-</div>
+  </div>
+</div>
+
+<canvas id="barChart"></canvas>
+<canvas id="lineChart"></canvas>
+
+<div id="tableArea"></div>
+
+</div>
+
+<script>
+
+let barChart, lineChart;
+
+// AUTO LOAD TODAY
+window.onload = () => {
+  let today = new Date().toISOString().split("T")[0];
+  document.getElementById("start").value = today;
+  document.getElementById("end").value = today;
+  load();
+};
+
+// AUTO UPDATE ON DATE CHANGE
+document.getElementById("start").addEventListener("change", load);
+document.getElementById("end").addEventListener("change", load);
+
+async function load() {
+
+  let start = document.getElementById("start").value;
+  let end = document.getElementById("end").value;
+
+  if (!start || !end) return;
+
+  let url = "https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
+
+  let res = await fetch(url);
+  let map = await res.json();
+
+  draw(map);
+}
+
+function draw(map) {
+
+  if (!map || Object.keys(map).length === 0) return;
+
+  let productTotals = {};
+  let dailyTotals = {};
+  let dates = Object.keys(map).sort();
+
+  let totalSales = 0;
+  let totalOrders = 0;
+
+  // =====================
+  // AGGREGATE DATA
+  // =====================
+  for (let d in map) {
+
+    dailyTotals[d] = 0;
+
+    for (let product in map[d]) {
+
+      let value = Number(map[d][product]) || 0;
+
+      productTotals[product] = (productTotals[product] || 0) + value;
+
+      dailyTotals[d] += value;
+
+      totalSales += value;
+      totalOrders++;
+    }
+  }
+
+  // =====================
+  // TOP 5 PRODUCTS
+  // =====================
+  let sorted = Object.keys(productTotals)
+    .sort((a,b)=>productTotals[b]-productTotals[a]);
+
+  let top5 = sorted.slice(0,5);
+
+  // =====================
+  // KPI UPDATE
+  // =====================
+  document.getElementById("sales").innerText = "£" + totalSales.toFixed(2);
+  document.getElementById("orders").innerText = totalOrders;
+  document.getElementById("top").innerText = top5[0] || "-";
+
+  // =====================
+  // LABELS
+  // =====================
+  let labels = dates.map(d =>
+    new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+  );
+
+  // =====================
+  // BAR CHART (TOP 5)
+  // =====================
+  let barData = top5.map(p => ({
+    label: p,
+    data: dates.map(d => {
+      return map[d] && map[d][p] ? map[d][p] : 0;
+    })
+  }));
+
+  // =====================
+  // LINE CHART (DAILY TOTAL)
+  // =====================
+  let lineData = dates.map(d => dailyTotals[d]);
+
+  if (barChart) barChart.destroy();
+  if (lineChart) lineChart.destroy();
+
+  barChart = new Chart(document.getElementById("barChart"), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: barData
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          ticks: {
+            callback: v => "£" + v
+          }
+        }
+      }
+    }
+  });
+
+  lineChart = new Chart(document.getElementById("lineChart"), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: "Daily Sales",
+        data: lineData,
+        borderColor: "#3b82f6",
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          ticks: {
+            callback: v => "£" + v
+          }
+        }
+      }
+    }
+  });
+
+  // =====================
+  // FULL PRODUCT TABLE
+  // =====================
+  let tableHtml = `
+  <div style="margin-top:15px;background:#1f2937;padding:10px;border-radius:10px;">
+    <h3>All Products (Period Total)</h3>
+    <table style="width:100%;color:white;font-size:14px;">
+      <tr>
+        <th style="text-align:left;">Product</th>
+        <th style="text-align:right;">Total</th>
+      </tr>
+  `;
+
+  for (let product in productTotals) {
+    tableHtml += `
+      <tr>
+        <td>${product}</td>
+        <td style="text-align:right;">£${productTotals[product].toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  tableHtml += `</table></div>`;
+
+  document.getElementById("tableArea").innerHTML = tableHtml;
+}
+
+</script>
+
+</body>
+</html>
