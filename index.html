@@ -4,27 +4,118 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA / APP SETTINGS -->
-<meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- APP ICONS / MANIFEST -->
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png" type="image/png">
+<meta name="theme-color" content="#0f172a">
 
-<!-- CHART LIBRARY -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<title>Sales Dashboard</title>
 
 <style>
 body {
   margin:0;
-  font-family:Arial, sans-serif;
+  font-family:Arial;
   background:#0f172a;
   color:white;
+  overflow-x:hidden;
+}
+
+/* SPLASH */
+#splash {
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+/* OFFLINE */
+#offline {
+  display:none;
+  background:#ef4444;
+  text-align:center;
+  padding:6px;
+}
+
+/* WRAP */
+.wrap {
+  padding:12px;
+  padding-bottom:70px;
+}
+
+/* SLIDER */
+.slider {
+  display:flex;
+  width:300%;
+  transition:0.3s;
+}
+
+.section {
+  width:100%;
+  flex-shrink:0;
+}
+
+/* TILES */
+.tiles {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+
+.tile {
+  background:#1f2937;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+}
+
+/* INPUT */
+input {
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:10px;
+  border:none;
+}
+
+/* BUTTON */
+button {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  background:#3b82f6;
+  color:white;
+}
+
+/* NAV */
+.nav {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  background:#111827;
+}
+
+.nav div {
+  flex:1;
+  text-align:center;
+  padding:10px;
+}
+
+.nav .active {
+  background:#3b82f6;
+}
+
+canvas {
+  margin-top:15px;
+  background:#111827;
+  border-radius:12px;
+  padding:10px;
 }
 </style>
 
@@ -33,7 +124,6 @@ body {
 <body>
 
 <div id="splash">Loading...</div>
-
 <div id="offline">Offline mode</div>
 
 <!-- LOGIN -->
@@ -54,10 +144,11 @@ body {
 <!-- DASHBOARD -->
 <div class="section">
   <div class="tiles">
-    <div class="tile"><div>Sales</div><div id="sales">£0</div></div>
-    <div class="tile"><div>Orders</div><div id="orders">0</div></div>
-    <div class="tile"><div>Top</div><div id="top">-</div></div>
+    <div class="tile"><div>Sales</div><div id="salesEl">£0</div></div>
+    <div class="tile"><div>Orders</div><div id="ordersEl">0</div></div>
+    <div class="tile"><div>Top</div><div id="topEl">-</div></div>
   </div>
+
   <canvas id="barChart"></canvas>
 </div>
 
@@ -95,7 +186,7 @@ function check(){
   if(PASSWORDS.includes(pw.value)){
     localStorage.setItem("login","1");
     showApp();
-  }else alert("Wrong password");
+  } else alert("Wrong password");
 }
 
 function showApp(){
@@ -114,10 +205,6 @@ window.onload=()=>{
 
   setTimeout(()=>splash.style.display="none",500);
 };
-
-/* DATE CHANGE */
-start.onchange=load;
-end.onchange=load;
 
 /* NAV */
 function goTo(i,el){
@@ -145,7 +232,7 @@ slider.addEventListener("touchend",e=>{
   document.querySelectorAll(".nav div")[index].classList.add("active");
 });
 
-/* LOAD DATA */
+/* LOAD */
 async function load(){
 
   let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start.value+"&end="+end.value;
@@ -159,16 +246,14 @@ async function load(){
     draw(map);
     showOnline(true);
 
-  }catch{
-
+  } catch {
     let saved=localStorage.getItem("lastData");
     if(saved) draw(JSON.parse(saved));
-
     showOnline(false);
   }
 }
 
-/* OFFLINE UI */
+/* OFFLINE */
 function showOnline(state){
   offline.style.display = state ? "none" : "block";
 }
@@ -211,9 +296,9 @@ function draw(map){
     data:{labels,datasets:[{label:"Sales",data:dates.map(d=>daily[d])}]}
   });
 
-  let html="<table>";
+  let html="<table style='width:100%'>";
   for(let p in totals){
-    html+=`<tr><td>${p}</td><td>£${totals[p].toFixed(2)}</td></tr>`;
+    html+=`<tr><td>${p}</td><td style="text-align:right">£${totals[p].toFixed(2)}</td></tr>`;
   }
   html+="</table>";
 
