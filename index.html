@@ -1,120 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
+<!-- PWA / APP SETTINGS -->
 <meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+<!-- APP ICONS / MANIFEST -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png" type="image/png">
+
+<!-- CHART LIBRARY -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<title>Sales Dashboard</title>
 
 <style>
 body {
   margin:0;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   background:#0f172a;
   color:white;
-  overflow-x:hidden;
-}
-
-/* SPLASH */
-#splash {
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:#0f172a;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-
-/* OFFLINE BAR */
-#offline {
-  display:none;
-  background:#ef4444;
-  text-align:center;
-  padding:6px;
-}
-
-/* WRAP */
-.wrap {
-  padding:12px;
-  padding-bottom:70px;
-}
-
-/* SLIDER */
-.slider {
-  display:flex;
-  width:300%;
-  transition:0.3s;
-}
-
-.section {
-  width:100%;
-  flex-shrink:0;
-}
-
-/* NAV */
-.nav {
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  background:#111827;
-}
-
-.nav div {
-  flex:1;
-  text-align:center;
-  padding:10px;
-}
-
-.nav .active {
-  background:#3b82f6;
-}
-
-/* KPI */
-.tiles {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-}
-
-.tile {
-  background:#1f2937;
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-}
-
-/* INPUT */
-input {
-  width:100%;
-  padding:12px;
-  margin-top:6px;
-  border-radius:10px;
-  border:none;
-}
-
-button {
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border:none;
-  border-radius:12px;
-  background:#3b82f6;
-  color:white;
-}
-
-canvas {
-  margin-top:15px;
-  background:#111827;
-  border-radius:12px;
-  padding:10px;
 }
 </style>
+
 </head>
 
 <body>
