@@ -162,13 +162,98 @@ canvas{
 
 let chart;
 
-async function loadData(){
+/* LOAD DATA (JSONP - NO CORS ISSUES) */
+function loadData(){
 
   document.getElementById("loader").style.display="flex";
 
-  let url="https://script.google.com/macros/s/AKfycbxOIPkcA0sy4rFRVutaNQtdjkx2YkYmf7xIqlKUpdBo4Vv6Xy5KtvBpyB9FQtmIzsEALw/exec?start="
-    + start.value + "&end=" + end.value;
+  let url =
+    "https://script.google.com/macros/s/AKfycbxOIPkcA0sy4rFRVutaNQtdjkx2YkYmf7xIqlKUpdBo4Vv6Xy5KtvBpyB9FQtmIzsEALw/exec"
+    + "?start=" + start.value
+    + "&end=" + end.value
+    + "&callback=handleData";
 
-  try{
+  let script = document.createElement("script");
+  script.src = url;
 
-    let res = await fetch(url);
+  document.body.appendChild(script);
+}
+
+/* CALLBACK FROM APPS SCRIPT */
+function handleData(map){
+
+  draw(map);
+
+  document.getElementById("loader").style.display="none";
+}
+
+/* DRAW DASHBOARD */
+function draw(map){
+
+  if(!map || Object.keys(map).length===0){
+    salesEl.innerText="£0";
+    ordersEl.innerText="0";
+    topEl.innerText="-";
+    list.innerHTML="<div>No data</div>";
+    return;
+  }
+
+  let totals={};
+  let dates=Object.keys(map).sort();
+
+  let sales=0;
+  let orders=0;
+
+  for(let d in map){
+    for(let p in map[d]){
+      let v=map[d][p];
+
+      totals[p]=(totals[p]||0)+v;
+      sales+=v;
+      orders++;
+    }
+  }
+
+  let sorted=Object.keys(totals).sort((a,b)=>totals[b]-totals[a]);
+  let top5=sorted.slice(0,5);
+
+  salesEl.innerText="£"+sales.toFixed(2);
+  ordersEl.innerText=orders;
+  topEl.innerText=top5[0]||"-";
+
+  let labels=dates.map(d=>
+    new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
+  );
+
+  if(chart) chart.destroy();
+
+  chart=new Chart(document.getElementById("chart"),{
+    type:"bar",
+    data:{
+      labels,
+      datasets:top5.map(p=>({
+        label:p,
+        data:dates.map(d=>map[d][p]||0)
+      }))
+    }
+  });
+
+  let html="";
+  for(let p in totals){
+    html+=`<div>${p} — £${totals[p].toFixed(2)}</div>`;
+  }
+
+  list.innerHTML=html;
+}
+
+/* DEFAULT DATE */
+window.onload=()=>{
+  let today=new Date().toISOString().split("T")[0];
+  start.value=today;
+  end.value=today;
+};
+
+</script>
+
+</body>
+</html>
