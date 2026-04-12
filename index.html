@@ -2,6 +2,12 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- APP MODE -->
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -12,27 +18,51 @@ body {
   color:white;
 }
 
+/* SPLASH */
+#splash {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  z-index:9999;
+}
+
+/* WRAP */
 .wrap { padding:12px; }
 
+/* INPUTS */
 input {
   width:100%;
-  padding:10px;
+  padding:12px;
   margin-top:6px;
-  border-radius:8px;
+  border-radius:10px;
   border:none;
 }
 
+/* BUTTON */
 button {
   width:100%;
-  padding:10px;
+  padding:12px;
   margin-top:8px;
   border:none;
-  border-radius:8px;
-  background:#3b82f6;
+  border-radius:12px;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
   color:white;
   font-weight:bold;
 }
 
+/* LOGOUT */
+.logout {
+  background:#ef4444;
+}
+
+/* KPI TILES */
 .tiles {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -42,15 +72,33 @@ button {
 
 .tile {
   background:#1f2937;
-  padding:10px;
-  border-radius:10px;
+  padding:12px;
+  border-radius:12px;
   text-align:center;
+  transition:0.3s;
+}
+
+.tile:hover {
+  transform:scale(1.05);
+}
+
+/* LOADING */
+#loading {
+  display:none;
+  text-align:center;
+  margin-top:10px;
+}
+
+/* TABLE */
+table {
+  width:100%;
+  font-size:14px;
 }
 
 canvas {
   margin-top:15px;
   background:#111827;
-  border-radius:10px;
+  border-radius:12px;
   padding:10px;
 }
 </style>
@@ -58,20 +106,23 @@ canvas {
 
 <body>
 
-<!-- 🔐 LOGIN -->
+<!-- SPLASH -->
+<div id="splash">Loading Dashboard...</div>
+
+<!-- LOGIN -->
 <div id="login" style="text-align:center;margin-top:120px;">
   <h2>Dashboard Login</h2>
-
   <input type="password" id="pw" placeholder="Enter password">
-
   <button onclick="check()">Login</button>
 </div>
 
-<!-- 📊 APP -->
+<!-- APP -->
 <div id="app" style="display:none;" class="wrap">
 
 <input type="date" id="start">
 <input type="date" id="end">
+
+<button class="logout" onclick="logout()">Logout</button>
 
 <div class="tiles">
   <div class="tile">
@@ -88,6 +139,8 @@ canvas {
   </div>
 </div>
 
+<div id="loading">Loading...</div>
+
 <canvas id="barChart"></canvas>
 <canvas id="lineChart"></canvas>
 
@@ -99,160 +152,140 @@ canvas {
 
 let barChart, lineChart;
 
-/* ================= LOGIN ================= */
-const PASSWORDS = [
-  "1234",
-  "staff1",
-  "staff2"
-];
+const PASSWORDS = ["1234","staff1","staff2"];
 
+/* LOGIN */
 function check() {
   let pw = document.getElementById("pw").value;
 
   if (PASSWORDS.includes(pw)) {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    load();
+    localStorage.setItem("loggedIn","true");
+    showApp();
   } else {
     alert("Wrong password");
   }
 }
 
-/* ================= AUTO DATE ================= */
+function logout() {
+  localStorage.removeItem("loggedIn");
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  load();
+}
+
+/* AUTO LOAD */
 window.onload = () => {
+
   let today = new Date().toISOString().split("T")[0];
   document.getElementById("start").value = today;
   document.getElementById("end").value = today;
+
+  if(localStorage.getItem("loggedIn")==="true"){
+    showApp();
+  }
+
+  setTimeout(()=>document.getElementById("splash").style.display="none",500);
 };
 
-/* ================= AUTO REFRESH ================= */
-document.getElementById("start").addEventListener("change", load);
-document.getElementById("end").addEventListener("change", load);
+/* DATE CHANGE */
+document.getElementById("start").addEventListener("change",load);
+document.getElementById("end").addEventListener("change",load);
 
-/* ================= LOAD API ================= */
-async function load() {
+/* LOAD DATA */
+async function load(){
 
-  let start = document.getElementById("start").value;
-  let end = document.getElementById("end").value;
+  document.getElementById("loading").style.display="block";
 
-  if (!start || !end) return;
+  let start=document.getElementById("start").value;
+  let end=document.getElementById("end").value;
 
-  let url = "https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
+  let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start+"&end="+end;
 
-  try {
-    let res = await fetch(url);
-    let map = await res.json();
-    draw(map);
-  } catch (e) {
-    alert("Failed to load data");
-  }
+  let res=await fetch(url);
+  let map=await res.json();
+
+  draw(map);
+
+  document.getElementById("loading").style.display="none";
 }
 
-/* ================= DRAW DASHBOARD ================= */
-function draw(map) {
+/* KPI ANIMATION */
+function animateValue(id, start, end, duration, prefix=""){
+  let range=end-start;
+  let current=start;
+  let increment=range/(duration/20);
 
-  if (!map || Object.keys(map).length === 0) return;
+  let timer=setInterval(()=>{
+    current+=increment;
+    if(current>=end){
+      current=end;
+      clearInterval(timer);
+    }
+    document.getElementById(id).innerText=prefix+Math.floor(current);
+  },20);
+}
 
-  let productTotals = {};
-  let dailyTotals = {};
-  let dates = Object.keys(map).sort();
+/* DRAW */
+function draw(map){
 
-  let totalSales = 0;
-  let totalOrders = 0;
+  let productTotals={}, dailyTotals={}, dates=Object.keys(map).sort();
+  let totalSales=0,totalOrders=0;
 
-  for (let d in map) {
+  for(let d in map){
+    dailyTotals[d]=0;
 
-    dailyTotals[d] = 0;
-
-    for (let product in map[d]) {
-
-      let value = Number(map[d][product]) || 0;
-
-      productTotals[product] = (productTotals[product] || 0) + value;
-
-      dailyTotals[d] += value;
-
-      totalSales += value;
+    for(let p in map[d]){
+      let v=Number(map[d][p])||0;
+      productTotals[p]=(productTotals[p]||0)+v;
+      dailyTotals[d]+=v;
+      totalSales+=v;
       totalOrders++;
     }
   }
 
-  let sorted = Object.keys(productTotals)
-    .sort((a,b)=>productTotals[b]-productTotals[a]);
+  let sorted=Object.keys(productTotals).sort((a,b)=>productTotals[b]-productTotals[a]);
+  let top5=sorted.slice(0,5);
 
-  let top5 = sorted.slice(0,5);
+  animateValue("sales",0,totalSales,500,"£");
+  animateValue("orders",0,totalOrders,500);
+  document.getElementById("top").innerText=top5[0]||"-";
 
-  document.getElementById("sales").innerText = "£" + totalSales.toFixed(2);
-  document.getElementById("orders").innerText = totalOrders;
-  document.getElementById("top").innerText = top5[0] || "-";
+  let labels=dates.map(d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
 
-  let labels = dates.map(d =>
-    new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-  );
-
-  let barData = top5.map(p => ({
-    label: p,
-    data: dates.map(d => map[d] && map[d][p] ? map[d][p] : 0)
+  let barData=top5.map(p=>({
+    label:p,
+    data:dates.map(d=>map[d][p]||0)
   }));
 
-  let lineData = dates.map(d => dailyTotals[d]);
+  let lineData=dates.map(d=>dailyTotals[d]);
 
-  if (barChart) barChart.destroy();
-  if (lineChart) lineChart.destroy();
+  if(barChart)barChart.destroy();
+  if(lineChart)lineChart.destroy();
 
-  barChart = new Chart(document.getElementById("barChart"), {
+  barChart=new Chart(barChart=document.getElementById("barChart"),{
     type:'bar',
-    data:{ labels, datasets: barData },
-    options:{
-      responsive:true,
-      scales:{
-        y:{ ticks:{ callback:v=>"£"+v } }
-      }
-    }
+    data:{labels,datasets:barData}
   });
 
-  lineChart = new Chart(document.getElementById("lineChart"), {
+  lineChart=new Chart(lineChart=document.getElementById("lineChart"),{
     type:'line',
-    data:{
-      labels,
-      datasets:[{
-        label:"Daily Sales",
-        data: lineData,
-        borderColor:"#3b82f6",
-        fill:false
-      }]
-    },
-    options:{
-      responsive:true,
-      scales:{
-        y:{ ticks:{ callback:v=>"£"+v } }
-      }
-    }
+    data:{labels,datasets:[{label:"Daily Sales",data:lineData,borderColor:"#3b82f6"}]}
   });
 
-  // PRODUCT TABLE
-  let html = `
-  <div style="margin-top:15px;background:#1f2937;padding:10px;border-radius:10px;">
-    <h3>All Products</h3>
-    <table style="width:100%;color:white;font-size:14px;">
-      <tr>
-        <th style="text-align:left;">Product</th>
-        <th style="text-align:right;">Total</th>
-      </tr>
-  `;
+  let html=`<div style="margin-top:15px;background:#1f2937;padding:10px;border-radius:10px;">
+  <h3>Products</h3><table>`;
 
-  for (let p in productTotals) {
-    html += `
-      <tr>
-        <td>${p}</td>
-        <td style="text-align:right;">£${productTotals[p].toFixed(2)}</td>
-      </tr>
-    `;
+  for(let p in productTotals){
+    html+=`<tr><td>${p}</td><td style="text-align:right;">£${productTotals[p].toFixed(2)}</td></tr>`;
   }
 
-  html += `</table></div>`;
+  html+=`</table></div>`;
 
-  document.getElementById("tableArea").innerHTML = html;
+  document.getElementById("tableArea").innerHTML=html;
 }
 
 </script>
