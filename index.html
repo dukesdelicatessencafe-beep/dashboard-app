@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="manifest" href="manifest.json"> 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -28,14 +30,21 @@ body {
   z-index:9999;
 }
 
+/* OFFLINE BAR */
+#offline {
+  display:none;
+  background:#ef4444;
+  text-align:center;
+  padding:6px;
+}
+
 /* WRAP */
 .wrap {
   padding:12px;
   padding-bottom:70px;
-  position:relative;
 }
 
-/* SLIDE CONTAINER */
+/* SLIDER */
 .slider {
   display:flex;
   width:300%;
@@ -71,7 +80,6 @@ body {
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px;
-  margin-top:10px;
 }
 
 .tile {
@@ -112,6 +120,8 @@ canvas {
 <body>
 
 <div id="splash">Loading...</div>
+
+<div id="offline">Offline mode</div>
 
 <!-- LOGIN -->
 <div id="login" style="text-align:center;margin-top:120px;">
@@ -163,14 +173,16 @@ canvas {
 
 let index=0;
 let startX=0;
+let barChart,lineChart;
 
 const PASSWORDS=["1234","staff1","staff2"];
 
+/* LOGIN */
 function check(){
   if(PASSWORDS.includes(pw.value)){
     localStorage.setItem("login","1");
     showApp();
-  }else alert("Wrong");
+  }else alert("Wrong password");
 }
 
 function showApp(){
@@ -179,6 +191,7 @@ function showApp(){
   load();
 }
 
+/* INIT */
 window.onload=()=>{
   let today=new Date().toISOString().split("T")[0];
   start.value=today;
@@ -189,10 +202,11 @@ window.onload=()=>{
   setTimeout(()=>splash.style.display="none",500);
 };
 
+/* DATE CHANGE */
 start.onchange=load;
 end.onchange=load;
 
-/* NAV CLICK */
+/* NAV */
 function goTo(i,el){
   index=i;
   slider.style.transform="translateX(-"+(i*100)+"%)";
@@ -220,12 +234,30 @@ slider.addEventListener("touchend",e=>{
 
 /* LOAD DATA */
 async function load(){
+
   let url="https://script.google.com/macros/s/AKfycbxaNoSfFbXI_z1oVXCG4j9AtvNSuokJIQNX7YsDnCMF0Lk57AcAY3lv4gHfFUetgyDRZg/exec?start="+start.value+"&end="+end.value;
 
-  let res=await fetch(url);
-  let map=await res.json();
+  try{
+    let res=await fetch(url);
+    let map=await res.json();
 
-  draw(map);
+    localStorage.setItem("lastData",JSON.stringify(map));
+
+    draw(map);
+    showOnline(true);
+
+  }catch{
+
+    let saved=localStorage.getItem("lastData");
+    if(saved) draw(JSON.parse(saved));
+
+    showOnline(false);
+  }
+}
+
+/* OFFLINE UI */
+function showOnline(state){
+  offline.style.display = state ? "none" : "block";
 }
 
 /* DRAW */
@@ -254,12 +286,14 @@ function draw(map){
 
   let labels=dates.map(d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'}));
 
-  new Chart(barChart=document.getElementById("barChart"),{
+  if(barChart) barChart.destroy();
+  barChart=new Chart(document.getElementById("barChart"),{
     type:'bar',
     data:{labels,datasets:top5.map(p=>({label:p,data:dates.map(d=>map[d][p]||0)}))}
   });
 
-  new Chart(lineChart=document.getElementById("lineChart"),{
+  if(lineChart) lineChart.destroy();
+  lineChart=new Chart(document.getElementById("lineChart"),{
     type:'line',
     data:{labels,datasets:[{label:"Sales",data:dates.map(d=>daily[d])}]}
   });
@@ -273,12 +307,12 @@ function draw(map){
   tableArea.innerHTML=html;
 }
 
+/* SERVICE WORKER */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
 </script>
 
 </body>
 </html>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-</script>
