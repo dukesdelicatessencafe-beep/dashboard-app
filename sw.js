@@ -1,22 +1,21 @@
-const CACHE_NAME = "dashboard-v3";
+const CACHE_NAME = "dashboard-v4";
 
-/* IMPORTANT: use RELATIVE paths for GitHub Pages */
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.png",
-  "https://cdn.jsdelivr.net/npm/chart.js"
+  "./icon.png"
 ];
 
 /* INSTALL */
 self.addEventListener("install", event => {
+  self.skipWaiting(); // 🔥 activate immediately
+
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
 /* ACTIVATE */
@@ -25,24 +24,36 @@ self.addEventListener("activate", event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME){
+            return caches.delete(key);
+          }
         })
       )
     )
   );
-  self.clients.claim();
+
+  self.clients.claim(); // 🔥 take control instantly
 });
 
-/* FETCH (SMART OFFLINE MODE) */
+/* FETCH — NETWORK FIRST (CRITICAL) */
 self.addEventListener("fetch", event => {
+
+  // ONLY handle GET requests
+  if(event.request.method !== "GET") return;
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // clone & cache fresh version
+
+        // Don't cache bad responses
+        if(!response || response.status !== 200) return response;
+
         const copy = response.clone();
+
         caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, copy);
         });
+
         return response;
       })
       .catch(() => {
