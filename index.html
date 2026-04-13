@@ -23,6 +23,57 @@ body{
   overflow-x:hidden;
 }
 
+/* ======================
+   LOGIN SCREEN
+====================== */
+
+#login{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  background:#0f172a;
+}
+
+#login img{
+  width:90px;
+  height:90px;
+  border-radius:18px;
+  margin-bottom:15px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.5);
+  animation:pop 0.6s ease-out;
+}
+
+@keyframes pop{
+  from{transform:scale(0.6);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+#login input{
+  width:100%;
+  max-width:280px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-bottom:10px;
+}
+
+#login button{
+  width:100%;
+  max-width:280px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#38bdf8;
+  font-weight:bold;
+}
+
+/* ======================
+   APP WRAP
+====================== */
+
 .wrap{
   padding:12px;
   padding-bottom:70px;
@@ -153,12 +204,32 @@ td{
   text-align:center;
   color:#38bdf8;
   font-size:14px;
+  z-index:999;
 }
 </style>
 
 </head>
 
 <body>
+
+<!-- ======================
+     LOGIN SCREEN
+====================== -->
+
+<div id="login">
+  <img src="icon.png">
+  <h2>Sales Dashboard</h2>
+
+  <input id="pass" type="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- ======================
+     APP
+====================== -->
+
+<div id="app" style="display:none;">
 
 <div id="pull">↓ Pull to refresh</div>
 
@@ -167,31 +238,26 @@ td{
 <!-- TAB 1 -->
 <div id="tab1" class="tab active">
 
-  <!-- DATE FILTER -->
   <div class="dateBar">
     <input type="date" id="startDate">
     <input type="date" id="endDate">
     <button onclick="applyFilter()">Go</button>
   </div>
 
-  <!-- PRESETS -->
   <div class="presetRow">
     <button class="presetBtn" onclick="setRange('today')">Today</button>
     <button class="presetBtn" onclick="setRange('7')">7 Days</button>
     <button class="presetBtn" onclick="setRange('30')">Month</button>
   </div>
 
-  <!-- SUMMARY -->
   <div class="tiles">
     <div class="tile">Sales<br><b id="sales">£0</b></div>
     <div class="tile">Products<br><b id="products">0</b></div>
     <div class="tile">Top<br><b id="top">-</b></div>
   </div>
 
-  <!-- INSIGHTS -->
   <div id="insights">Loading insights...</div>
 
-  <!-- BAR CHART -->
   <div class="chartBox">
     <canvas id="barChart"></canvas>
   </div>
@@ -212,46 +278,52 @@ td{
 
 </div>
 
-<!-- NAV -->
 <div class="nav">
   <div onclick="switchTab(1,this)" class="active">📊</div>
   <div onclick="switchTab(2,this)">📦</div>
   <div onclick="switchTab(3,this)">📈</div>
 </div>
 
+</div>
+
 <script>
 
 /* ======================
-   CONFIG
+   LOGIN
 ====================== */
 
-const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+function login(){
+  let pass=document.getElementById("pass").value;
+
+  if(pass==="1234"){
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    load();
+  }else{
+    alert("Wrong password");
+  }
+}
 
 /* ======================
-   STATE
+   DATA
 ====================== */
 
-let RAW_DATA = {};
-let FILTERED_DATA = {};
-let barChart, lineChart;
+const URL="https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+
+let RAW_DATA={},FILTERED_DATA={},barChart,lineChart;
 
 /* ======================
    LOAD
 ====================== */
 
 async function load(){
-  try{
-    let res = await fetch(URL);
-    let data = await res.json();
+  let res=await fetch(URL);
+  let data=await res.json();
 
-    RAW_DATA = data;
-    FILTERED_DATA = data;
+  RAW_DATA=data;
+  FILTERED_DATA=data;
 
-    draw(FILTERED_DATA);
-
-  }catch(e){
-    console.log(e);
-  }
+  draw(data);
 }
 
 /* ======================
@@ -260,44 +332,37 @@ async function load(){
 
 function applyFilter(){
 
-  let start = document.getElementById("startDate").value;
-  let end = document.getElementById("endDate").value;
+  let s=document.getElementById("startDate").value;
+  let e=document.getElementById("endDate").value;
 
-  if(!start || !end){
-    FILTERED_DATA = RAW_DATA;
-    draw(FILTERED_DATA);
-    return;
-  }
+  if(!s||!e){draw(RAW_DATA);return;}
 
-  let out = {};
-  let s = new Date(start).getTime();
-  let e = new Date(end).getTime();
+  let out={};
+  let a=new Date(s).getTime();
+  let b=new Date(e).getTime();
 
   for(let d in RAW_DATA){
-    let t = new Date(d).getTime();
-    if(t>=s && t<=e){
-      out[d]=RAW_DATA[d];
-    }
+    let t=new Date(d).getTime();
+    if(t>=a&&t<=b)out[d]=RAW_DATA[d];
   }
 
-  FILTERED_DATA = out;
-  draw(FILTERED_DATA);
+  draw(out);
 }
 
 /* ======================
    PRESETS
 ====================== */
 
-function setRange(type){
+function setRange(t){
 
-  let end = new Date();
-  let start = new Date();
+  let e=new Date();
+  let s=new Date();
 
-  if(type==="7") start.setDate(end.getDate()-7);
-  if(type==="30") start.setDate(end.getDate()-30);
+  if(t==="7")s.setDate(e.getDate()-7);
+  if(t==="30")s.setDate(e.getDate()-30);
 
-  document.getElementById("startDate").value=format(start);
-  document.getElementById("endDate").value=format(end);
+  document.getElementById("startDate").value=format(s);
+  document.getElementById("endDate").value=format(e);
 
   applyFilter();
 }
@@ -312,7 +377,7 @@ function format(d){
 
 function draw(data){
 
-  let productTotals={}, dailyTotals={}, total=0;
+  let productTotals={},dailyTotals={},total=0;
   let dates=Object.keys(data).sort();
 
   for(let d of dates){
@@ -320,7 +385,6 @@ function draw(data){
 
     for(let p in data[d]){
       let v=Number(data[d][p])||0;
-
       productTotals[p]=(productTotals[p]||0)+v;
       dailyTotals[d]+=v;
       total+=v;
@@ -338,9 +402,7 @@ function draw(data){
 
   buildInsights(productTotals,dailyTotals,dates);
 
-  /* BAR */
   if(barChart)barChart.destroy();
-
   barChart=new Chart(document.getElementById("barChart"),{
     type:"bar",
     data:{
@@ -361,16 +423,14 @@ function draw(data){
       plugins:{
         tooltip:{
           callbacks:{
-            label:(c)=>"£"+c.raw.toFixed(2)
+            label:c=>"£"+c.raw.toFixed(2)
           }
         }
       }
     }
   });
 
-  /* LINE */
   if(lineChart)lineChart.destroy();
-
   lineChart=new Chart(document.getElementById("lineChart"),{
     type:"line",
     data:{
@@ -381,19 +441,16 @@ function draw(data){
       }]
     },
     options:{
-      responsive:true,
-      maintainAspectRatio:false,
       plugins:{
         tooltip:{
           callbacks:{
-            label:(c)=>"£"+c.raw.toFixed(2)
+            label:c=>"£"+c.raw.toFixed(2)
           }
         }
       }
     }
   });
 
-  /* TABLE */
   let html="";
   for(let p of sorted){
     html+=`<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
@@ -402,7 +459,7 @@ function draw(data){
 }
 
 /* ======================
-   INSIGHTS ENGINE
+   INSIGHTS
 ====================== */
 
 function buildInsights(productTotals,dailyTotals,dates){
@@ -419,9 +476,7 @@ function buildInsights(productTotals,dailyTotals,dates){
     html+=`• ${p} (£${productTotals[p].toFixed(2)})<br>`;
   });
 
-  let best=dates.reduce((a,b)=>
-    dailyTotals[a]>dailyTotals[b]?a:b
-  ,dates[0]);
+  let best=dates.reduce((a,b)=>dailyTotals[a]>dailyTotals[b]?a:b,dates[0]);
 
   html+="<br>📈 <b>Best Day</b><br>";
   html+=`• ${best} (£${dailyTotals[best].toFixed(2)})<br><br>`;
@@ -432,13 +487,9 @@ function buildInsights(productTotals,dailyTotals,dates){
 
   html+="⚠️ <b>Anomalies</b><br>";
 
-  if(!anomalies.length){
-    html+="• None detected<br>";
-  }else{
-    anomalies.forEach(d=>{
-      html+=`• ${d} (£${dailyTotals[d].toFixed(2)})<br>`;
-    });
-  }
+  html+=anomalies.length?
+    anomalies.map(d=>`• ${d} (£${dailyTotals[d].toFixed(2)})<br>`).join("")
+    :"• None detected<br>";
 
   document.getElementById("insights").innerHTML=html;
 }
@@ -462,67 +513,12 @@ function switchTab(n,el){
 }
 
 /* ======================
-   SW
+   INIT
 ====================== */
 
 if("serviceWorker"in navigator){
   navigator.serviceWorker.register("sw.js");
 }
-
-/* ======================
-   INIT
-====================== */
-
-load();
-
-/* ======================
-   INSTALL PROMPT
-====================== */
-
-let deferredPrompt;
-
-window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();
-  deferredPrompt=e;
-
-  let btn=document.createElement("button");
-  btn.innerText="Install App";
-  btn.style.cssText="position:fixed;top:10px;right:10px;z-index:999;padding:8px;background:#38bdf8;border:none;border-radius:8px;font-weight:bold;";
-  document.body.appendChild(btn);
-
-  btn.onclick=async()=>{
-    btn.remove();
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt=null;
-  };
-});
-
-/* ======================
-   PULL REFRESH
-====================== */
-
-let startY=0,pulling=false;
-
-document.addEventListener("touchstart",e=>{
-  startY=e.touches[0].clientY;
-});
-
-document.addEventListener("touchmove",e=>{
-  let dy=e.touches[0].clientY-startY;
-  if(window.scrollY<5&&dy>20){
-    pulling=true;
-    document.getElementById("pull").style.top=Math.min(dy-60,30)+"px";
-  }
-});
-
-document.addEventListener("touchend",()=>{
-  if(pulling){
-    document.getElementById("pull").style.top="-60px";
-    load();
-  }
-  pulling=false;
-});
 
 </script>
 
