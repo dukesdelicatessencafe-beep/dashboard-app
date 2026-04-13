@@ -123,7 +123,7 @@ td{
   border-bottom:1px solid #334155;
 }
 
-/* CHART FIX */
+/* CHART */
 .chartBox{
   width:100%;
   height:240px;
@@ -213,7 +213,7 @@ const end = document.getElementById("end");
 const slider = document.getElementById("slider");
 
 /* =========================
-   SAFE STARTUP (FIXED)
+   SAFE STARTUP
 ========================= */
 window.addEventListener("DOMContentLoaded", () => {
   try {
@@ -259,40 +259,53 @@ function goTo(i,el){
   }, 250);
 }
 
-/* LOAD (SAFE) */
+/* =========================
+   SAFE LOAD (WITH TIMEOUT)
+========================= */
 async function load(){
+
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), 10000);
 
   try{
 
     let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
 
-    let res = await fetch(url);
+    let res = await fetch(url, { signal: controller.signal });
 
-    if(!res.ok) throw new Error("HTTP error " + res.status);
+    clearTimeout(timeout);
+
+    if(!res.ok) throw new Error("HTTP " + res.status);
 
     let map = await res.json();
 
-    localStorage.setItem("lastData", JSON.stringify(map));
+    if(!map || Object.keys(map).length === 0){
+      throw new Error("Empty dataset");
+    }
 
+    localStorage.setItem("lastData", JSON.stringify(map));
     draw(map);
 
   }catch(err){
 
-    console.log("Load failed:", err);
+    console.log("Load error:", err);
 
-    let fallback = localStorage.getItem("lastData");
+    let saved = localStorage.getItem("lastData");
 
-    if(fallback){
-      draw(JSON.parse(fallback));
+    if(saved){
+      draw(JSON.parse(saved));
     } else {
-      alert("Failed to load data from server");
+      alert("Failed to load data");
     }
-
   }
 }
 
-/* DRAW */
+/* =========================
+   DRAW
+========================= */
 function draw(map){
+
+  if(!map || Object.keys(map).length === 0) return;
 
   let productTotals = {};
   let dailyTotals = {};
@@ -321,46 +334,49 @@ function draw(map){
   document.getElementById("orders").innerText = sorted.length;
   document.getElementById("top").innerText = top5[0] || "-";
 
-  /* BAR */
-  if(barChart) barChart.destroy();
+  /* DELAYED RENDER (FIXES CHART BUGS) */
+  setTimeout(()=>{
 
-  barChart = new Chart(document.getElementById("barChart"),{
-    type:'bar',
-    data:{
-      labels: dates,
-      datasets: top5.map(p => ({
-        label:p,
-        data: dates.map(d => map[d][p] || 0),
-        stack:'s'
-      }))
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        x:{stacked:true},
-        y:{stacked:true}
+    if(barChart) barChart.destroy();
+
+    barChart = new Chart(document.getElementById("barChart"),{
+      type:'bar',
+      data:{
+        labels: dates,
+        datasets: top5.map(p => ({
+          label:p,
+          data: dates.map(d => map[d][p] || 0),
+          stack:'s'
+        }))
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{stacked:true},
+          y:{stacked:true}
+        }
       }
-    }
-  });
+    });
 
-  /* LINE */
-  if(lineChart) lineChart.destroy();
+    if(lineChart) lineChart.destroy();
 
-  lineChart = new Chart(document.getElementById("lineChart"),{
-    type:'line',
-    data:{
-      labels: dates,
-      datasets:[{
-        label:"Sales",
-        data: dates.map(d => dailyTotals[d])
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false
-    }
-  });
+    lineChart = new Chart(document.getElementById("lineChart"),{
+      type:'line',
+      data:{
+        labels: dates,
+        datasets:[{
+          label:"Sales",
+          data: dates.map(d => dailyTotals[d])
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false
+      }
+    });
+
+  }, 50);
 
   /* TABLE */
   let html="<table>";
