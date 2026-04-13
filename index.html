@@ -32,12 +32,16 @@ body{
 }
 
 /* APP */
+#app{
+  display:none;
+}
+
 .wrap{
   padding:12px;
   padding-bottom:70px;
 }
 
-/* DATE */
+/* INPUTS */
 .dateBar{
   display:flex;
   gap:8px;
@@ -135,6 +139,7 @@ td{
 .tab{display:none}
 .tab.active{display:block}
 
+/* INSIGHTS */
 #insights{
   margin:10px 0;
   padding:10px;
@@ -149,7 +154,8 @@ td{
 <!-- LOGIN -->
 <div id="login">
 
-<img src="./icon.png?v=2" style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
+<img src="./icon.png?v=2"
+style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
 
 <h2>Sales Dashboard</h2>
 
@@ -164,10 +170,11 @@ Login
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none;">
+<div id="app">
 
 <div class="wrap">
 
+<!-- TAB 1 -->
 <div id="tab1" class="tab active">
 
 <div class="dateBar">
@@ -196,10 +203,12 @@ Login
 
 </div>
 
+<!-- TAB 2 -->
 <div id="tab2" class="tab">
 <table id="table"></table>
 </div>
 
+<!-- TAB 3 -->
 <div id="tab3" class="tab">
 <div class="chartBox">
 <canvas id="lineChart"></canvas>
@@ -208,6 +217,7 @@ Login
 
 </div>
 
+<!-- NAV -->
 <div class="nav">
 <div onclick="switchTab(1,this)" class="active">📊</div>
 <div onclick="switchTab(2,this)">📦</div>
@@ -218,48 +228,69 @@ Login
 
 <script>
 
-/* LOGIN */
+const URL = "YOUR_WEB_APP_URL_HERE";
+
+let RAW = {};
+let barChart, lineChart;
+
+/* LOGIN (FIXED) */
 function login(){
-  if(document.getElementById("pass").value==="1234"){
-    login.style.display="none";
-    app.style.display="block";
+
+  const loginBox = document.getElementById("login");
+  const appBox = document.getElementById("app");
+  const input = document.getElementById("pass");
+
+  if(!loginBox || !appBox || !input){
+    alert("Missing elements");
+    return;
+  }
+
+  if(input.value === "1234"){
+    loginBox.style.display = "none";
+    appBox.style.display = "block";
     load();
-  }else alert("Wrong password");
+  } else {
+    alert("Wrong password");
+  }
 }
 
-/* DATA */
-const URL="YOUR_WEB_APP_URL_HERE";
-
-let RAW={},barChart,lineChart;
-
-/* LOAD */
+/* LOAD DATA */
 async function load(){
-  let res=await fetch(URL);
-  RAW=await res.json();
+  let res = await fetch(URL);
+  RAW = await res.json();
   draw(RAW);
 }
 
 /* FILTER */
 function applyFilter(){
-  let s=new Date(startDate.value).getTime();
-  let e=new Date(endDate.value).getTime();
-  if(!s||!e)return draw(RAW);
 
-  let out={};
+  let s = new Date(startDate.value).getTime();
+  let e = new Date(endDate.value).getTime();
+
+  if(!s || !e) return draw(RAW);
+
+  let out = {};
+
   for(let d in RAW){
-    let t=new Date(d).getTime();
-    if(t>=s&&t<=e)out[d]=RAW[d];
+    let t = new Date(d).getTime();
+    if(t >= s && t <= e) out[d] = RAW[d];
   }
+
   draw(out);
 }
 
-/* PRESETS */
-function setRange(t){
-  let e=new Date(),s=new Date();
-  if(t==="7")s.setDate(e.getDate()-7);
-  if(t==="30")s.setDate(e.getDate()-30);
-  startDate.value=format(s);
-  endDate.value=format(e);
+/* RANGE */
+function setRange(type){
+
+  let e = new Date();
+  let s = new Date();
+
+  if(type === "7") s.setDate(e.getDate()-7);
+  if(type === "30") s.setDate(e.getDate()-30);
+
+  startDate.value = format(s);
+  endDate.value = format(e);
+
   applyFilter();
 }
 
@@ -270,90 +301,97 @@ function format(d){
 /* DRAW */
 function draw(data){
 
-  if(!data || Object.keys(data).length===0) return;
+  if(!data || Object.keys(data).length === 0) return;
 
-  let pt={},dt={},total=0;
-  let dates=Object.keys(data).sort();
+  let pt = {}, dt = {}, total = 0;
+  let dates = Object.keys(data).sort();
 
   for(let d of dates){
-    dt[d]=0;
+    dt[d] = 0;
+
     for(let p in data[d]){
-      let v=+data[d][p]||0;
-      pt[p]=(pt[p]||0)+v;
-      dt[d]+=v;
-      total+=v;
+      let v = +data[d][p] || 0;
+      pt[p] = (pt[p] || 0) + v;
+      dt[d] += v;
+      total += v;
     }
   }
 
-  let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  let top5=sorted.slice(0,5);
+  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+  let top5 = sorted.slice(0,5);
 
-  sales.innerText="£"+total.toFixed(2);
-  products.innerText=sorted.length;
-  top.innerText=top5[0]||"-";
+  sales.innerText = "£" + total.toFixed(2);
+  products.innerText = sorted.length;
+  top.innerText = top5[0] || "-";
 
-  buildInsights(pt,dt,dates);
+  buildInsights(pt, dt, dates);
 
-  if(barChart)barChart.destroy();
-  barChart=new Chart(document.getElementById("barChart"),{
-    type:"bar",
-    data:{
-      labels:dates,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>data[d][p]||0),
-        stack:"s"
+  if(barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: dates,
+      datasets: top5.map(p => ({
+        label: p,
+        data: dates.map(d => data[d][p] || 0),
+        stack: "s"
       }))
     },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{x:{stacked:true},y:{stacked:true}},
-      plugins:{
-        tooltip:{callbacks:{label:c=>"£"+c.raw.toFixed(2)}}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true }
       }
     }
   });
 
-  if(lineChart)lineChart.destroy();
-  lineChart=new Chart(document.getElementById("lineChart"),{
-    type:"line",
-    data:{
-      labels:dates,
-      datasets:[{label:"Sales",data:dates.map(d=>dt[d])}]
+  if(lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: {
+      labels: dates,
+      datasets: [{
+        label: "Sales",
+        data: dates.map(d => dt[d])
+      }]
     }
   });
 
-  table.innerHTML=sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+  table.innerHTML =
+    sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
 /* INSIGHTS */
-function buildInsights(pt,dt,dates){
+function buildInsights(pt, dt, dates){
 
-  let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  let top3=sorted.slice(0,3);
+  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+  let top3 = sorted.slice(0,3);
 
-  let best=dates.reduce((a,b)=>dt[a]>dt[b]?a:b,dates[0]);
-  let avg=Object.values(dt).reduce((a,b)=>a+b,0)/dates.length;
+  let best = dates.reduce((a,b)=>dt[a]>dt[b]?a:b,dates[0]);
+  let avg = Object.values(dt).reduce((a,b)=>a+b,0)/dates.length;
 
-  let anomalies=dates.filter(d=>dt[d]>avg*1.5);
+  let anomalies = dates.filter(d => dt[d] > avg * 1.5);
 
-  insights.innerHTML=
-    "🏆 Best Sellers<br>"+
-    top3.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>")+
-    "<br><br>📈 Best Day<br>"+
-    `• ${best} (£${dt[best].toFixed(2)})<br><br>`+
-    "⚠️ Anomalies<br>"+
+  insights.innerHTML =
+    "🏆 Best Sellers<br>" +
+    top3.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>") +
+    "<br><br>📈 Best Day<br>" +
+    `• ${best} (£${dt[best].toFixed(2)})<br><br>` +
+    "⚠️ Anomalies<br>" +
     (anomalies.length
-      ? anomalies.map(d=>`• ${d} (£${dt[d].toFixed(2)})`).join("<br>")
+      ? anomalies.map(d => `• ${d} (£${dt[d].toFixed(2)})`).join("<br>")
       : "• None");
 }
 
 /* TABS */
-function switchTab(n,el){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+function switchTab(n, el){
+
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("tab"+n).classList.add("active");
-  document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+
+  document.querySelectorAll(".nav div").forEach(b => b.classList.remove("active"));
   el.classList.add("active");
 }
 
