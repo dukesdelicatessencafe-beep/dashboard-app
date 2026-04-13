@@ -126,19 +126,17 @@ td{
   border-bottom:1px solid #334155;
 }
 
-/* =======================
-   CHART FIXES (IMPORTANT)
-======================= */
+/* CHART FIX */
+.chartBox{
+  width:100%;
+  height:260px;
+  position:relative;
+}
 
 canvas{
-  max-height:250px;
-}
-
-.section canvas{
   width:100% !important;
-  height:250px !important;
+  height:260px !important;
 }
-
 </style>
 </head>
 
@@ -171,7 +169,9 @@ canvas{
       <div class="tile"><div>Top</div><div id="top">-</div></div>
     </div>
 
-    <canvas id="barChart"></canvas>
+    <div class="chartBox">
+      <canvas id="barChart"></canvas>
+    </div>
   </div>
 
   <!-- TAB 2 -->
@@ -181,7 +181,9 @@ canvas{
 
   <!-- TAB 3 -->
   <div class="section">
-    <canvas id="lineChart"></canvas>
+    <div class="chartBox">
+      <canvas id="lineChart"></canvas>
+    </div>
   </div>
 
 </div>
@@ -196,7 +198,6 @@ canvas{
 
 <script>
 
-/* CONFIG */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
 /* DOM */
@@ -244,19 +245,12 @@ window.onload=()=>{
   setTimeout(()=>splash.style.display="none",500);
 };
 
-/* NAV (FIXED CHART RESIZE) */
+/* NAV */
 function goTo(i,el){
   slider.style.transform = "translateX(-"+(i*100)+"%)";
-
   document.querySelectorAll(".nav div")
     .forEach(n=>n.classList.remove("active"));
   el.classList.add("active");
-
-  // FIX: force charts to resize after tab switch
-  setTimeout(()=>{
-    if(barChart) barChart.resize();
-    if(lineChart) lineChart.resize();
-  }, 200);
 }
 
 /* LOAD */
@@ -315,19 +309,34 @@ function draw(map){
     new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
   );
 
+  /* =======================
+     STACKED BAR CHART FIX
+  ======================= */
   if(barChart) barChart.destroy();
+
   barChart = new Chart(document.getElementById("barChart"),{
     type:'bar',
     data:{
-      labels,
+      labels: dates,
       datasets: top5.map(p => ({
-        label:p,
-        data: dates.map(d => map[d][p] || 0)
+        label: p,
+        data: dates.map(d => map[d][p] || 0),
+        stack: 'stack1'
       }))
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        x:{ stacked:true },
+        y:{ stacked:true }
+      }
     }
   });
 
+  /* LINE CHART */
   if(lineChart) lineChart.destroy();
+
   lineChart = new Chart(document.getElementById("lineChart"),{
     type:'line',
     data:{
@@ -336,9 +345,14 @@ function draw(map){
         label:"Sales",
         data: dates.map(d => dailyTotals[d])
       }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false
     }
   });
 
+  /* TABLE */
   let html="<table>";
   sorted.forEach(p=>{
     html += `<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
