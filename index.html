@@ -168,12 +168,37 @@ td{
 
 <script>
 
+/* =======================
+   DOM REFS (FIX CRASH)
+======================= */
+
+const salesEl = document.getElementById("sales");
+const ordersEl = document.getElementById("orders");
+const topEl = document.getElementById("top");
+const tableArea = document.getElementById("tableArea");
+const slider = document.getElementById("slider");
+const splash = document.getElementById("splash");
+const login = document.getElementById("login");
+const app = document.getElementById("app");
+const offline = document.getElementById("offline");
+const pw = document.getElementById("pw");
+const start = document.getElementById("start");
+const end = document.getElementById("end");
+
+/* =======================
+   CONFIG
+======================= */
+
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
-let index=0,startX=0;
-let barChart,lineChart;
+let barChart, lineChart;
+let index = 0;
 
-const PASSWORDS=["1234","staff1","staff2"];
+const PASSWORDS = ["1234","staff1","staff2"];
+
+/* =======================
+   LOGIN
+======================= */
 
 function check(){
   if(PASSWORDS.includes(pw.value)){
@@ -188,6 +213,10 @@ function showApp(){
   load();
 }
 
+/* =======================
+   INIT
+======================= */
+
 window.onload=()=>{
   let today=new Date().toISOString().split("T")[0];
   start.value=today;
@@ -198,6 +227,10 @@ window.onload=()=>{
   setTimeout(()=>splash.style.display="none",500);
 };
 
+/* =======================
+   NAV
+======================= */
+
 function goTo(i,el){
   index=i;
   slider.style.transform="translateX(-"+(i*100)+"%)";
@@ -205,30 +238,38 @@ function goTo(i,el){
   el.classList.add("active");
 }
 
+/* =======================
+   LOAD DATA
+======================= */
+
 async function load(){
 
   let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
 
   try{
+
     let res = await fetch(url);
     let map = await res.json();
 
     localStorage.setItem("lastData",JSON.stringify(map));
-    draw(map);
-    showOnline(true);
 
-  }catch{
+    draw(map);
+    offline.style.display="none";
+
+  }catch(e){
+
+    console.log(e);
 
     let saved = localStorage.getItem("lastData");
     if(saved) draw(JSON.parse(saved));
 
-    showOnline(false);
+    offline.style.display="block";
   }
 }
 
-function showOnline(state){
-  offline.style.display = state ? "none" : "block";
-}
+/* =======================
+   DRAW
+======================= */
 
 function draw(map){
 
