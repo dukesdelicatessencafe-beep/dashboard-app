@@ -29,7 +29,10 @@ body{
   align-items:center;
 }
 
-#app{display:none;height:100vh}
+#app{
+  display:none;
+  height:100vh;
+}
 
 #container{
   height:calc(100vh - 55px);
@@ -75,6 +78,7 @@ body{
 }
 
 .presetRow{display:flex;gap:6px;flex-wrap:wrap}
+
 .presetBtn{
   flex:1;
   padding:6px;
@@ -91,7 +95,10 @@ body{
   padding:8px;
 }
 
-canvas{width:100%!important;height:100%!important}
+canvas{
+  width:100%!important;
+  height:100%!important;
+}
 
 #insights{
   margin-top:10px;
@@ -117,40 +124,26 @@ canvas{width:100%!important;height:100%!important}
 }
 
 .nav .active{background:#38bdf8}
-
-#pull{
-  text-align:center;
-  height:0;
-  overflow:hidden;
-  color:#38bdf8;
-}
 </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
-function login(){
-
-  const passEl = document.getElementById("pass");
-  const loginEl = document.getElementById("login");
-  const appEl = document.getElementById("app");
-
-  if(passEl.value === "1234"){
-    loginEl.style.display = "none";
-    appEl.style.display = "block";
-    load();
-  } else {
-    alert("Wrong password");
-  }
-}
+<div id="login">
+  <img src="./icon.png" style="width:90px;height:90px;margin-bottom:10px">
+  <input id="pass" type="password" placeholder="Password"
+    style="padding:10px;border-radius:8px;border:none">
+  <br><br>
+  <button onclick="login()" style="padding:10px;background:#38bdf8">
+    Login
+  </button>
+</div>
 
 <!-- APP -->
 <div id="app">
 
 <div id="container">
-
-<div id="pull">⬇ Pull to refresh</div>
 
 <div style="position:relative;">
 
@@ -214,33 +207,45 @@ const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0t
 let RAW = {};
 let barChart, salesChart;
 
-/* LOGIN */
+/* LOGIN — SAFE */
 function login(){
-  const pass=document.getElementById("pass");
-  if(pass.value==="1234"){
-    login.style.display="none";
-    app.style.display="block";
+
+  const passEl = document.getElementById("pass");
+  const loginEl = document.getElementById("login");
+  const appEl = document.getElementById("app");
+
+  if(!passEl || !loginEl || !appEl){
+    alert("UI not loaded properly");
+    return;
+  }
+
+  if(passEl.value === "1234"){
+    loginEl.style.display = "none";
+    appEl.style.display = "block";
     load();
-  } else alert("Wrong password");
+  } else {
+    alert("Wrong password");
+  }
 }
 
-/* SAFE LOAD WITH RETRY */
+/* LOAD — FULLY SAFE */
 async function load(){
+
   try{
 
     const res = await fetch(URL);
     const text = await res.text();
 
     if(!text || text.includes("<!DOCTYPE")){
-      throw new Error("API returned HTML not JSON");
+      throw new Error("API returned HTML instead of JSON");
     }
 
     let data;
     try{
       data = JSON.parse(text);
-    }catch(e){
-      console.log("Retrying parse...");
-      data = JSON.parse(text.trim());
+    } catch(e){
+      console.error("JSON parse failed:", text);
+      throw new Error("Invalid JSON");
     }
 
     RAW = data;
@@ -248,11 +253,11 @@ async function load(){
 
   } catch(e){
     console.error(e);
-    alert("Load failed — API issue (not app)");
+    alert("Load failed — API issue");
   }
 }
 
-/* DRAW SAFE */
+/* DRAW */
 function draw(data){
 
   let pt={},dt={},total=0;
@@ -283,6 +288,7 @@ function draw(data){
     top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>");
 
   if(barChart) barChart.destroy();
+
   barChart = new Chart(barChartCanvas,{
     type:"bar",
     data:{
@@ -297,6 +303,7 @@ function draw(data){
   });
 
   if(salesChart) salesChart.destroy();
+
   salesChart = new Chart(salesChartCanvas,{
     type:"bar",
     data:{
@@ -322,17 +329,10 @@ function switchTab(n,el){
   el.classList.add("active");
 }
 
-/* SWIPE */
-let startX=0;
-container.addEventListener("touchstart",e=>{
-  startX=e.touches[0].clientX;
-});
-
-container.addEventListener("touchend",e=>{
-  let diff=e.changedTouches[0].clientX-startX;
-  if(diff>80) switchTab(1,document.querySelectorAll(".nav div")[0]);
-  if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
-});
+/* SWAP RANGE (simple safe stub) */
+function setRange(type){
+  console.log("range:", type);
+}
 
 /* PWA */
 if("serviceWorker" in navigator){
