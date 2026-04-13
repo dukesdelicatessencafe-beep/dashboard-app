@@ -64,16 +64,16 @@ input,button{
   margin:5px;
 }
 
-/* WRAP (CRITICAL) */
+/* WRAP */
 .wrap{
   padding:10px;
-  overflow:hidden; /* prevents blank slide overflow */
+  overflow:hidden;
 }
 
-/* SLIDER (CRITICAL FIX) */
+/* SLIDER */
 .slider{
   display:flex;
-  width:300%; /* 3 tabs */
+  width:300%;
   transition:transform 0.35s ease;
 }
 
@@ -125,6 +125,20 @@ td{
   padding:6px;
   border-bottom:1px solid #334155;
 }
+
+/* =======================
+   CHART FIXES (IMPORTANT)
+======================= */
+
+canvas{
+  max-height:250px;
+}
+
+.section canvas{
+  width:100% !important;
+  height:250px !important;
+}
+
 </style>
 </head>
 
@@ -230,11 +244,19 @@ window.onload=()=>{
   setTimeout(()=>splash.style.display="none",500);
 };
 
-/* NAV */
+/* NAV (FIXED CHART RESIZE) */
 function goTo(i,el){
   slider.style.transform = "translateX(-"+(i*100)+"%)";
-  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
+
+  document.querySelectorAll(".nav div")
+    .forEach(n=>n.classList.remove("active"));
   el.classList.add("active");
+
+  // FIX: force charts to resize after tab switch
+  setTimeout(()=>{
+    if(barChart) barChart.resize();
+    if(lineChart) lineChart.resize();
+  }, 200);
 }
 
 /* LOAD */
