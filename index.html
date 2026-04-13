@@ -72,7 +72,7 @@ body{
   text-align:center;
 }
 
-/* DATE + PRESETS */
+/* DATE */
 .dateBar{display:flex;gap:8px;flex-wrap:wrap}
 .dateBar input{
   flex:1;
@@ -99,7 +99,7 @@ body{
   color:white;
 }
 
-/* CHARTS */
+/* CHART */
 .chartBox{
   height:300px;
   background:#0b1220;
@@ -233,25 +233,35 @@ let barChart, salesChart;
 
 /* LOGIN SAFE */
 function login(){
-  const pass=document.getElementById("pass");
-  const loginEl=document.getElementById("login");
-  const appEl=document.getElementById("app");
+  const pass = document.getElementById("pass");
+  const loginEl = document.getElementById("login");
+  const appEl = document.getElementById("app");
 
-  if(pass.value==="1234"){
-    loginEl.style.display="none";
-    appEl.style.display="block";
+  if(pass.value === "1234"){
+    loginEl.style.display = "none";
+    appEl.style.display = "block";
     load();
-  } else alert("Wrong password");
+  } else {
+    alert("Wrong password");
+  }
 }
 
-/* LOAD */
+/* LOAD SAFE (NO MORE CRASHES) */
 async function load(){
   try{
-    const res=await fetch(URL);
-    RAW=await res.json();
+    const res = await fetch(URL);
+    const text = await res.text();
+
+    if(!text || text.includes("<!DOCTYPE")){
+      throw new Error("API returned HTML not JSON");
+    }
+
+    RAW = JSON.parse(text);
     draw(RAW);
-  }catch(e){
-    alert("Load failed");
+
+  } catch(e){
+    console.error(e);
+    alert("Load failed — check API");
   }
 }
 
@@ -287,16 +297,19 @@ function applyFilter(){
   draw(out);
 }
 
-/* DRAW */
+/* DRAW SAFE */
 function draw(data){
 
   let pt={},dt={},total=0;
-  let dates=Object.keys(data).sort();
+  let dates=Object.keys(data||{}).sort();
 
   for(let d of dates){
+
+    let day=data[d]||{};
     dt[d]=0;
-    for(let p in data[d]){
-      let v=+data[d][p]||0;
+
+    for(let p in day){
+      let v=Number(day[p]||0);
       pt[p]=(pt[p]||0)+v;
       dt[d]+=v;
       total+=v;
@@ -335,13 +348,13 @@ function draw(data){
       labels:dates,
       datasets:[{
         label:"Sales (£)",
-        data:dates.map(d=>dt[d]),
+        data:dates.map(d=>dt[d]||0),
         backgroundColor:"#38bdf8"
       }]
     }
   });
 
-  table.innerHTML=
+  table.innerHTML =
     sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
@@ -368,7 +381,7 @@ container.addEventListener("touchend",e=>{
   if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
 });
 
-/* PULL REFRESH */
+/* PULL */
 let pulling=false;
 
 container.addEventListener("touchmove",e=>{
@@ -384,7 +397,7 @@ container.addEventListener("touchend",()=>{
   pulling=false;
 });
 
-/* PWA SERVICE WORKER */
+/* PWA */
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js");
 }
