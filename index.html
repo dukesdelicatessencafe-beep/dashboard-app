@@ -3,272 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b1220">
+
+<!-- PWA -->
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<title>Sales Dashboard</title>
 
 <style>
 body{
   margin:0;
-  font-family:system-ui, Arial;
-  background:#0b1220;
-  color:#e5e7eb;
-}
-
-.wrap{
-  padding:16px;
-  max-width:900px;
-  margin:auto;
-}
-
-h2{
-  margin:10px 0;
-}
-
-/* INPUTS */
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:6px;
-  border-radius:10px;
-  border:none;
-}
-
-input{
-  background:#111827;
+  font-family:Arial;
+  background:#0f172a;
   color:white;
 }
 
-button{
-  background:#2563eb;
-  color:white;
-  font-weight:600;
-}
-
-/* CARDS */
-.tiles{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:14px;
-}
-
-.tile{
-  background:#111827;
-  padding:14px;
-  border-radius:14px;
-  text-align:center;
-}
-
-.tile div:first-child{
-  font-size:12px;
-  opacity:0.7;
-}
-
-.tile div:last-child{
-  font-size:18px;
-  font-weight:600;
-}
-
-/* CHART */
-canvas{
-  margin-top:16px;
-  background:#111827;
-  border-radius:14px;
-  padding:10px;
-}
-
-/* LIST */
-#list{
-  margin-top:14px;
-  background:#111827;
-  border-radius:14px;
-  padding:12px;
-}
-
-#list div{
-  padding:6px 0;
-  border-bottom:1px solid rgba(255,255,255,0.05);
-}
-
-/* LOADER */
-#loader{
+#splash{
   position:fixed;
   inset:0;
-  background:#0b1220;
-  display:none;
+  display:flex;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
-  z-index:9999;
+  background:#0f172a;
+  z-index:10;
 }
 
-.spinner{
-  width:50px;
-  height:50px;
-  border:4px solid #1f2937;
-  border-top:4px solid #3b82f6;
+.loader{
+  border:4px solid #1e293b;
+  border-top:4px solid #38bdf8;
   border-radius:50%;
+  width:40px;
+  height:40px;
   animation:spin 1s linear infinite;
 }
 
 @keyframes spin{
-  0%{transform:rotate(0deg);}
-  100%{transform:rotate(360deg);}
-}
-</style>
-</head>
-
-<body>
-
-<!-- LOADER -->
-<div id="loader">
-  <div class="spinner"></div>
-  <div style="margin-top:10px;opacity:0.7">Loading...</div>
-</div>
-
-<div class="wrap">
-
-<h2>📊 Sales Dashboard</h2>
-
-<input type="date" id="start">
-<input type="date" id="end">
-<button onclick="loadData()">Load Data</button>
-
-<div class="tiles">
-  <div class="tile">
-    <div>Sales</div>
-    <div id="salesEl">£0</div>
-  </div>
-
-  <div class="tile">
-    <div>Orders</div>
-    <div id="ordersEl">0</div>
-  </div>
-
-  <div class="tile">
-    <div>Top</div>
-    <div id="topEl">-</div>
-  </div>
-</div>
-
-<canvas id="chart"></canvas>
-
-<div id="list"></div>
-
-</div>
-
-<script>
-
-let chart;
-
-/* LOAD DATA (JSONP - NO CORS ISSUES) */
-async function loadData(){
-
-  document.getElementById("loader").style.display="flex";
-
-  try{
-
-    let url =
-      "https://script.google.com/macros/s/AKfycbxOIPkcA0sy4rFRVutaNQtdjkx2YkYmf7xIqlKUpdBo4Vv6Xy5KtvBpyB9FQtmIzsEALw/exec"
-      + "?start=" + start.value
-      + "&end=" + end.value;
-
-    let res = await fetch(url, {
-      method: "GET",
-      cache: "no-cache"
-    });
-
-    let data = await res.json();
-
-    draw(data);
-
-  }catch(err){
-
-    console.log("ERROR:", err);
-    alert("Failed to load data");
-
-  }finally{
-
-    document.getElementById("loader").style.display="none";
-  }
+  0%{transform:rotate(0)}
+  100%{transform:rotate(360deg)}
 }
 
-/* CALLBACK FROM APPS SCRIPT */
-function handleData(map){
-
-  draw(map);
-
-  document.getElementById("loader").style.display="none";
+#offline{
+  display:none;
+  text-align:center;
+  padding:6px;
+  background:#ef4444;
 }
 
-/* DRAW DASHBOARD */
-function draw(map){
-
-  if(!map || Object.keys(map).length===0){
-    salesEl.innerText="£0";
-    ordersEl.innerText="0";
-    topEl.innerText="-";
-    list.innerHTML="<div>No data</div>";
-    return;
-  }
-
-  let totals={};
-  let dates=Object.keys(map).sort();
-
-  let sales=0;
-  let orders=0;
-
-  for(let d in map){
-    for(let p in map[d]){
-      let v=map[d][p];
-
-      totals[p]=(totals[p]||0)+v;
-      sales+=v;
-      orders++;
-    }
-  }
-
-  let sorted=Object.keys(totals).sort((a,b)=>totals[b]-totals[a]);
-  let top5=sorted.slice(0,5);
-
-  salesEl.innerText="£"+sales.toFixed(2);
-  ordersEl.innerText=orders;
-  topEl.innerText=top5[0]||"-";
-
-  let labels=dates.map(d=>
-    new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})
-  );
-
-  if(chart) chart.destroy();
-
-  chart=new Chart(document.getElementById("chart"),{
-    type:"bar",
-    data:{
-      labels,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>map[d][p]||0)
-      }))
-    }
-  });
-
-  let html="";
-  for(let p in totals){
-    html+=`<div>${p} — £${totals[p].toFixed(2)}</div>`;
-  }
-
-  list.innerHTML=html;
-}
-
-/* DEFAULT DATE */
-window.onload=()=>{
-  let today=new Date().toISOString().split("T")[0];
-  start.value=today;
-  end.value=today;
-};
-
-</script>
-
-</body>
-</html>
+#login{
+  text-align
