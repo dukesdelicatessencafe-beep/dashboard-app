@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f172a">
 
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png">
+<link rel="icon" href="./icon.png">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -20,13 +20,9 @@ body{
   font-family:Arial;
   background:#0f172a;
   color:white;
-  overflow-x:hidden;
 }
 
-/* ======================
-   LOGIN SCREEN
-====================== */
-
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -34,46 +30,9 @@ body{
   justify-content:center;
   align-items:center;
   padding:20px;
-  background:#0f172a;
 }
 
-#login img{
-  width:90px;
-  height:90px;
-  border-radius:18px;
-  margin-bottom:15px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.5);
-  animation:pop 0.6s ease-out;
-}
-
-@keyframes pop{
-  from{transform:scale(0.6);opacity:0}
-  to{transform:scale(1);opacity:1}
-}
-
-#login input{
-  width:100%;
-  max-width:280px;
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  margin-bottom:10px;
-}
-
-#login button{
-  width:100%;
-  max-width:280px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#38bdf8;
-  font-weight:bold;
-}
-
-/* ======================
-   APP WRAP
-====================== */
-
+/* APP */
 .wrap{
   padding:12px;
   padding-bottom:70px;
@@ -126,7 +85,6 @@ body{
   background:#1e293b;
   border-radius:10px;
   font-size:13px;
-  line-height:1.4;
 }
 
 /* TABS */
@@ -137,7 +95,6 @@ body{
 .nav{
   position:fixed;
   bottom:0;
-  left:0;
   width:100%;
   display:flex;
   background:#1e293b;
@@ -149,7 +106,6 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:20px;
 }
 
 .nav .active{
@@ -169,7 +125,6 @@ body{
   padding:10px;
   border-radius:10px;
   text-align:center;
-  font-size:14px;
 }
 
 /* CHART */
@@ -186,25 +141,11 @@ canvas{
 /* TABLE */
 table{
   width:100%;
-  border-collapse:collapse;
 }
 
 td{
   padding:8px;
   border-bottom:1px solid #334155;
-  font-size:14px;
-}
-
-/* PULL */
-#pull{
-  position:fixed;
-  top:-60px;
-  left:0;
-  width:100%;
-  text-align:center;
-  color:#38bdf8;
-  font-size:14px;
-  z-index:999;
 }
 </style>
 
@@ -212,30 +153,39 @@ td{
 
 <body>
 
-<!-- ======================
-     LOGIN SCREEN
-====================== -->
+<!-- ================= LOGIN ================= -->
 
 <div id="login">
-  <img src="icon.png">
+
+  <!-- FIXED ICON -->
+  <img src="./icon.png?v=2"
+       style="
+         width:100px;
+         height:100px;
+         border-radius:20px;
+         margin-bottom:15px;
+         background:#1e293b;
+         object-fit:cover;
+       ">
+
   <h2>Sales Dashboard</h2>
 
-  <input id="pass" type="password" placeholder="Password">
+  <input id="pass" type="password" placeholder="Password"
+    style="padding:10px;border-radius:8px;border:none;margin-bottom:10px;width:200px;">
 
-  <button onclick="login()">Login</button>
+  <button onclick="login()"
+    style="padding:10px;border:none;border-radius:8px;background:#38bdf8;">
+    Login
+  </button>
+
 </div>
 
-<!-- ======================
-     APP
-====================== -->
+<!-- ================= APP ================= -->
 
 <div id="app" style="display:none;">
 
-<div id="pull">↓ Pull to refresh</div>
-
 <div class="wrap">
 
-<!-- TAB 1 -->
 <div id="tab1" class="tab active">
 
   <div class="dateBar">
@@ -264,12 +214,10 @@ td{
 
 </div>
 
-<!-- TAB 2 -->
 <div id="tab2" class="tab">
   <table id="table"></table>
 </div>
 
-<!-- TAB 3 -->
 <div id="tab3" class="tab">
   <div class="chartBox">
     <canvas id="lineChart"></canvas>
@@ -288,82 +236,51 @@ td{
 
 <script>
 
-/* ======================
-   LOGIN
-====================== */
-
+/* LOGIN */
 function login(){
-  let pass=document.getElementById("pass").value;
-
-  if(pass==="1234"){
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
+  if(document.getElementById("pass").value==="1234"){
+    loginEl.style.display="none";
+    app.style.display="block";
     load();
-  }else{
-    alert("Wrong password");
-  }
+  }else alert("Wrong password");
 }
 
-/* ======================
-   DATA
-====================== */
+const loginEl=document.getElementById("login");
+const app=document.getElementById("app");
 
+/* DATA */
 const URL="https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
-let RAW_DATA={},FILTERED_DATA={},barChart,lineChart;
+let RAW={},barChart,lineChart;
 
-/* ======================
-   LOAD
-====================== */
-
+/* LOAD */
 async function load(){
   let res=await fetch(URL);
-  let data=await res.json();
-
-  RAW_DATA=data;
-  FILTERED_DATA=data;
-
-  draw(data);
+  RAW=await res.json();
+  draw(RAW);
 }
 
-/* ======================
-   FILTER
-====================== */
-
+/* FILTER */
 function applyFilter(){
-
-  let s=document.getElementById("startDate").value;
-  let e=document.getElementById("endDate").value;
-
-  if(!s||!e){draw(RAW_DATA);return;}
+  let s=new Date(startDate.value).getTime();
+  let e=new Date(endDate.value).getTime();
+  if(!s||!e)return draw(RAW);
 
   let out={};
-  let a=new Date(s).getTime();
-  let b=new Date(e).getTime();
-
-  for(let d in RAW_DATA){
+  for(let d in RAW){
     let t=new Date(d).getTime();
-    if(t>=a&&t<=b)out[d]=RAW_DATA[d];
+    if(t>=s&&t<=e)out[d]=RAW[d];
   }
-
   draw(out);
 }
 
-/* ======================
-   PRESETS
-====================== */
-
+/* PRESETS */
 function setRange(t){
-
-  let e=new Date();
-  let s=new Date();
-
+  let e=new Date(),s=new Date();
   if(t==="7")s.setDate(e.getDate()-7);
   if(t==="30")s.setDate(e.getDate()-30);
-
-  document.getElementById("startDate").value=format(s);
-  document.getElementById("endDate").value=format(e);
-
+  startDate.value=format(s);
+  endDate.value=format(e);
   applyFilter();
 }
 
@@ -371,39 +288,33 @@ function format(d){
   return d.toISOString().split("T")[0];
 }
 
-/* ======================
-   DRAW
-====================== */
-
+/* DRAW */
 function draw(data){
 
-  let productTotals={},dailyTotals={},total=0;
+  let pt={},dt={},total=0;
   let dates=Object.keys(data).sort();
 
   for(let d of dates){
-    dailyTotals[d]=0;
-
+    dt[d]=0;
     for(let p in data[d]){
-      let v=Number(data[d][p])||0;
-      productTotals[p]=(productTotals[p]||0)+v;
-      dailyTotals[d]+=v;
+      let v=+data[d][p]||0;
+      pt[p]=(pt[p]||0)+v;
+      dt[d]+=v;
       total+=v;
     }
   }
 
-  let sorted=Object.keys(productTotals)
-    .sort((a,b)=>productTotals[b]-productTotals[a]);
-
+  let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
   let top5=sorted.slice(0,5);
 
-  document.getElementById("sales").innerText="£"+total.toFixed(2);
-  document.getElementById("products").innerText=sorted.length;
-  document.getElementById("top").innerText=top5[0]||"-";
+  sales.innerText="£"+total.toFixed(2);
+  products.innerText=sorted.length;
+  top.innerText=top5[0]||"-";
 
-  buildInsights(productTotals,dailyTotals,dates);
+  buildInsights(pt,dt,dates);
 
   if(barChart)barChart.destroy();
-  barChart=new Chart(document.getElementById("barChart"),{
+  barChart=new Chart(barChartCanvas,{
     type:"bar",
     data:{
       labels:dates,
@@ -416,108 +327,55 @@ function draw(data){
     options:{
       responsive:true,
       maintainAspectRatio:false,
-      scales:{
-        x:{stacked:true},
-        y:{stacked:true}
-      },
+      scales:{x:{stacked:true},y:{stacked:true}},
       plugins:{
         tooltip:{
-          callbacks:{
-            label:c=>"£"+c.raw.toFixed(2)
-          }
+          callbacks:{label:c=>"£"+c.raw.toFixed(2)}
         }
       }
     }
   });
 
   if(lineChart)lineChart.destroy();
-  lineChart=new Chart(document.getElementById("lineChart"),{
+  lineChart=new Chart(lineChartCanvas,{
     type:"line",
     data:{
       labels:dates,
-      datasets:[{
-        label:"Sales",
-        data:dates.map(d=>dailyTotals[d])
-      }]
-    },
-    options:{
-      plugins:{
-        tooltip:{
-          callbacks:{
-            label:c=>"£"+c.raw.toFixed(2)
-          }
-        }
-      }
+      datasets:[{label:"Sales",data:dates.map(d=>dt[d])}]
     }
   });
 
-  let html="";
-  for(let p of sorted){
-    html+=`<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
-  }
-  document.getElementById("table").innerHTML=html;
+  table.innerHTML=sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
-/* ======================
-   INSIGHTS
-====================== */
+/* INSIGHTS */
+function buildInsights(pt,dt,dates){
 
-function buildInsights(productTotals,dailyTotals,dates){
-
-  let html="";
-
-  let sorted=Object.keys(productTotals)
-    .sort((a,b)=>productTotals[b]-productTotals[a]);
-
+  let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
   let top3=sorted.slice(0,3);
 
-  html+="🏆 <b>Best Sellers</b><br>";
-  top3.forEach(p=>{
-    html+=`• ${p} (£${productTotals[p].toFixed(2)})<br>`;
-  });
+  let best=dates.reduce((a,b)=>dt[a]>dt[b]?a:b,dates[0]);
+  let avg=Object.values(dt).reduce((a,b)=>a+b,0)/dates.length;
 
-  let best=dates.reduce((a,b)=>dailyTotals[a]>dailyTotals[b]?a:b,dates[0]);
+  let anomalies=dates.filter(d=>dt[d]>avg*1.5);
 
-  html+="<br>📈 <b>Best Day</b><br>";
-  html+=`• ${best} (£${dailyTotals[best].toFixed(2)})<br><br>`;
-
-  let avg=Object.values(dailyTotals).reduce((a,b)=>a+b,0)/dates.length;
-
-  let anomalies=dates.filter(d=>dailyTotals[d]>avg*1.5);
-
-  html+="⚠️ <b>Anomalies</b><br>";
-
-  html+=anomalies.length?
-    anomalies.map(d=>`• ${d} (£${dailyTotals[d].toFixed(2)})<br>`).join("")
-    :"• None detected<br>";
-
-  document.getElementById("insights").innerHTML=html;
+  insights.innerHTML=
+    "🏆 <b>Best Sellers</b><br>"+
+    top3.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>")+
+    "<br><br>📈 <b>Best Day</b><br>"+
+    `• ${best} (£${dt[best].toFixed(2)})<br><br>`+
+    "⚠️ <b>Anomalies</b><br>"+
+    (anomalies.length
+      ? anomalies.map(d=>`• ${d} (£${dt[d].toFixed(2)})`).join("<br>")
+      : "• None");
 }
 
-/* ======================
-   TABS
-====================== */
-
+/* TABS */
 function switchTab(n,el){
-
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.getElementById("tab"+n).classList.add("active");
-
   document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
   el.classList.add("active");
-
-  setTimeout(()=>{
-    if(barChart)barChart.resize();
-    if(lineChart)lineChart.resize();
-  },100);
-}
-
-/* ======================
-   INIT
-====================== */
-
-if("serviceWorker"in navigator){
-  navigator.serviceWorker.register("sw.js");
 }
 
 </script>
