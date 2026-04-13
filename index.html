@@ -18,6 +18,7 @@ body{
   font-family:Arial;
   background:#0f172a;
   color:white;
+  overflow-x:hidden;
 }
 
 /* SPLASH */
@@ -43,6 +44,18 @@ body{
 @keyframes spin{
   0%{transform:rotate(0)}
   100%{transform:rotate(360deg)}
+}
+
+/* PULL TO REFRESH */
+#pull{
+  position:fixed;
+  top:-60px;
+  left:0;
+  width:100%;
+  text-align:center;
+  font-size:14px;
+  color:#38bdf8;
+  transition:top 0.2s;
 }
 
 /* OFFLINE */
@@ -138,199 +151,4 @@ canvas{
 <body>
 
 <div id="splash"><div class="loader"></div></div>
-<div id="offline">Offline mode</div>
-
-<!-- LOGIN -->
-<div id="login">
-  <h2>Login</h2>
-  <input type="password" id="pw">
-  <button onclick="check()">Login</button>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;" class="wrap">
-
-<input type="date" id="start">
-<input type="date" id="end">
-<button onclick="load()">Load</button>
-
-<!-- TAB 1 -->
-<div id="tab1" class="tab active">
-  <div class="tiles">
-    <div class="tile"><div>Sales</div><div id="sales">£0</div></div>
-    <div class="tile"><div>Products</div><div id="orders">0</div></div>
-    <div class="tile"><div>Top</div><div id="top">-</div></div>
-  </div>
-
-  <div class="chartBox">
-    <canvas id="barChart"></canvas>
-  </div>
-</div>
-
-<!-- TAB 2 -->
-<div id="tab2" class="tab">
-  <div id="tableArea"></div>
-</div>
-
-<!-- TAB 3 -->
-<div id="tab3" class="tab">
-  <div class="chartBox">
-    <canvas id="lineChart"></canvas>
-  </div>
-</div>
-
-</div>
-
-<!-- NAV -->
-<div class="nav">
-  <div onclick="switchTab(1,this)" class="active">📊</div>
-  <div onclick="switchTab(2,this)">📦</div>
-  <div onclick="switchTab(3,this)">📈</div>
-</div>
-
-<script>
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
-
-const salesEl = document.getElementById("sales");
-const ordersEl = document.getElementById("orders");
-const topEl = document.getElementById("top");
-const tableArea = document.getElementById("tableArea");
-
-const splash = document.getElementById("splash");
-const login = document.getElementById("login");
-const app = document.getElementById("app");
-const offline = document.getElementById("offline");
-
-const pw = document.getElementById("pw");
-const start = document.getElementById("start");
-const end = document.getElementById("end");
-
-let barChart, lineChart;
-
-const PASSWORDS = ["1234","staff1","staff2"];
-
-/* LOGIN */
-function check(){
-  if(PASSWORDS.includes(pw.value)){
-    localStorage.setItem("login","1");
-    showApp();
-  } else alert("Wrong password");
-}
-
-function showApp(){
-  login.style.display="none";
-  app.style.display="block";
-  load();
-}
-
-/* INIT */
-window.onload=()=>{
-  let today=new Date().toISOString().split("T")[0];
-  start.value=today;
-  end.value=today;
-
-  if(localStorage.getItem("login")) showApp();
-
-  setTimeout(()=>splash.style.display="none",500);
-};
-
-/* NATIVE TAB SWITCH */
-function switchTab(n,el){
-
-  document.querySelectorAll(".tab")
-    .forEach(t=>t.classList.remove("active"));
-  document.getElementById("tab"+n).classList.add("active");
-
-  document.querySelectorAll(".nav div")
-    .forEach(b=>b.classList.remove("active"));
-  el.classList.add("active");
-
-  setTimeout(()=>{
-    if(barChart) barChart.resize();
-    if(lineChart) lineChart.resize();
-  },100);
-}
-
-/* LOAD */
-async function load(){
-  let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
-
-  try{
-    let res = await fetch(url);
-    let map = await res.json();
-    localStorage.setItem("lastData",JSON.stringify(map));
-    draw(map);
-    offline.style.display="none";
-  }catch{
-    let saved = localStorage.getItem("lastData");
-    if(saved) draw(JSON.parse(saved));
-    offline.style.display="block";
-  }
-}
-
-/* DRAW */
-function draw(map){
-
-  let productTotals = {};
-  let dailyTotals = {};
-  let dates = Object.keys(map).sort();
-  let sales = 0;
-
-  for(let d in map){
-    dailyTotals[d]=0;
-    for(let p in map[d]){
-      let v = Number(map[d][p]) || 0;
-      productTotals[p]=(productTotals[p]||0)+v;
-      dailyTotals[d]+=v;
-      sales+=v;
-    }
-  }
-
-  let sorted = Object.keys(productTotals)
-    .sort((a,b)=>productTotals[b]-productTotals[a]);
-
-  let top5 = sorted.slice(0,5);
-
-  salesEl.innerText="£"+sales.toFixed(2);
-  ordersEl.innerText=sorted.length;
-  topEl.innerText=top5[0]||"-";
-
-  let labels = dates.map(d =>
-    new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-  );
-
-  if(barChart) barChart.destroy();
-  barChart = new Chart(document.getElementById("barChart"),{
-    type:'bar',
-    data:{
-      labels:dates,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>map[d][p]||0),
-        stack:'s'
-      }))
-    },
-    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}
-  });
-
-  if(lineChart) lineChart.destroy();
-  lineChart = new Chart(document.getElementById("lineChart"),{
-    type:'line',
-    data:{labels,datasets:[{label:"Sales",data:dates.map(d=>dailyTotals[d])}]},
-    options:{responsive:true,maintainAspectRatio:false}
-  });
-
-  let html="<table>";
-  sorted.forEach(p=>{
-    html+=`<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
-  });
-  html+="</table>";
-
-  tableArea.innerHTML=html;
-}
-
-</script>
-
-</body>
-</html>
+<div id="pull">↓ Pull to refresh
