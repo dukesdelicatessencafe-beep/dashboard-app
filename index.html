@@ -8,7 +8,7 @@
 <link rel="icon" href="./icon.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<title>Hardened Dashboard</title>
+<title>Dashboard</title>
 
 <style>
 body{
@@ -19,6 +19,7 @@ body{
   overflow:hidden;
 }
 
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -29,19 +30,39 @@ body{
 
 #app{display:none;height:100vh}
 
+/* CONTAINER */
 #container{
   height:calc(100vh - 55px);
   overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   padding:12px;
+  max-width:1200px;
+  margin:auto;
 }
 
-.tab{display:none}
-.tab.active{display:block}
+/* ===== ANIMATED TABS ===== */
+.tab{
+  opacity:0;
+  transform:translateY(10px) scale(0.98);
+  pointer-events:none;
+  transition:all 220ms ease;
+  position:absolute;
+  width:100%;
+  left:0;
+  top:0;
+}
 
+.tab.active{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+  position:relative;
+}
+
+/* TILES */
 .tiles{
   display:flex;
   gap:8px;
-  margin-bottom:10px;
 }
 
 .tile{
@@ -52,10 +73,11 @@ body{
   text-align:center;
 }
 
+/* DATE + PRESETS */
 .dateBar{
   display:flex;
   gap:8px;
-  margin-bottom:10px;
+  flex-wrap:wrap;
 }
 
 .dateBar input{
@@ -63,23 +85,51 @@ body{
   padding:8px;
   border-radius:8px;
   border:none;
+  min-width:120px;
 }
 
-.chartBox{height:260px}
+.presetRow{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+
+.presetBtn{
+  flex:1;
+  min-width:80px;
+  padding:6px;
+  border:none;
+  border-radius:8px;
+  background:#1e293b;
+  color:white;
+}
+
+/* CHARTS */
+.chartBox{
+  height:300px;
+  background:#0b1220;
+  border-radius:10px;
+  padding:8px;
+}
 
 canvas{
   width:100%!important;
-  height:260px!important;
+  height:100%!important;
 }
 
+/* INSIGHTS */
 #insights{
-  margin:10px 0;
   padding:10px;
   background:#1e293b;
   border-radius:10px;
 }
 
+/* NAV */
 .nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
   height:55px;
   display:flex;
   background:#1e293b;
@@ -88,8 +138,8 @@ canvas{
 .nav div{
   flex:1;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
 }
 
 .nav .active{background:#38bdf8}
@@ -104,222 +154,197 @@ canvas{
   <input id="pass" type="password" placeholder="Password"
     style="padding:10px;border-radius:8px;border:none">
   <br><br>
-  <button id="loginBtn" style="padding:10px;background:#38bdf8">
+  <button onclick="login()" style="padding:10px;background:#38bdf8">
     Login
   </button>
 </div>
 
 <!-- APP -->
 <div id="app">
-  <div id="container">
 
-    <div class="tab active" id="tab1">
+<div id="container">
 
-      <div class="dateBar">
-        <input id="startDate" type="date">
-        <input id="endDate" type="date">
-      </div>
+<div style="position:relative;">
 
-      <div class="tiles">
-        <div class="tile">Sales<br><b id="sales">£0</b></div>
-        <div class="tile">Products<br><b id="products">0</b></div>
-        <div class="tile">Top<br><b id="top">-</b></div>
-      </div>
+<!-- TAB 1 -->
+<div id="tab1" class="tab active">
 
-      <div id="insights"></div>
+<div class="dateBar">
+  <input id="startDate" type="date">
+  <input id="endDate" type="date">
+</div>
 
-      <div class="chartBox">
-        <canvas id="barChart"></canvas>
-      </div>
+<div class="presetRow">
+  <button class="presetBtn" onclick="setRange('today')">Today</button>
+  <button class="presetBtn" onclick="setRange('7')">7 Days</button>
+  <button class="presetBtn" onclick="setRange('30')">Month</button>
+</div>
 
-    </div>
+<div class="tiles">
+  <div class="tile">Sales<br><b id="sales">£0</b></div>
+  <div class="tile">Products<br><b id="products">0</b></div>
+  <div class="tile">Top<br><b id="top">-</b></div>
+</div>
 
-    <div class="tab" id="tab2">
-      <table id="table" width="100%"></table>
-    </div>
+<div id="insights"></div>
 
-    <div class="tab" id="tab3">
-      <div class="chartBox">
-        <canvas id="salesChart"></canvas>
-      </div>
-    </div>
+<div class="chartBox">
+<canvas id="barChart"></canvas>
+</div>
 
-  </div>
+</div>
 
-  <div class="nav">
-    <div data-tab="1">📊</div>
-    <div data-tab="2">📦</div>
-    <div data-tab="3">📈</div>
-  </div>
+<!-- TAB 2 -->
+<div id="tab2" class="tab">
+<table id="table" width="100%"></table>
+</div>
+
+<!-- TAB 3 -->
+<div id="tab3" class="tab">
+<div class="chartBox">
+<canvas id="salesChart"></canvas>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav">
+<div onclick="switchTab(1,this)" class="active">📊</div>
+<div onclick="switchTab(2,this)">📦</div>
+<div onclick="switchTab(3,this)">📈</div>
+</div>
+
 </div>
 
 <script>
 
 const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
-/* SAFE DOM CACHE (NO GLOBAL RELIANCE) */
-const $ = (id) => document.getElementById(id);
-
-const UI = {
-  login: $("login"),
-  app: $("app"),
-  pass: $("pass"),
-  sales: $("sales"),
-  products: $("products"),
-  top: $("top"),
-  insights: $("insights"),
-  table: $("table"),
-  barCanvas: $("barChart"),
-  salesCanvas: $("salesChart"),
-  container: $("container"),
-  loginBtn: $("loginBtn")
-};
-
 let RAW = {};
-let barChart = null;
-let salesChart = null;
+let barChart, salesChart;
 
-/* SAFE LOGIN */
-UI.loginBtn.onclick = () => {
-  if (UI.pass.value.trim() === "1234") {
-    UI.login.style.display = "none";
-    UI.app.style.display = "block";
+/* LOGIN */
+function login(){
+  const p=document.getElementById("pass").value;
+  if(p==="1234"){
+    login.style.display="none";
+    app.style.display="block";
     load();
-  } else {
-    alert("Wrong password");
-  }
-};
-
-/* SAFE LOAD */
-async function load(){
-  try {
-    const res = await fetch(URL);
-
-    if(!res.ok){
-      throw new Error("Network error: " + res.status);
-    }
-
-    const text = await res.text();
-
-    if(!text.trim().startsWith("{")){
-      throw new Error("Invalid JSON response");
-    }
-
-    RAW = JSON.parse(text);
-    draw(RAW);
-
-  } catch(err){
-    console.error("LOAD FAILED:", err);
-    alert("Data load failed");
-  }
+  } else alert("Wrong password");
 }
 
-/* SAFE DRAW PIPELINE */
+/* LOAD */
+async function load(){
+  const res=await fetch(URL);
+  RAW=await res.json();
+  draw(RAW);
+}
+
+/* RANGE */
+function setRange(type){
+
+  let e=new Date();
+  let s=new Date();
+
+  if(type==="today") s.setHours(0,0,0,0);
+  if(type==="7") s.setDate(e.getDate()-7);
+  if(type==="30") s.setDate(e.getDate()-30);
+
+  startDate.value=s.toISOString().split("T")[0];
+  endDate.value=e.toISOString().split("T")[0];
+
+  applyFilter();
+}
+
+/* FILTER */
+function applyFilter(){
+
+  let s=new Date(startDate.value).getTime();
+  let e=new Date(endDate.value).getTime();
+
+  let out={};
+
+  for(let d in RAW){
+    let t=new Date(d).getTime();
+    if(t>=s&&t<=e) out[d]=RAW[d];
+  }
+
+  draw(out);
+}
+
+/* DRAW */
 function draw(data){
 
-  if(!data || typeof data !== "object") return;
+  let pt={},dt={},total=0;
+  let dates=Object.keys(data).sort();
 
-  const pt = {};
-  const dt = {};
-  let total = 0;
-
-  const dates = Object.keys(data).sort();
-
-  for(const d of dates){
-    dt[d] = 0;
-
-    for(const p in data[d]){
-      const v = Number(data[d][p]) || 0;
-      pt[p] = (pt[p] || 0) + v;
-      dt[d] += v;
-      total += v;
+  for(let d of dates){
+    dt[d]=0;
+    for(let p in data[d]){
+      let v=+data[d][p]||0;
+      pt[p]=(pt[p]||0)+v;
+      dt[d]+=v;
+      total+=v;
     }
   }
 
-  const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  const top5 = sorted.slice(0,5);
+  let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+  let top5=sorted.slice(0,5);
 
-  /* UI SAFE UPDATES */
-  UI.sales.innerText = "£" + total.toFixed(2);
-  UI.products.innerText = sorted.length;
-  UI.top.innerText = top5[0] || "-";
+  sales.innerText="£"+total.toFixed(2);
+  products.innerText=sorted.length;
+  top.innerText=top5[0]||"-";
 
-  UI.insights.innerHTML =
-    "🏆 Top Products<br>" +
-    top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
+  insights.innerHTML=
+    "🏆 Top Products<br>"+
+    top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>");
 
-  /* SAFE TABLE */
-  UI.table.innerHTML =
-    sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+  if(barChart) barChart.destroy();
+  barChart=new Chart(barChartCanvas,{
+    type:"bar",
+    data:{
+      labels:dates,
+      datasets:top5.map(p=>({
+        label:p,
+        data:dates.map(d=>data[d]?.[p]||0),
+        stack:"s"
+      }))
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}
+  });
 
-  /* SAFE BAR CHART */
-  try {
-    if(barChart) barChart.destroy();
+  if(salesChart) salesChart.destroy();
+  salesChart=new Chart(salesChartCanvas,{
+    type:"bar",
+    data:{
+      labels:dates,
+      datasets:[{
+        label:"Sales (£)",
+        data:dates.map(d=>dt[d]),
+        backgroundColor:"#38bdf8"
+      }]
+    }
+  });
 
-    barChart = new Chart(UI.barCanvas, {
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets: top5.map(p => ({
-          label:p,
-          data:dates.map(d => data[d]?.[p] || 0),
-          stack:"s"
-        }))
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{x:{stacked:true},y:{stacked:true}}
-      }
-    });
-
-  } catch(e){
-    console.error("BAR CHART ERROR", e);
-  }
-
-  /* SAFE SALES CHART */
-  try {
-    if(salesChart) salesChart.destroy();
-
-    salesChart = new Chart(UI.salesCanvas, {
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:[{
-          label:"Sales (£)",
-          data:dates.map(d => dt[d]),
-          backgroundColor:"#38bdf8"
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          tooltip:{
-            callbacks:{
-              label:c=>"£"+c.raw.toFixed(2)
-            }
-          }
-        }
-      }
-    });
-
-  } catch(e){
-    console.error("SALES CHART ERROR", e);
-  }
+  table.innerHTML=
+    sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
-/* SAFE TAB SWITCH */
-UI.container.addEventListener("click",(e)=>{
-  const tab = e.target.dataset.tab;
-  if(!tab) return;
+/* TAB SWITCH WITH ANIMATION */
+function switchTab(n,el){
 
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  $("tab"+tab).classList.add("active");
+
+  const newTab=document.getElementById("tab"+n);
+  void newTab.offsetWidth; // restart animation
+  newTab.classList.add("active");
 
   document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-  e.target.classList.add("active");
-});
+  el.classList.add("active");
+}
 
 </script>
 
