@@ -22,7 +22,6 @@ body{
   color:white;
 }
 
-/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -31,7 +30,6 @@ body{
   align-items:center;
 }
 
-/* APP */
 #app{
   display:none;
 }
@@ -41,7 +39,6 @@ body{
   padding-bottom:70px;
 }
 
-/* INPUTS */
 .dateBar{
   display:flex;
   gap:8px;
@@ -62,7 +59,6 @@ body{
   background:#38bdf8;
 }
 
-/* PRESETS */
 .presetRow{
   display:flex;
   gap:6px;
@@ -79,7 +75,6 @@ body{
   font-size:12px;
 }
 
-/* TILES */
 .tiles{
   display:flex;
   gap:8px;
@@ -94,7 +89,6 @@ body{
   text-align:center;
 }
 
-/* CHART */
 .chartBox{
   width:100%;
   height:260px;
@@ -105,7 +99,6 @@ canvas{
   height:260px !important;
 }
 
-/* TABLE */
 table{
   width:100%;
 }
@@ -115,7 +108,6 @@ td{
   border-bottom:1px solid #334155;
 }
 
-/* NAV */
 .nav{
   position:fixed;
   bottom:0;
@@ -139,7 +131,6 @@ td{
 .tab{display:none}
 .tab.active{display:block}
 
-/* INSIGHTS */
 #insights{
   margin:10px 0;
   padding:10px;
@@ -154,7 +145,7 @@ td{
 <!-- LOGIN -->
 <div id="login">
 
-<img src="./icon.png?v=2"
+<img src="./icon.png?v=3"
 style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
 
 <h2>Sales Dashboard</h2>
@@ -233,15 +224,14 @@ const URL = "YOUR_WEB_APP_URL_HERE";
 let RAW = {};
 let barChart, lineChart;
 
-/* LOGIN (FIXED) */
+/* LOGIN */
 function login(){
-
   const loginBox = document.getElementById("login");
   const appBox = document.getElementById("app");
   const input = document.getElementById("pass");
 
   if(!loginBox || !appBox || !input){
-    alert("Missing elements");
+    alert("Missing UI elements");
     return;
   }
 
@@ -320,9 +310,10 @@ function draw(data){
   let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
   let top5 = sorted.slice(0,5);
 
-  sales.innerText = "£" + total.toFixed(2);
-  products.innerText = sorted.length;
-  top.innerText = top5[0] || "-";
+  /* SAFE DOM ACCESS (FIXED) */
+  document.getElementById("sales").innerText = "£" + total.toFixed(2);
+  document.getElementById("products").innerText = sorted.length;
+  document.getElementById("top").innerText = top5[0] || "-";
 
   buildInsights(pt, dt, dates);
 
@@ -359,7 +350,7 @@ function draw(data){
     }
   });
 
-  table.innerHTML =
+  document.getElementById("table").innerHTML =
     sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
@@ -374,7 +365,7 @@ function buildInsights(pt, dt, dates){
 
   let anomalies = dates.filter(d => dt[d] > avg * 1.5);
 
-  insights.innerHTML =
+  document.getElementById("insights").innerHTML =
     "🏆 Best Sellers<br>" +
     top3.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>") +
     "<br><br>📈 Best Day<br>" +
