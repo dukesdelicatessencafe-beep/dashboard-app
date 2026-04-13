@@ -10,18 +10,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<title>Sales Dashboard</title>
+<title>Dashboard Pro</title>
 
 <style>
-*{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:Arial;
   background:#0f172a;
   color:white;
+  overflow:hidden;
 }
 
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -30,49 +30,22 @@ body{
   align-items:center;
 }
 
-#app{display:none}
+/* APP */
+#app{display:none;height:100vh;overflow:hidden}
 
-.wrap{
+/* SCROLL AREA */
+#container{
+  height:calc(100vh - 55px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   padding:12px;
-  padding-bottom:70px;
 }
 
-.dateBar{
-  display:flex;
-  gap:8px;
-  margin-bottom:8px;
-}
+/* TABS */
+.tab{display:none}
+.tab.active{display:block}
 
-.dateBar input{
-  flex:1;
-  padding:8px;
-  border-radius:8px;
-  border:none;
-}
-
-.dateBar button{
-  padding:8px;
-  border:none;
-  border-radius:8px;
-  background:#38bdf8;
-}
-
-.presetRow{
-  display:flex;
-  gap:6px;
-  margin-bottom:10px;
-}
-
-.presetBtn{
-  flex:1;
-  padding:6px;
-  border:none;
-  border-radius:8px;
-  background:#1e293b;
-  color:white;
-  font-size:12px;
-}
-
+/* TOP BAR */
 .tiles{
   display:flex;
   gap:8px;
@@ -87,53 +60,74 @@ body{
   text-align:center;
 }
 
+/* DATE */
+.dateBar{
+  display:flex;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.dateBar input{
+  flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+}
+
+/* BUTTONS */
+button{
+  border:none;
+  border-radius:8px;
+}
+
+/* CHART */
 .chartBox{
-  width:100%;
   height:260px;
 }
 
-canvas{
-  width:100% !important;
-  height:260px !important;
-}
-
-table{
-  width:100%;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-}
-
-.nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  background:#1e293b;
-  height:55px;
-}
-
-.nav div{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.nav .active{
-  background:#38bdf8;
-}
-
-.tab{display:none}
-.tab.active{display:block}
-
+/* INSIGHTS */
 #insights{
   margin:10px 0;
   padding:10px;
   background:#1e293b;
   border-radius:10px;
+}
+
+/* NAV */
+.nav{
+  height:55px;
+  display:flex;
+  background:#1e293b;
+}
+
+.nav div{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.nav .active{background:#38bdf8}
+
+/* PULL REFRESH */
+#pull{
+  text-align:center;
+  height:0;
+  overflow:hidden;
+  color:#38bdf8;
+}
+
+/* INSTALL */
+#install{
+  position:fixed;
+  bottom:70px;
+  left:10px;
+  right:10px;
+  background:#38bdf8;
+  padding:10px;
+  border-radius:10px;
+  display:none;
+  text-align:center;
 }
 </style>
 </head>
@@ -142,26 +136,21 @@ td{
 
 <!-- LOGIN -->
 <div id="login">
-
-<img src="./icon.png?v=5"
-style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
-
-<h2>Sales Dashboard</h2>
-
+<img src="./icon.png" style="width:90px;height:90px;margin-bottom:10px">
 <input id="pass" type="password" placeholder="Password"
-style="padding:10px;border-radius:8px;border:none;margin-bottom:10px;width:200px;">
-
-<button onclick="login()"
-style="padding:10px;border:none;border-radius:8px;background:#38bdf8;">
+style="padding:10px;border-radius:8px;border:none">
+<br><br>
+<button onclick="login()" style="padding:10px;background:#38bdf8">
 Login
 </button>
-
 </div>
 
 <!-- APP -->
 <div id="app">
 
-<div class="wrap">
+<div id="container">
+
+<div id="pull">⬇ Pull to refresh</div>
 
 <!-- TAB 1 -->
 <div id="tab1" class="tab active">
@@ -169,12 +158,6 @@ Login
 <div class="dateBar">
 <input type="date" id="startDate">
 <input type="date" id="endDate">
-<button onclick="applyFilter()">Go</button>
-</div>
-
-<div class="presetRow">
-<button class="presetBtn" onclick="setRange('7')">7 Days</button>
-<button class="presetBtn" onclick="setRange('30')">Month</button>
 </div>
 
 <div class="tiles">
@@ -193,13 +176,13 @@ Login
 
 <!-- TAB 2 -->
 <div id="tab2" class="tab">
-<table id="table"></table>
+<table id="table" width="100%"></table>
 </div>
 
 <!-- TAB 3 -->
 <div id="tab3" class="tab">
 <div class="chartBox">
-<canvas id="lineChart"></canvas>
+<canvas id="salesChart"></canvas>
 </div>
 </div>
 
@@ -208,4 +191,156 @@ Login
 <!-- NAV -->
 <div class="nav">
 <div onclick="switchTab(1,this)" class="active">📊</div>
-<div onclick="
+<div onclick="switchTab(2,this)">📦</div>
+<div onclick="switchTab(3,this)">📈</div>
+</div>
+
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install">Install App</div>
+
+<script>
+
+const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+
+let RAW = {};
+let barChart, salesChart;
+
+/* LOGIN */
+function login(){
+  if(pass.value==="1234"){
+    login.style.display="none";
+    app.style.display="block";
+    load();
+  } else alert("Wrong");
+}
+
+/* LOAD */
+async function load(){
+  let res = await fetch(URL);
+  let data = await res.text();
+  RAW = JSON.parse(data);
+  draw(RAW);
+}
+
+/* DRAW */
+function draw(data){
+
+  let pt={}, dt={}, total=0;
+  let dates = Object.keys(data).sort();
+
+  for(let d of dates){
+    dt[d]=0;
+    for(let p in data[d]){
+      let v=+data[d][p]||0;
+      pt[p]=(pt[p]||0)+v;
+      dt[d]+=v;
+      total+=v;
+    }
+  }
+
+  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+  let top5 = sorted.slice(0,5);
+
+  sales.innerText="£"+total.toFixed(2);
+  products.innerText=sorted.length;
+  top.innerText=top5[0]||"-";
+
+  insights.innerHTML =
+    "🏆 Top Products<br>" +
+    top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>");
+
+  /* PRODUCT BAR */
+  if(barChart) barChart.destroy();
+  barChart = new Chart(barChartCanvas,{
+    type:"bar",
+    data:{
+      labels:dates,
+      datasets:top5.map(p=>({
+        label:p,
+        data:dates.map(d=>data[d][p]||0),
+        stack:"s"
+      }))
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}
+  });
+
+  /* SALES BAR */
+  if(salesChart) salesChart.destroy();
+  salesChart = new Chart(salesChartCanvas,{
+    type:"bar",
+    data:{
+      labels:dates,
+      datasets:[{
+        label:"Sales (£)",
+        data:dates.map(d=>dt[d]),
+        backgroundColor:"#38bdf8"
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        tooltip:{callbacks:{label:c=>"£"+c.raw.toFixed(2)}}
+      }
+    }
+  });
+
+  table.innerHTML =
+    sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+}
+
+/* TABS */
+function switchTab(n,el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("tab"+n).classList.add("active");
+
+  document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* SWIPE */
+let startX=0;
+
+container.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
+
+container.addEventListener("touchend",e=>{
+  let diff=e.changedTouches[0].clientX-startX;
+  if(diff>80) switchTab(1,document.querySelectorAll(".nav div")[0]);
+  if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
+});
+
+/* PULL TO REFRESH */
+let pulling=false;
+
+container.addEventListener("touchmove",e=>{
+  if(container.scrollTop===0 && e.touches[0].clientY>80){
+    pull.innerText="↻ Release to refresh";
+    pulling=true;
+  }
+});
+
+container.addEventListener("touchend",()=>{
+  if(pulling){
+    load();
+    pull.innerText="⬇ Pull to refresh";
+  }
+  pulling=false;
+});
+
+/* PWA INSTALL */
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  window.deferred=e;
+  install.style.display="block";
+});
+
+install.onclick=()=>{
+  window.deferred.prompt();
+};
+
+</script>
+
+</body>
+</html>
