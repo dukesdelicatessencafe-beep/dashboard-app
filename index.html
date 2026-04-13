@@ -18,7 +18,7 @@ body{
   font-family:Arial;
   background:#0f172a;
   color:white;
-  overflow-x:hidden;
+  overflow:hidden;
 }
 
 /* SPLASH */
@@ -43,8 +43,7 @@ body{
 }
 
 @keyframes spin{
-  0%{transform:rotate(0)}
-  100%{transform:rotate(360deg)}
+  to{transform:rotate(360deg)}
 }
 
 /* LOGIN */
@@ -58,26 +57,24 @@ input,button{
   margin:5px;
 }
 
-/* WRAP */
+/* APP */
 .wrap{
-  padding:10px;
-  overflow-x:hidden;
+  overflow:hidden;
 }
 
 /* SLIDER */
 .slider{
   display:flex;
   width:300vw;
-  transition:transform 0.35s ease;
-  will-change:transform;
+  height:100vh;
+  touch-action:pan-y;
 }
 
 .section{
   width:100vw;
   flex-shrink:0;
+  padding:12px;
   box-sizing:border-box;
-  overflow:hidden;
-  padding:10px;
 }
 
 /* TILES */
@@ -114,10 +111,7 @@ input,button{
 }
 
 /* TABLE */
-table{
-  width:100%;
-}
-
+table{width:100%;}
 td{
   padding:6px;
   border-bottom:1px solid #334155;
@@ -125,17 +119,13 @@ td{
 
 /* CHART */
 .chartBox{
-  width:100%;
-  height:240px;
-  position:relative;
-  overflow:hidden;
-  max-width:100vw;
+  height:220px;
+  margin-top:10px;
 }
 
 canvas{
   width:100% !important;
-  height:240px !important;
-  max-width:100% !important;
+  height:220px !important;
 }
 
 </style>
@@ -143,19 +133,14 @@ canvas{
 
 <body>
 
-<!-- SPLASH -->
-<div id="splash">
-  <div class="loader"></div>
-</div>
+<div id="splash"><div class="loader"></div></div>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input type="password" id="pw">
   <button onclick="check()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;" class="wrap">
 
 <input type="date" id="start">
@@ -171,10 +156,7 @@ canvas{
       <div class="tile"><div>Products</div><div id="orders">0</div></div>
       <div class="tile"><div>Top</div><div id="top">-</div></div>
     </div>
-
-    <div class="chartBox">
-      <canvas id="barChart"></canvas>
-    </div>
+    <div class="chartBox"><canvas id="barChart"></canvas></div>
   </div>
 
   <!-- TAB 2 -->
@@ -184,15 +166,12 @@ canvas{
 
   <!-- TAB 3 -->
   <div class="section">
-    <div class="chartBox">
-      <canvas id="lineChart"></canvas>
-    </div>
+    <div class="chartBox"><canvas id="lineChart"></canvas></div>
   </div>
 
 </div>
 </div>
 
-<!-- NAV -->
 <div class="nav">
   <div onclick="goTo(0,this)" class="active">📊</div>
   <div onclick="goTo(1,this)">📦</div>
@@ -204,191 +183,41 @@ canvas{
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
 let barChart, lineChart;
+let currentIndex = 0;
 
-const login = document.getElementById("login");
-const app = document.getElementById("app");
-const pw = document.getElementById("pw");
-const start = document.getElementById("start");
-const end = document.getElementById("end");
 const slider = document.getElementById("slider");
 
-/* =========================
-   SAFE STARTUP
-========================= */
-window.addEventListener("DOMContentLoaded", () => {
-  try {
+/* ======================
+   SWIPE SYSTEM
+====================== */
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
 
-    let today = new Date().toISOString().split("T")[0];
-    start.value = today;
-    end.value = today;
-
-    if (localStorage.getItem("login")) {
-      login.style.display = "none";
-      app.style.display = "block";
-      load();
-    }
-
-  } catch (e) {
-    console.log("Startup error:", e);
-  } finally {
-    document.getElementById("splash").style.display = "none";
-  }
+slider.addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+  isDragging = true;
 });
 
-/* LOGIN */
-function check(){
-  if(pw.value==="1234"){
-    localStorage.setItem("login","1");
-    login.style.display="none";
-    app.style.display="block";
-    load();
-  }
-}
+slider.addEventListener("touchmove", e=>{
+  if(!isDragging) return;
 
-/* NAV */
-function goTo(i,el){
-  slider.style.transform = `translateX(-${i * 100}vw)`;
+  currentX = e.touches[0].clientX;
+  let diff = currentX - startX;
 
-  document.querySelectorAll(".nav div")
-    .forEach(n=>n.classList.remove("active"));
-  el.classList.add("active");
+  slider.style.transform =
+    `translateX(${-(currentIndex * window.innerWidth) + diff}px)`;
+});
 
-  setTimeout(()=>{
-    if(barChart){ barChart.resize(); barChart.update(); }
-    if(lineChart){ lineChart.resize(); lineChart.update(); }
-  }, 250);
-}
+slider.addEventListener("touchend", ()=>{
+  isDragging = false;
 
-/* =========================
-   SAFE LOAD (WITH TIMEOUT)
-========================= */
-async function load(){
+  let diff = currentX - startX;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 10000);
+  if(diff < -50 && currentIndex < 2) currentIndex++;
+  if(diff > 50 && currentIndex > 0) currentIndex--;
 
-  try{
+  updateSlide();
+});
 
-    let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
-
-    let res = await fetch(url, { signal: controller.signal });
-
-    clearTimeout(timeout);
-
-    if(!res.ok) throw new Error("HTTP " + res.status);
-
-    let map = await res.json();
-
-    if(!map || Object.keys(map).length === 0){
-      throw new Error("Empty dataset");
-    }
-
-    localStorage.setItem("lastData", JSON.stringify(map));
-    draw(map);
-
-  }catch(err){
-
-    console.log("Load error:", err);
-
-    let saved = localStorage.getItem("lastData");
-
-    if(saved){
-      draw(JSON.parse(saved));
-    } else {
-      alert("Failed to load data");
-    }
-  }
-}
-
-/* =========================
-   DRAW
-========================= */
-function draw(map){
-
-  if(!map || Object.keys(map).length === 0) return;
-
-  let productTotals = {};
-  let dailyTotals = {};
-  let dates = Object.keys(map).sort();
-
-  let sales = 0;
-
-  for(let d in map){
-    dailyTotals[d] = 0;
-
-    for(let p in map[d]){
-      let v = Number(map[d][p]) || 0;
-
-      productTotals[p] = (productTotals[p] || 0) + v;
-      dailyTotals[d] += v;
-      sales += v;
-    }
-  }
-
-  let sorted = Object.keys(productTotals)
-    .sort((a,b)=>productTotals[b]-productTotals[a]);
-
-  let top5 = sorted.slice(0,5);
-
-  document.getElementById("sales").innerText = "£" + sales.toFixed(2);
-  document.getElementById("orders").innerText = sorted.length;
-  document.getElementById("top").innerText = top5[0] || "-";
-
-  /* DELAYED RENDER (FIXES CHART BUGS) */
-  setTimeout(()=>{
-
-    if(barChart) barChart.destroy();
-
-    barChart = new Chart(document.getElementById("barChart"),{
-      type:'bar',
-      data:{
-        labels: dates,
-        datasets: top5.map(p => ({
-          label:p,
-          data: dates.map(d => map[d][p] || 0),
-          stack:'s'
-        }))
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true}
-        }
-      }
-    });
-
-    if(lineChart) lineChart.destroy();
-
-    lineChart = new Chart(document.getElementById("lineChart"),{
-      type:'line',
-      data:{
-        labels: dates,
-        datasets:[{
-          label:"Sales",
-          data: dates.map(d => dailyTotals[d])
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false
-      }
-    });
-
-  }, 50);
-
-  /* TABLE */
-  let html="<table>";
-  sorted.forEach(p=>{
-    html += `<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
-  });
-  html+="</table>";
-
-  document.getElementById("tableArea").innerHTML = html;
-}
-
-</script>
-
-</body>
-</html>
+/* NAV BUTTON
