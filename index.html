@@ -4,10 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="theme-color" content="#0f172a">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <title>Sales Dashboard</title>
@@ -30,7 +26,6 @@ body{
   justify-content:center;
   background:#0f172a;
   z-index:999;
-  pointer-events:none;
 }
 
 .loader{
@@ -55,11 +50,6 @@ body{
 input,button{
   padding:10px;
   margin:5px;
-}
-
-/* APP */
-.wrap{
-  overflow:hidden;
 }
 
 /* SLIDER */
@@ -120,7 +110,6 @@ td{
 /* CHART */
 .chartBox{
   height:220px;
-  margin-top:10px;
 }
 
 canvas{
@@ -141,7 +130,7 @@ canvas{
   <button onclick="check()">Login</button>
 </div>
 
-<div id="app" style="display:none;" class="wrap">
+<div id="app" style="display:none;">
 
 <input type="date" id="start">
 <input type="date" id="end">
@@ -182,42 +171,145 @@ canvas{
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
+/* ELEMENT FIX (THIS WAS MISSING) */
+const salesEl = document.getElementById("sales");
+const ordersEl = document.getElementById("orders");
+const topEl = document.getElementById("top");
+const barCanvas = document.getElementById("barChart");
+const lineCanvas = document.getElementById("lineChart");
+const tableArea = document.getElementById("tableArea");
+
 let barChart, lineChart;
 let currentIndex = 0;
-
 const slider = document.getElementById("slider");
 
-/* ======================
-   SWIPE SYSTEM
-====================== */
-let startX = 0;
-let currentX = 0;
-let isDragging = false;
+/* SWIPE */
+let startX=0,currentX=0,isDragging=false;
 
-slider.addEventListener("touchstart", e=>{
-  startX = e.touches[0].clientX;
-  isDragging = true;
+slider.addEventListener("touchstart",e=>{
+  startX=e.touches[0].clientX;
+  isDragging=true;
 });
 
-slider.addEventListener("touchmove", e=>{
-  if(!isDragging) return;
-
-  currentX = e.touches[0].clientX;
-  let diff = currentX - startX;
-
-  slider.style.transform =
-    `translateX(${-(currentIndex * window.innerWidth) + diff}px)`;
+slider.addEventListener("touchmove",e=>{
+  if(!isDragging)return;
+  currentX=e.touches[0].clientX;
+  let diff=currentX-startX;
+  slider.style.transform=`translateX(${-(currentIndex*window.innerWidth)+diff}px)`;
 });
 
-slider.addEventListener("touchend", ()=>{
-  isDragging = false;
-
-  let diff = currentX - startX;
-
-  if(diff < -50 && currentIndex < 2) currentIndex++;
-  if(diff > 50 && currentIndex > 0) currentIndex--;
-
+slider.addEventListener("touchend",()=>{
+  isDragging=false;
+  let diff=currentX-startX;
+  if(diff<-50 && currentIndex<2) currentIndex++;
+  if(diff>50 && currentIndex>0) currentIndex--;
   updateSlide();
 });
 
-/* NAV BUTTON
+function goTo(i,el){
+  currentIndex=i;
+  updateSlide();
+  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
+  el.classList.add("active");
+}
+
+function updateSlide(){
+  slider.style.transition="0.3s";
+  slider.style.transform=`translateX(-${currentIndex*100}vw)`;
+  setTimeout(()=>{
+    slider.style.transition="none";
+    if(barChart) barChart.resize();
+    if(lineChart) lineChart.resize();
+  },300);
+}
+
+/* START */
+window.onload=()=>{
+  let today=new Date().toISOString().split("T")[0];
+  start.value=today;
+  end.value=today;
+  document.getElementById("splash").style.display="none";
+};
+
+/* LOGIN */
+function check(){
+  if(pw.value==="1234"){
+    login.style.display="none";
+    app.style.display="block";
+    load();
+  }
+}
+
+/* LOAD */
+async function load(){
+  try{
+    let res=await fetch(SCRIPT_URL);
+    let map=await res.json();
+    draw(map);
+  }catch(e){
+    console.log(e);
+    alert("Data failed to load");
+  }
+}
+
+/* DRAW */
+function draw(map){
+
+  let productTotals={},dailyTotals={},dates=Object.keys(map).sort();
+  let sales=0;
+
+  for(let d in map){
+    dailyTotals[d]=0;
+    for(let p in map[d]){
+      let v=Number(map[d][p])||0;
+      productTotals[p]=(productTotals[p]||0)+v;
+      dailyTotals[d]+=v;
+      sales+=v;
+    }
+  }
+
+  let sorted=Object.keys(productTotals).sort((a,b)=>productTotals[b]-productTotals[a]);
+  let top5=sorted.slice(0,5);
+
+  salesEl.innerText="£"+sales.toFixed(2);
+  ordersEl.innerText=sorted.length;
+  topEl.innerText=top5[0]||"-";
+
+  if(barChart) barChart.destroy();
+
+  barChart=new Chart(barCanvas,{
+    type:'bar',
+    data:{
+      labels:dates,
+      datasets:top5.map(p=>({
+        label:p,
+        data:dates.map(d=>map[d][p]||0),
+        stack:'s'
+      }))
+    },
+    options:{responsive:true,maintainAspectRatio:false}
+  });
+
+  if(lineChart) lineChart.destroy();
+
+  lineChart=new Chart(lineCanvas,{
+    type:'line',
+    data:{
+      labels:dates,
+      datasets:[{label:"Sales",data:dates.map(d=>dailyTotals[d])}]
+    },
+    options:{responsive:true,maintainAspectRatio:false}
+  });
+
+  let html="<table>";
+  sorted.forEach(p=>{
+    html+=`<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
+  });
+  html+="</table>";
+  tableArea.innerHTML=html;
+}
+
+</script>
+
+</body>
+</html>
