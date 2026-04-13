@@ -22,6 +22,7 @@ body{
   color:white;
 }
 
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -145,7 +146,7 @@ td{
 <!-- LOGIN -->
 <div id="login">
 
-<img src="./icon.png?v=3"
+<img src="./icon.png?v=4"
 style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
 
 <h2>Sales Dashboard</h2>
@@ -175,7 +176,6 @@ Login
 </div>
 
 <div class="presetRow">
-<button class="presetBtn" onclick="setRange('today')">Today</button>
 <button class="presetBtn" onclick="setRange('7')">7 Days</button>
 <button class="presetBtn" onclick="setRange('30')">Month</button>
 </div>
@@ -219,25 +219,19 @@ Login
 
 <script>
 
-const URL = "YOUR_WEB_APP_URL_HERE";
+/* YOUR REAL URL */
+const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
 let RAW = {};
 let barChart, lineChart;
 
 /* LOGIN */
 function login(){
-  const loginBox = document.getElementById("login");
-  const appBox = document.getElementById("app");
-  const input = document.getElementById("pass");
+  const pass = document.getElementById("pass").value;
 
-  if(!loginBox || !appBox || !input){
-    alert("Missing UI elements");
-    return;
-  }
-
-  if(input.value === "1234"){
-    loginBox.style.display = "none";
-    appBox.style.display = "block";
+  if(pass === "1234"){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
     load();
   } else {
     alert("Wrong password");
@@ -246,9 +240,19 @@ function login(){
 
 /* LOAD DATA */
 async function load(){
-  let res = await fetch(URL);
-  RAW = await res.json();
-  draw(RAW);
+  try {
+    let res = await fetch(URL);
+    let text = await res.text();
+
+    console.log("RAW RESPONSE:", text);
+
+    RAW = JSON.parse(text);
+    draw(RAW);
+
+  } catch(err){
+    console.error("LOAD ERROR:", err);
+    alert("Failed to load data");
+  }
 }
 
 /* FILTER */
@@ -270,13 +274,13 @@ function applyFilter(){
 }
 
 /* RANGE */
-function setRange(type){
+function setRange(days){
 
   let e = new Date();
   let s = new Date();
 
-  if(type === "7") s.setDate(e.getDate()-7);
-  if(type === "30") s.setDate(e.getDate()-30);
+  if(days === "7") s.setDate(e.getDate()-7);
+  if(days === "30") s.setDate(e.getDate()-30);
 
   startDate.value = format(s);
   endDate.value = format(e);
@@ -310,12 +314,13 @@ function draw(data){
   let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
   let top5 = sorted.slice(0,5);
 
-  /* SAFE DOM ACCESS (FIXED) */
   document.getElementById("sales").innerText = "£" + total.toFixed(2);
   document.getElementById("products").innerText = sorted.length;
   document.getElementById("top").innerText = top5[0] || "-";
 
-  buildInsights(pt, dt, dates);
+  document.getElementById("insights").innerHTML =
+    "🏆 Top Products<br>" +
+    top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
 
   if(barChart) barChart.destroy();
   barChart = new Chart(document.getElementById("barChart"), {
@@ -352,28 +357,6 @@ function draw(data){
 
   document.getElementById("table").innerHTML =
     sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
-}
-
-/* INSIGHTS */
-function buildInsights(pt, dt, dates){
-
-  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  let top3 = sorted.slice(0,3);
-
-  let best = dates.reduce((a,b)=>dt[a]>dt[b]?a:b,dates[0]);
-  let avg = Object.values(dt).reduce((a,b)=>a+b,0)/dates.length;
-
-  let anomalies = dates.filter(d => dt[d] > avg * 1.5);
-
-  document.getElementById("insights").innerHTML =
-    "🏆 Best Sellers<br>" +
-    top3.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>") +
-    "<br><br>📈 Best Day<br>" +
-    `• ${best} (£${dt[best].toFixed(2)})<br><br>` +
-    "⚠️ Anomalies<br>" +
-    (anomalies.length
-      ? anomalies.map(d => `• ${d} (£${dt[d].toFixed(2)})`).join("<br>")
-      : "• None");
 }
 
 /* TABS */
