@@ -29,7 +29,6 @@ body{
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  padding:20px;
 }
 
 /* APP */
@@ -53,12 +52,10 @@ body{
 }
 
 .dateBar button{
-  padding:8px 10px;
-  border-radius:8px;
+  padding:8px;
   border:none;
+  border-radius:8px;
   background:#38bdf8;
-  color:#000;
-  font-weight:bold;
 }
 
 /* PRESETS */
@@ -76,40 +73,6 @@ body{
   background:#1e293b;
   color:white;
   font-size:12px;
-}
-
-/* INSIGHTS */
-#insights{
-  margin:10px 0;
-  padding:10px;
-  background:#1e293b;
-  border-radius:10px;
-  font-size:13px;
-}
-
-/* TABS */
-.tab{display:none}
-.tab.active{display:block}
-
-/* NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  background:#1e293b;
-  height:55px;
-}
-
-.nav div{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.nav .active{
-  background:#38bdf8;
 }
 
 /* TILES */
@@ -147,89 +110,108 @@ td{
   padding:8px;
   border-bottom:1px solid #334155;
 }
-</style>
 
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  background:#1e293b;
+  height:55px;
+}
+
+.nav div{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.nav .active{
+  background:#38bdf8;
+}
+
+.tab{display:none}
+.tab.active{display:block}
+
+#insights{
+  margin:10px 0;
+  padding:10px;
+  background:#1e293b;
+  border-radius:10px;
+}
+</style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
-
+<!-- LOGIN -->
 <div id="login">
 
-  <!-- FIXED ICON -->
-  <img src="./icon.png?v=2"
-       style="
-         width:100px;
-         height:100px;
-         border-radius:20px;
-         margin-bottom:15px;
-         background:#1e293b;
-         object-fit:cover;
-       ">
+<img src="./icon.png?v=2" style="width:100px;height:100px;border-radius:20px;margin-bottom:15px;background:#1e293b;">
 
-  <h2>Sales Dashboard</h2>
+<h2>Sales Dashboard</h2>
 
-  <input id="pass" type="password" placeholder="Password"
-    style="padding:10px;border-radius:8px;border:none;margin-bottom:10px;width:200px;">
+<input id="pass" type="password" placeholder="Password"
+style="padding:10px;border-radius:8px;border:none;margin-bottom:10px;width:200px;">
 
-  <button onclick="login()"
-    style="padding:10px;border:none;border-radius:8px;background:#38bdf8;">
-    Login
-  </button>
+<button onclick="login()"
+style="padding:10px;border:none;border-radius:8px;background:#38bdf8;">
+Login
+</button>
 
 </div>
 
-<!-- ================= APP ================= -->
-
+<!-- APP -->
 <div id="app" style="display:none;">
 
 <div class="wrap">
 
 <div id="tab1" class="tab active">
 
-  <div class="dateBar">
-    <input type="date" id="startDate">
-    <input type="date" id="endDate">
-    <button onclick="applyFilter()">Go</button>
-  </div>
+<div class="dateBar">
+<input type="date" id="startDate">
+<input type="date" id="endDate">
+<button onclick="applyFilter()">Go</button>
+</div>
 
-  <div class="presetRow">
-    <button class="presetBtn" onclick="setRange('today')">Today</button>
-    <button class="presetBtn" onclick="setRange('7')">7 Days</button>
-    <button class="presetBtn" onclick="setRange('30')">Month</button>
-  </div>
+<div class="presetRow">
+<button class="presetBtn" onclick="setRange('today')">Today</button>
+<button class="presetBtn" onclick="setRange('7')">7 Days</button>
+<button class="presetBtn" onclick="setRange('30')">Month</button>
+</div>
 
-  <div class="tiles">
-    <div class="tile">Sales<br><b id="sales">£0</b></div>
-    <div class="tile">Products<br><b id="products">0</b></div>
-    <div class="tile">Top<br><b id="top">-</b></div>
-  </div>
+<div class="tiles">
+<div class="tile">Sales<br><b id="sales">£0</b></div>
+<div class="tile">Products<br><b id="products">0</b></div>
+<div class="tile">Top<br><b id="top">-</b></div>
+</div>
 
-  <div id="insights">Loading insights...</div>
+<div id="insights"></div>
 
-  <div class="chartBox">
-    <canvas id="barChart"></canvas>
-  </div>
+<div class="chartBox">
+<canvas id="barChart"></canvas>
+</div>
 
 </div>
 
 <div id="tab2" class="tab">
-  <table id="table"></table>
+<table id="table"></table>
 </div>
 
 <div id="tab3" class="tab">
-  <div class="chartBox">
-    <canvas id="lineChart"></canvas>
-  </div>
+<div class="chartBox">
+<canvas id="lineChart"></canvas>
+</div>
 </div>
 
 </div>
 
 <div class="nav">
-  <div onclick="switchTab(1,this)" class="active">📊</div>
-  <div onclick="switchTab(2,this)">📦</div>
-  <div onclick="switchTab(3,this)">📈</div>
+<div onclick="switchTab(1,this)" class="active">📊</div>
+<div onclick="switchTab(2,this)">📦</div>
+<div onclick="switchTab(3,this)">📈</div>
 </div>
 
 </div>
@@ -239,17 +221,14 @@ td{
 /* LOGIN */
 function login(){
   if(document.getElementById("pass").value==="1234"){
-    loginEl.style.display="none";
+    login.style.display="none";
     app.style.display="block";
     load();
   }else alert("Wrong password");
 }
 
-const loginEl=document.getElementById("login");
-const app=document.getElementById("app");
-
 /* DATA */
-const URL="https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+const URL="YOUR_WEB_APP_URL_HERE";
 
 let RAW={},barChart,lineChart;
 
@@ -291,6 +270,8 @@ function format(d){
 /* DRAW */
 function draw(data){
 
+  if(!data || Object.keys(data).length===0) return;
+
   let pt={},dt={},total=0;
   let dates=Object.keys(data).sort();
 
@@ -314,7 +295,7 @@ function draw(data){
   buildInsights(pt,dt,dates);
 
   if(barChart)barChart.destroy();
-  barChart=new Chart(barChartCanvas,{
+  barChart=new Chart(document.getElementById("barChart"),{
     type:"bar",
     data:{
       labels:dates,
@@ -329,15 +310,13 @@ function draw(data){
       maintainAspectRatio:false,
       scales:{x:{stacked:true},y:{stacked:true}},
       plugins:{
-        tooltip:{
-          callbacks:{label:c=>"£"+c.raw.toFixed(2)}
-        }
+        tooltip:{callbacks:{label:c=>"£"+c.raw.toFixed(2)}}
       }
     }
   });
 
   if(lineChart)lineChart.destroy();
-  lineChart=new Chart(lineChartCanvas,{
+  lineChart=new Chart(document.getElementById("lineChart"),{
     type:"line",
     data:{
       labels:dates,
@@ -360,11 +339,11 @@ function buildInsights(pt,dt,dates){
   let anomalies=dates.filter(d=>dt[d]>avg*1.5);
 
   insights.innerHTML=
-    "🏆 <b>Best Sellers</b><br>"+
+    "🏆 Best Sellers<br>"+
     top3.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>")+
-    "<br><br>📈 <b>Best Day</b><br>"+
+    "<br><br>📈 Best Day<br>"+
     `• ${best} (£${dt[best].toFixed(2)})<br><br>`+
-    "⚠️ <b>Anomalies</b><br>"+
+    "⚠️ Anomalies<br>"+
     (anomalies.length
       ? anomalies.map(d=>`• ${d} (£${dt[d].toFixed(2)})`).join("<br>")
       : "• None");
