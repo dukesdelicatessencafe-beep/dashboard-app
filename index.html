@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
 
-<link rel="icon" href="./icon.png">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Dashboard Pro</title>
 
-<title>Dashboard</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.png">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{
@@ -30,7 +32,7 @@ body{
 
 #app{display:none;height:100vh}
 
-/* CONTAINER */
+/* APP */
 #container{
   height:calc(100vh - 55px);
   overflow-y:auto;
@@ -38,9 +40,10 @@ body{
   padding:12px;
   max-width:1200px;
   margin:auto;
+  position:relative;
 }
 
-/* ===== ANIMATED TABS ===== */
+/* TABS */
 .tab{
   opacity:0;
   transform:translateY(10px) scale(0.98);
@@ -60,11 +63,7 @@ body{
 }
 
 /* TILES */
-.tiles{
-  display:flex;
-  gap:8px;
-}
-
+.tiles{display:flex;gap:8px}
 .tile{
   flex:1;
   background:#1e293b;
@@ -74,12 +73,7 @@ body{
 }
 
 /* DATE + PRESETS */
-.dateBar{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
+.dateBar{display:flex;gap:8px;flex-wrap:wrap}
 .dateBar input{
   flex:1;
   padding:8px;
@@ -123,6 +117,7 @@ canvas{
   padding:10px;
   background:#1e293b;
   border-radius:10px;
+  margin-top:10px;
 }
 
 /* NAV */
@@ -138,11 +133,19 @@ canvas{
 .nav div{
   flex:1;
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:center;
 }
 
 .nav .active{background:#38bdf8}
+
+/* PULL */
+#pull{
+  text-align:center;
+  height:0;
+  overflow:hidden;
+  color:#38bdf8;
+}
 </style>
 </head>
 
@@ -163,6 +166,8 @@ canvas{
 <div id="app">
 
 <div id="container">
+
+<div id="pull">⬇ Pull to refresh</div>
 
 <div style="position:relative;">
 
@@ -226,21 +231,28 @@ const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0t
 let RAW = {};
 let barChart, salesChart;
 
-/* LOGIN */
+/* LOGIN SAFE */
 function login(){
-  const p=document.getElementById("pass").value;
-  if(p==="1234"){
-    login.style.display="none";
-    app.style.display="block";
+  const pass=document.getElementById("pass");
+  const loginEl=document.getElementById("login");
+  const appEl=document.getElementById("app");
+
+  if(pass.value==="1234"){
+    loginEl.style.display="none";
+    appEl.style.display="block";
     load();
   } else alert("Wrong password");
 }
 
 /* LOAD */
 async function load(){
-  const res=await fetch(URL);
-  RAW=await res.json();
-  draw(RAW);
+  try{
+    const res=await fetch(URL);
+    RAW=await res.json();
+    draw(RAW);
+  }catch(e){
+    alert("Load failed");
+  }
 }
 
 /* RANGE */
@@ -333,17 +345,48 @@ function draw(data){
     sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 }
 
-/* TAB SWITCH WITH ANIMATION */
+/* TAB SWITCH */
 function switchTab(n,el){
-
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-
-  const newTab=document.getElementById("tab"+n);
-  void newTab.offsetWidth; // restart animation
-  newTab.classList.add("active");
+  const tab=document.getElementById("tab"+n);
+  void tab.offsetWidth;
+  tab.classList.add("active");
 
   document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
   el.classList.add("active");
+}
+
+/* SWIPE */
+let startX=0;
+container.addEventListener("touchstart",e=>{
+  startX=e.touches[0].clientX;
+});
+
+container.addEventListener("touchend",e=>{
+  let diff=e.changedTouches[0].clientX-startX;
+  if(diff>80) switchTab(1,document.querySelectorAll(".nav div")[0]);
+  if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
+});
+
+/* PULL REFRESH */
+let pulling=false;
+
+container.addEventListener("touchmove",e=>{
+  if(container.scrollTop===0 && e.touches[0].clientY>80){
+    pull.innerText="↻ Release to refresh";
+    pulling=true;
+  }
+});
+
+container.addEventListener("touchend",()=>{
+  if(pulling) load();
+  pull.innerText="⬇ Pull to refresh";
+  pulling=false;
+});
+
+/* PWA SERVICE WORKER */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js");
 }
 
 </script>
