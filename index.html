@@ -5,12 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f172a">
 
-<link rel="manifest" href="manifest.json">
 <link rel="icon" href="./icon.png">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<title>Dashboard Pro</title>
+<title>Hardened Dashboard</title>
 
 <style>
 body{
@@ -21,7 +19,6 @@ body{
   overflow:hidden;
 }
 
-/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -30,22 +27,17 @@ body{
   align-items:center;
 }
 
-/* APP */
-#app{display:none;height:100vh;overflow:hidden}
+#app{display:none;height:100vh}
 
-/* SCROLL AREA */
 #container{
   height:calc(100vh - 55px);
   overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
   padding:12px;
 }
 
-/* TABS */
 .tab{display:none}
 .tab.active{display:block}
 
-/* TOP BAR */
 .tiles{
   display:flex;
   gap:8px;
@@ -60,11 +52,10 @@ body{
   text-align:center;
 }
 
-/* DATE */
 .dateBar{
   display:flex;
   gap:8px;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
 
 .dateBar input{
@@ -74,18 +65,13 @@ body{
   border:none;
 }
 
-/* BUTTONS */
-button{
-  border:none;
-  border-radius:8px;
+.chartBox{height:260px}
+
+canvas{
+  width:100%!important;
+  height:260px!important;
 }
 
-/* CHART */
-.chartBox{
-  height:260px;
-}
-
-/* INSIGHTS */
 #insights{
   margin:10px 0;
   padding:10px;
@@ -93,7 +79,6 @@ button{
   border-radius:10px;
 }
 
-/* NAV */
 .nav{
   height:55px;
   display:flex;
@@ -108,27 +93,6 @@ button{
 }
 
 .nav .active{background:#38bdf8}
-
-/* PULL REFRESH */
-#pull{
-  text-align:center;
-  height:0;
-  overflow:hidden;
-  color:#38bdf8;
-}
-
-/* INSTALL */
-#install{
-  position:fixed;
-  bottom:70px;
-  left:10px;
-  right:10px;
-  background:#38bdf8;
-  padding:10px;
-  border-radius:10px;
-  display:none;
-  text-align:center;
-}
 </style>
 </head>
 
@@ -136,209 +100,226 @@ button{
 
 <!-- LOGIN -->
 <div id="login">
-<img src="./icon.png" style="width:90px;height:90px;margin-bottom:10px">
-<input id="pass" type="password" placeholder="Password"
-style="padding:10px;border-radius:8px;border:none">
-<br><br>
-<button onclick="login()" style="padding:10px;background:#38bdf8">
-Login
-</button>
+  <img src="./icon.png" style="width:90px;height:90px;margin-bottom:10px">
+  <input id="pass" type="password" placeholder="Password"
+    style="padding:10px;border-radius:8px;border:none">
+  <br><br>
+  <button id="loginBtn" style="padding:10px;background:#38bdf8">
+    Login
+  </button>
 </div>
 
 <!-- APP -->
 <div id="app">
+  <div id="container">
 
-<div id="container">
+    <div class="tab active" id="tab1">
 
-<div id="pull">⬇ Pull to refresh</div>
+      <div class="dateBar">
+        <input id="startDate" type="date">
+        <input id="endDate" type="date">
+      </div>
 
-<!-- TAB 1 -->
-<div id="tab1" class="tab active">
+      <div class="tiles">
+        <div class="tile">Sales<br><b id="sales">£0</b></div>
+        <div class="tile">Products<br><b id="products">0</b></div>
+        <div class="tile">Top<br><b id="top">-</b></div>
+      </div>
 
-<div class="dateBar">
-<input type="date" id="startDate">
-<input type="date" id="endDate">
+      <div id="insights"></div>
+
+      <div class="chartBox">
+        <canvas id="barChart"></canvas>
+      </div>
+
+    </div>
+
+    <div class="tab" id="tab2">
+      <table id="table" width="100%"></table>
+    </div>
+
+    <div class="tab" id="tab3">
+      <div class="chartBox">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <div data-tab="1">📊</div>
+    <div data-tab="2">📦</div>
+    <div data-tab="3">📈</div>
+  </div>
 </div>
-
-<div class="tiles">
-<div class="tile">Sales<br><b id="sales">£0</b></div>
-<div class="tile">Products<br><b id="products">0</b></div>
-<div class="tile">Top<br><b id="top">-</b></div>
-</div>
-
-<div id="insights"></div>
-
-<div class="chartBox">
-<canvas id="barChart"></canvas>
-</div>
-
-</div>
-
-<!-- TAB 2 -->
-<div id="tab2" class="tab">
-<table id="table" width="100%"></table>
-</div>
-
-<!-- TAB 3 -->
-<div id="tab3" class="tab">
-<div class="chartBox">
-<canvas id="salesChart"></canvas>
-</div>
-</div>
-
-</div>
-
-<!-- NAV -->
-<div class="nav">
-<div onclick="switchTab(1,this)" class="active">📊</div>
-<div onclick="switchTab(2,this)">📦</div>
-<div onclick="switchTab(3,this)">📈</div>
-</div>
-
-</div>
-
-<!-- INSTALL BANNER -->
-<div id="install">Install App</div>
 
 <script>
 
 const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
+/* SAFE DOM CACHE (NO GLOBAL RELIANCE) */
+const $ = (id) => document.getElementById(id);
+
+const UI = {
+  login: $("login"),
+  app: $("app"),
+  pass: $("pass"),
+  sales: $("sales"),
+  products: $("products"),
+  top: $("top"),
+  insights: $("insights"),
+  table: $("table"),
+  barCanvas: $("barChart"),
+  salesCanvas: $("salesChart"),
+  container: $("container"),
+  loginBtn: $("loginBtn")
+};
+
 let RAW = {};
-let barChart, salesChart;
+let barChart = null;
+let salesChart = null;
 
-/* LOGIN */
-function login(){
-  if(pass.value==="1234"){
-    login.style.display="none";
-    app.style.display="block";
+/* SAFE LOGIN */
+UI.loginBtn.onclick = () => {
+  if (UI.pass.value.trim() === "1234") {
+    UI.login.style.display = "none";
+    UI.app.style.display = "block";
     load();
-  } else alert("Wrong");
-}
+  } else {
+    alert("Wrong password");
+  }
+};
 
-/* LOAD */
+/* SAFE LOAD */
 async function load(){
-  let res = await fetch(URL);
-  let data = await res.text();
-  RAW = JSON.parse(data);
-  draw(RAW);
+  try {
+    const res = await fetch(URL);
+
+    if(!res.ok){
+      throw new Error("Network error: " + res.status);
+    }
+
+    const text = await res.text();
+
+    if(!text.trim().startsWith("{")){
+      throw new Error("Invalid JSON response");
+    }
+
+    RAW = JSON.parse(text);
+    draw(RAW);
+
+  } catch(err){
+    console.error("LOAD FAILED:", err);
+    alert("Data load failed");
+  }
 }
 
-/* DRAW */
+/* SAFE DRAW PIPELINE */
 function draw(data){
 
-  let pt={}, dt={}, total=0;
-  let dates = Object.keys(data).sort();
+  if(!data || typeof data !== "object") return;
 
-  for(let d of dates){
-    dt[d]=0;
-    for(let p in data[d]){
-      let v=+data[d][p]||0;
-      pt[p]=(pt[p]||0)+v;
-      dt[d]+=v;
-      total+=v;
+  const pt = {};
+  const dt = {};
+  let total = 0;
+
+  const dates = Object.keys(data).sort();
+
+  for(const d of dates){
+    dt[d] = 0;
+
+    for(const p in data[d]){
+      const v = Number(data[d][p]) || 0;
+      pt[p] = (pt[p] || 0) + v;
+      dt[d] += v;
+      total += v;
     }
   }
 
-  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  let top5 = sorted.slice(0,5);
+  const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+  const top5 = sorted.slice(0,5);
 
-  sales.innerText="£"+total.toFixed(2);
-  products.innerText=sorted.length;
-  top.innerText=top5[0]||"-";
+  /* UI SAFE UPDATES */
+  UI.sales.innerText = "£" + total.toFixed(2);
+  UI.products.innerText = sorted.length;
+  UI.top.innerText = top5[0] || "-";
 
-  insights.innerHTML =
+  UI.insights.innerHTML =
     "🏆 Top Products<br>" +
-    top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>");
+    top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
 
-  /* PRODUCT BAR */
-  if(barChart) barChart.destroy();
-  barChart = new Chart(barChartCanvas,{
-    type:"bar",
-    data:{
-      labels:dates,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>data[d][p]||0),
-        stack:"s"
-      }))
-    },
-    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}
-  });
+  /* SAFE TABLE */
+  UI.table.innerHTML =
+    sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
-  /* SALES BAR */
-  if(salesChart) salesChart.destroy();
-  salesChart = new Chart(salesChartCanvas,{
-    type:"bar",
-    data:{
-      labels:dates,
-      datasets:[{
-        label:"Sales (£)",
-        data:dates.map(d=>dt[d]),
-        backgroundColor:"#38bdf8"
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        tooltip:{callbacks:{label:c=>"£"+c.raw.toFixed(2)}}
+  /* SAFE BAR CHART */
+  try {
+    if(barChart) barChart.destroy();
+
+    barChart = new Chart(UI.barCanvas, {
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets: top5.map(p => ({
+          label:p,
+          data:dates.map(d => data[d]?.[p] || 0),
+          stack:"s"
+        }))
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{x:{stacked:true},y:{stacked:true}}
       }
-    }
-  });
+    });
 
-  table.innerHTML =
-    sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+  } catch(e){
+    console.error("BAR CHART ERROR", e);
+  }
+
+  /* SAFE SALES CHART */
+  try {
+    if(salesChart) salesChart.destroy();
+
+    salesChart = new Chart(UI.salesCanvas, {
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:[{
+          label:"Sales (£)",
+          data:dates.map(d => dt[d]),
+          backgroundColor:"#38bdf8"
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          tooltip:{
+            callbacks:{
+              label:c=>"£"+c.raw.toFixed(2)
+            }
+          }
+        }
+      }
+    });
+
+  } catch(e){
+    console.error("SALES CHART ERROR", e);
+  }
 }
 
-/* TABS */
-function switchTab(n,el){
+/* SAFE TAB SWITCH */
+UI.container.addEventListener("click",(e)=>{
+  const tab = e.target.dataset.tab;
+  if(!tab) return;
+
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.getElementById("tab"+n).classList.add("active");
+  $("tab"+tab).classList.add("active");
 
   document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-  el.classList.add("active");
-}
-
-/* SWIPE */
-let startX=0;
-
-container.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
-
-container.addEventListener("touchend",e=>{
-  let diff=e.changedTouches[0].clientX-startX;
-  if(diff>80) switchTab(1,document.querySelectorAll(".nav div")[0]);
-  if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
+  e.target.classList.add("active");
 });
-
-/* PULL TO REFRESH */
-let pulling=false;
-
-container.addEventListener("touchmove",e=>{
-  if(container.scrollTop===0 && e.touches[0].clientY>80){
-    pull.innerText="↻ Release to refresh";
-    pulling=true;
-  }
-});
-
-container.addEventListener("touchend",()=>{
-  if(pulling){
-    load();
-    pull.innerText="⬇ Pull to refresh";
-  }
-  pulling=false;
-});
-
-/* PWA INSTALL */
-window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();
-  window.deferred=e;
-  install.style.display="block";
-});
-
-install.onclick=()=>{
-  window.deferred.prompt();
-};
 
 </script>
 
