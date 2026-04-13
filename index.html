@@ -18,6 +18,7 @@ body{
   font-family:Arial;
   background:#0f172a;
   color:white;
+  overflow-x:hidden; /* IMPORTANT GLOBAL SAFETY */
 }
 
 /* SPLASH */
@@ -45,14 +46,6 @@ body{
   100%{transform:rotate(360deg)}
 }
 
-/* OFFLINE */
-#offline{
-  display:none;
-  text-align:center;
-  padding:6px;
-  background:#ef4444;
-}
-
 /* LOGIN */
 #login{
   text-align:center;
@@ -67,22 +60,24 @@ input,button{
 /* WRAP */
 .wrap{
   padding:10px;
-  overflow-x:hidden; /* IMPORTANT FIX */
+  overflow-x:hidden;
 }
 
 /* =========================
-   FIXED SLIDER (100vw SYSTEM)
+   SLIDER (100vw SAFE)
 ========================= */
 
 .slider{
   display:flex;
-  width:300vw; /* 3 full screens */
+  width:300vw;
   transition:transform 0.35s ease;
+  will-change:transform;
 }
 
 .section{
-  width:100vw; /* exact viewport width */
+  width:100vw;
   flex-shrink:0;
+  box-sizing:border-box;
   overflow:hidden;
   padding:10px;
 }
@@ -130,15 +125,20 @@ td{
   border-bottom:1px solid #334155;
 }
 
-/* CHART FIX */
+/* =========================
+   CHART FIX (FINAL SAFE)
+========================= */
+
 .chartBox{
   width:100%;
   height:240px;
   position:relative;
   overflow:hidden;
+  max-width:100vw;
 }
 
 canvas{
+  display:block;
   width:100% !important;
   height:240px !important;
   max-width:100% !important;
@@ -150,16 +150,13 @@ canvas{
 <body>
 
 <div id="splash"><div class="loader"></div></div>
-<div id="offline">Offline mode</div>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input type="password" id="pw">
   <button onclick="check()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none;" class="wrap">
 
 <input type="date" id="start">
@@ -207,52 +204,30 @@ canvas{
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
 
-/* DOM */
 const salesEl = document.getElementById("sales");
 const ordersEl = document.getElementById("orders");
 const topEl = document.getElementById("top");
 const tableArea = document.getElementById("tableArea");
 const slider = document.getElementById("slider");
-const splash = document.getElementById("splash");
+
+let barChart, lineChart;
+
 const login = document.getElementById("login");
 const app = document.getElementById("app");
-const offline = document.getElementById("offline");
 const pw = document.getElementById("pw");
 const start = document.getElementById("start");
 const end = document.getElementById("end");
 
-let barChart, lineChart;
-
-const PASSWORDS = ["1234","staff1","staff2"];
-
 /* LOGIN */
 function check(){
-  if(PASSWORDS.includes(pw.value)){
-    localStorage.setItem("login","1");
-    showApp();
-  } else {
-    alert("Wrong password");
+  if(pw.value==="1234"){
+    login.style.display="none";
+    app.style.display="block";
+    load();
   }
 }
 
-function showApp(){
-  login.style.display="none";
-  app.style.display="block";
-  load();
-}
-
-/* INIT */
-window.onload=()=>{
-  let today=new Date().toISOString().split("T")[0];
-  start.value=today;
-  end.value=today;
-
-  if(localStorage.getItem("login")) showApp();
-
-  setTimeout(()=>splash.style.display="none",500);
-};
-
-/* NAV (FIXED ALIGNMENT) */
+/* NAV - FINAL FIX */
 function goTo(i,el){
   slider.style.transform = `translateX(-${i * 100}vw)`;
 
@@ -261,35 +236,29 @@ function goTo(i,el){
   el.classList.add("active");
 
   setTimeout(()=>{
-    if(barChart) barChart.resize();
-    if(lineChart) lineChart.resize();
-  },150);
+    if(barChart){
+      barChart.resize();
+      barChart.update();
+    }
+    if(lineChart){
+      lineChart.resize();
+      lineChart.update();
+    }
+  }, 250);
 }
 
 /* LOAD */
 async function load(){
-
   let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
 
-  try{
-    let res = await fetch(url);
-    let map = await res.json();
+  let res = await fetch(url);
+  let map = await res.json();
 
-    localStorage.setItem("lastData",JSON.stringify(map));
-    draw(map);
-    offline.style.display="none";
-
-  }catch(e){
-    let saved = localStorage.getItem("lastData");
-    if(saved) draw(JSON.parse(saved));
-    offline.style.display="block";
-  }
+  draw(map);
 }
 
 /* DRAW */
 function draw(map){
-
-  if(!map) return;
 
   let productTotals = {};
   let dailyTotals = {};
@@ -318,11 +287,7 @@ function draw(map){
   ordersEl.innerText = sorted.length;
   topEl.innerText = top5[0] || "-";
 
-  let labels = dates.map(d =>
-    new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-  );
-
-  /* STACKED BAR */
+  /* BAR */
   if(barChart) barChart.destroy();
 
   barChart = new Chart(document.getElementById("barChart"),{
@@ -332,7 +297,7 @@ function draw(map){
       datasets: top5.map(p => ({
         label:p,
         data: dates.map(d => map[d][p] || 0),
-        stack:'stack1'
+        stack:'s'
       }))
     },
     options:{
@@ -351,7 +316,7 @@ function draw(map){
   lineChart = new Chart(document.getElementById("lineChart"),{
     type:'line',
     data:{
-      labels,
+      labels: dates,
       datasets:[{
         label:"Sales",
         data: dates.map(d => dailyTotals[d])
