@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- PWA -->
 <meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
@@ -53,4 +52,255 @@ body{
 }
 
 #login{
-  text-align
+  text-align:center;
+  margin-top:120px;
+}
+
+input,button{
+  padding:10px;
+  margin:5px;
+}
+
+.wrap{
+  padding:10px;
+}
+
+.slider{
+  display:flex;
+  width:300%;
+  transition:0.3s;
+}
+
+.section{
+  width:100%;
+  padding:10px;
+}
+
+.tiles{
+  display:flex;
+  gap:10px;
+}
+
+.tile{
+  flex:1;
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+}
+
+.nav{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  background:#1e293b;
+}
+
+.nav div{
+  flex:1;
+  padding:10px;
+  text-align:center;
+}
+
+.nav .active{
+  background:#38bdf8;
+}
+
+table{
+  width:100%;
+}
+
+td{
+  padding:6px;
+  border-bottom:1px solid #334155;
+}
+</style>
+</head>
+
+<body>
+
+<div id="splash"><div class="loader"></div></div>
+<div id="offline">Offline mode</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>Login</h2>
+  <input type="password" id="pw">
+  <button onclick="check()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;" class="wrap">
+
+<input type="date" id="start">
+<input type="date" id="end">
+<button onclick="load()">Load</button>
+
+<div id="slider" class="slider">
+
+<div class="section">
+  <div class="tiles">
+    <div class="tile"><div>Sales</div><div id="sales">£0</div></div>
+    <div class="tile"><div>Products</div><div id="orders">0</div></div>
+    <div class="tile"><div>Top</div><div id="top">-</div></div>
+  </div>
+
+  <canvas id="barChart"></canvas>
+</div>
+
+<div class="section">
+  <div id="tableArea"></div>
+</div>
+
+<div class="section">
+  <canvas id="lineChart"></canvas>
+</div>
+
+</div>
+</div>
+
+<div class="nav">
+  <div onclick="goTo(0,this)" class="active">📊</div>
+  <div onclick="goTo(1,this)">📦</div>
+  <div onclick="goTo(2,this)">📈</div>
+</div>
+
+<script>
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+
+let index=0,startX=0;
+let barChart,lineChart;
+
+const PASSWORDS=["1234","staff1","staff2"];
+
+function check(){
+  if(PASSWORDS.includes(pw.value)){
+    localStorage.setItem("login","1");
+    showApp();
+  }else alert("Wrong password");
+}
+
+function showApp(){
+  login.style.display="none";
+  app.style.display="block";
+  load();
+}
+
+window.onload=()=>{
+  let today=new Date().toISOString().split("T")[0];
+  start.value=today;
+  end.value=today;
+
+  if(localStorage.getItem("login")) showApp();
+
+  setTimeout(()=>splash.style.display="none",500);
+};
+
+function goTo(i,el){
+  index=i;
+  slider.style.transform="translateX(-"+(i*100)+"%)";
+  document.querySelectorAll(".nav div").forEach(n=>n.classList.remove("active"));
+  el.classList.add("active");
+}
+
+async function load(){
+
+  let url = SCRIPT_URL + "?start="+start.value+"&end="+end.value;
+
+  try{
+    let res = await fetch(url);
+    let map = await res.json();
+
+    localStorage.setItem("lastData",JSON.stringify(map));
+    draw(map);
+    showOnline(true);
+
+  }catch{
+
+    let saved = localStorage.getItem("lastData");
+    if(saved) draw(JSON.parse(saved));
+
+    showOnline(false);
+  }
+}
+
+function showOnline(state){
+  offline.style.display = state ? "none" : "block";
+}
+
+function draw(map){
+
+  if(!map) return;
+
+  let productTotals = {};
+  let dailyTotals = {};
+  let dates = Object.keys(map).sort();
+
+  let sales = 0;
+
+  for(let d in map){
+
+    dailyTotals[d] = 0;
+
+    for(let p in map[d]){
+
+      let v = Number(map[d][p]) || 0;
+
+      productTotals[p] = (productTotals[p] || 0) + v;
+      dailyTotals[d] += v;
+      sales += v;
+    }
+  }
+
+  let sorted = Object.keys(productTotals)
+    .sort((a,b)=>productTotals[b]-productTotals[a]);
+
+  let top5 = sorted.slice(0,5);
+
+  salesEl.innerText = "£" + sales.toFixed(2);
+  ordersEl.innerText = sorted.length;
+  topEl.innerText = top5[0] || "-";
+
+  let labels = dates.map(d =>
+    new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+  );
+
+  if(barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById("barChart"),{
+    type:'bar',
+    data:{
+      labels,
+      datasets: top5.map(p => ({
+        label:p,
+        data: dates.map(d => map[d][p] || 0)
+      }))
+    }
+  });
+
+  if(lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById("lineChart"),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:"Sales",
+        data: dates.map(d => dailyTotals[d])
+      }]
+    }
+  });
+
+  let html="<table>";
+  sorted.forEach(p=>{
+    html += `<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
+  });
+  html+="</table>";
+
+  tableArea.innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
