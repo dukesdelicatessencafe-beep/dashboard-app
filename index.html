@@ -23,21 +23,32 @@ body{
   overflow-x:hidden;
 }
 
-/* TOP PADDING SAFE AREA */
 .wrap{
   padding:12px;
   padding-bottom:70px;
 }
 
-/* PULL REFRESH */
-#pull{
-  position:fixed;
-  top:-60px;
-  left:0;
-  width:100%;
-  text-align:center;
-  color:#38bdf8;
-  font-size:14px;
+/* DATE FILTER */
+.dateBar{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.dateBar input{
+  flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:none;
+}
+
+.dateBar button{
+  padding:8px 10px;
+  border-radius:8px;
+  border:none;
+  background:#38bdf8;
+  color:#000;
+  font-weight:bold;
 }
 
 /* TABS */
@@ -83,13 +94,12 @@ body{
   font-size:14px;
 }
 
-/* CHART FIX (NO OVERFLOW EVER) */
+/* CHARTS */
 .chartBox{
   width:100%;
   height:260px;
 }
 
-/* IMPORTANT: prevents Chart.js overflow */
 canvas{
   width:100% !important;
   height:260px !important;
@@ -106,7 +116,19 @@ td{
   border-bottom:1px solid #334155;
   font-size:14px;
 }
+
+/* PULL REFRESH */
+#pull{
+  position:fixed;
+  top:-60px;
+  left:0;
+  width:100%;
+  text-align:center;
+  color:#38bdf8;
+  font-size:14px;
+}
 </style>
+
 </head>
 
 <body>
@@ -118,12 +140,21 @@ td{
 <!-- TAB 1 -->
 <div id="tab1" class="tab active">
 
+  <!-- DATE RANGE -->
+  <div class="dateBar">
+    <input type="date" id="startDate">
+    <input type="date" id="endDate">
+    <button onclick="applyFilter()">Go</button>
+  </div>
+
+  <!-- SUMMARY -->
   <div class="tiles">
     <div class="tile">Sales<br><b id="sales">£0</b></div>
     <div class="tile">Products<br><b id="products">0</b></div>
     <div class="tile">Top<br><b id="top">-</b></div>
   </div>
 
+  <!-- BAR CHART -->
   <div class="chartBox">
     <canvas id="barChart"></canvas>
   </div>
@@ -163,8 +194,9 @@ const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0t
    STATE
 ====================== */
 
+let RAW_DATA = {};
+let FILTERED_DATA = {};
 let barChart, lineChart;
-let currentTab = 1;
 
 /* ======================
    LOAD DATA
@@ -177,11 +209,46 @@ async function load(){
     let res = await fetch(URL);
     let data = await res.json();
 
-    draw(data);
+    RAW_DATA = data;
+    FILTERED_DATA = data;
+
+    draw(FILTERED_DATA);
 
   }catch(e){
-    console.log("Load error",e);
+    console.log("Load error", e);
   }
+}
+
+/* ======================
+   APPLY DATE FILTER
+====================== */
+
+function applyFilter(){
+
+  let start = document.getElementById("startDate").value;
+  let end = document.getElementById("endDate").value;
+
+  if(!start || !end){
+    FILTERED_DATA = RAW_DATA;
+    draw(FILTERED_DATA);
+    return;
+  }
+
+  let out = {};
+  let startT = new Date(start).getTime();
+  let endT = new Date(end).getTime();
+
+  for(let d in RAW_DATA){
+
+    let t = new Date(d).getTime();
+
+    if(t >= startT && t <= endT){
+      out[d] = RAW_DATA[d];
+    }
+  }
+
+  FILTERED_DATA = out;
+  draw(FILTERED_DATA);
 }
 
 /* ======================
@@ -207,25 +274,21 @@ function draw(data){
       productTotals[p] = (productTotals[p] || 0) + v;
 
       dailyTotals[d] += v;
-
       totalSales += v;
     }
   }
 
-  let sortedProducts = Object.keys(productTotals)
+  let sorted = Object.keys(productTotals)
     .sort((a,b)=>productTotals[b]-productTotals[a]);
 
-  let top5 = sortedProducts.slice(0,5);
+  let top5 = sorted.slice(0,5);
 
-  /* TILE DATA */
+  /* SUMMARY */
   document.getElementById("sales").innerText = "£" + totalSales.toFixed(2);
-  document.getElementById("products").innerText = sortedProducts.length;
+  document.getElementById("products").innerText = sorted.length;
   document.getElementById("top").innerText = top5[0] || "-";
 
-  /* ======================
-     BAR CHART (STACKED)
-  ====================== */
-
+  /* BAR CHART */
   if(barChart) barChart.destroy();
 
   barChart = new Chart(document.getElementById("barChart"),{
@@ -248,10 +311,7 @@ function draw(data){
     }
   });
 
-  /* ======================
-     LINE CHART
-  ====================== */
-
+  /* LINE CHART */
   if(lineChart) lineChart.destroy();
 
   lineChart = new Chart(document.getElementById("lineChart"),{
@@ -269,13 +329,10 @@ function draw(data){
     }
   });
 
-  /* ======================
-     TABLE
-  ====================== */
-
+  /* TABLE */
   let html = "";
 
-  for(let p of sortedProducts){
+  for(let p of sorted){
     html += `<tr><td>${p}</td><td>£${productTotals[p].toFixed(2)}</td></tr>`;
   }
 
@@ -287,8 +344,6 @@ function draw(data){
 ====================== */
 
 function switchTab(n,el){
-
-  currentTab = n;
 
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.getElementById("tab"+n).classList.add("active");
@@ -322,7 +377,7 @@ if("serviceWorker" in navigator){
 load();
 
 /* ======================
-   PULL TO REFRESH (ELASTIC)
+   PULL TO REFRESH
 ====================== */
 
 let startY=0;
@@ -333,23 +388,20 @@ document.addEventListener("touchstart",e=>{
 });
 
 document.addEventListener("touchmove",e=>{
-
   let dy = e.touches[0].clientY - startY;
 
   if(window.scrollY < 5 && dy > 20){
     pulling = true;
-    document.getElementById("pull").style.top = Math.min(dy-60,30) + "px";
+    document.getElementById("pull").style.top = Math.min(dy-60,30)+"px";
   }
 });
 
 document.addEventListener("touchend",()=>{
-
   if(pulling){
-    document.getElementById("pull").style.top = "-60px";
+    document.getElementById("pull").style.top="-60px";
     load();
   }
-
-  pulling = false;
+  pulling=false;
 });
 
 </script>
