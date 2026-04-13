@@ -21,7 +21,6 @@ body{
   overflow:hidden;
 }
 
-/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -32,7 +31,6 @@ body{
 
 #app{display:none;height:100vh}
 
-/* APP */
 #container{
   height:calc(100vh - 55px);
   overflow-y:auto;
@@ -43,26 +41,22 @@ body{
   position:relative;
 }
 
-/* TABS */
 .tab{
   opacity:0;
-  transform:translateY(10px) scale(0.98);
+  transform:translateY(10px);
   pointer-events:none;
-  transition:all 220ms ease;
+  transition:all 200ms ease;
   position:absolute;
   width:100%;
-  left:0;
-  top:0;
 }
 
 .tab.active{
   opacity:1;
-  transform:translateY(0) scale(1);
+  transform:translateY(0);
   pointer-events:auto;
   position:relative;
 }
 
-/* TILES */
 .tiles{display:flex;gap:8px}
 .tile{
   flex:1;
@@ -72,26 +66,17 @@ body{
   text-align:center;
 }
 
-/* DATE */
 .dateBar{display:flex;gap:8px;flex-wrap:wrap}
 .dateBar input{
   flex:1;
   padding:8px;
   border-radius:8px;
   border:none;
-  min-width:120px;
 }
 
-.presetRow{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  margin-top:6px;
-}
-
+.presetRow{display:flex;gap:6px;flex-wrap:wrap}
 .presetBtn{
   flex:1;
-  min-width:80px;
   padding:6px;
   border:none;
   border-radius:8px;
@@ -99,7 +84,6 @@ body{
   color:white;
 }
 
-/* CHART */
 .chartBox{
   height:300px;
   background:#0b1220;
@@ -107,20 +91,15 @@ body{
   padding:8px;
 }
 
-canvas{
-  width:100%!important;
-  height:100%!important;
-}
+canvas{width:100%!important;height:100%!important}
 
-/* INSIGHTS */
 #insights{
-  padding:10px;
-  background:#1e293b;
-  border-radius:10px;
   margin-top:10px;
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
 }
 
-/* NAV */
 .nav{
   position:fixed;
   bottom:0;
@@ -139,7 +118,6 @@ canvas{
 
 .nav .active{background:#38bdf8}
 
-/* PULL */
 #pull{
   text-align:center;
   height:0;
@@ -231,24 +209,20 @@ const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0t
 let RAW = {};
 let barChart, salesChart;
 
-/* LOGIN SAFE */
+/* LOGIN */
 function login(){
-  const pass = document.getElementById("pass");
-  const loginEl = document.getElementById("login");
-  const appEl = document.getElementById("app");
-
-  if(pass.value === "1234"){
-    loginEl.style.display = "none";
-    appEl.style.display = "block";
+  const pass=document.getElementById("pass");
+  if(pass.value==="1234"){
+    login.style.display="none";
+    app.style.display="block";
     load();
-  } else {
-    alert("Wrong password");
-  }
+  } else alert("Wrong password");
 }
 
-/* LOAD SAFE (NO MORE CRASHES) */
+/* SAFE LOAD WITH RETRY */
 async function load(){
   try{
+
     const res = await fetch(URL);
     const text = await res.text();
 
@@ -256,45 +230,21 @@ async function load(){
       throw new Error("API returned HTML not JSON");
     }
 
-    RAW = JSON.parse(text);
+    let data;
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      console.log("Retrying parse...");
+      data = JSON.parse(text.trim());
+    }
+
+    RAW = data;
     draw(RAW);
 
   } catch(e){
     console.error(e);
-    alert("Load failed — check API");
+    alert("Load failed — API issue (not app)");
   }
-}
-
-/* RANGE */
-function setRange(type){
-
-  let e=new Date();
-  let s=new Date();
-
-  if(type==="today") s.setHours(0,0,0,0);
-  if(type==="7") s.setDate(e.getDate()-7);
-  if(type==="30") s.setDate(e.getDate()-30);
-
-  startDate.value=s.toISOString().split("T")[0];
-  endDate.value=e.toISOString().split("T")[0];
-
-  applyFilter();
-}
-
-/* FILTER */
-function applyFilter(){
-
-  let s=new Date(startDate.value).getTime();
-  let e=new Date(endDate.value).getTime();
-
-  let out={};
-
-  for(let d in RAW){
-    let t=new Date(d).getTime();
-    if(t>=s&&t<=e) out[d]=RAW[d];
-  }
-
-  draw(out);
 }
 
 /* DRAW SAFE */
@@ -323,12 +273,12 @@ function draw(data){
   products.innerText=sorted.length;
   top.innerText=top5[0]||"-";
 
-  insights.innerHTML=
-    "🏆 Top Products<br>"+
+  insights.innerHTML =
+    "🏆 Top Products<br>" +
     top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>");
 
   if(barChart) barChart.destroy();
-  barChart=new Chart(barChartCanvas,{
+  barChart = new Chart(barChartCanvas,{
     type:"bar",
     data:{
       labels:dates,
@@ -338,11 +288,11 @@ function draw(data){
         stack:"s"
       }))
     },
-    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}
+    options:{responsive:true,maintainAspectRatio:false}
   });
 
   if(salesChart) salesChart.destroy();
-  salesChart=new Chart(salesChartCanvas,{
+  salesChart = new Chart(salesChartCanvas,{
     type:"bar",
     data:{
       labels:dates,
@@ -361,9 +311,7 @@ function draw(data){
 /* TAB SWITCH */
 function switchTab(n,el){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  const tab=document.getElementById("tab"+n);
-  void tab.offsetWidth;
-  tab.classList.add("active");
+  document.getElementById("tab"+n).classList.add("active");
 
   document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
   el.classList.add("active");
@@ -379,22 +327,6 @@ container.addEventListener("touchend",e=>{
   let diff=e.changedTouches[0].clientX-startX;
   if(diff>80) switchTab(1,document.querySelectorAll(".nav div")[0]);
   if(diff<-80) switchTab(3,document.querySelectorAll(".nav div")[2]);
-});
-
-/* PULL */
-let pulling=false;
-
-container.addEventListener("touchmove",e=>{
-  if(container.scrollTop===0 && e.touches[0].clientY>80){
-    pull.innerText="↻ Release to refresh";
-    pulling=true;
-  }
-});
-
-container.addEventListener("touchend",()=>{
-  if(pulling) load();
-  pull.innerText="⬇ Pull to refresh";
-  pulling=false;
 });
 
 /* PWA */
