@@ -71,6 +71,8 @@ button{background:#38bdf8;font-weight:bold;}
   width:100%;
   height:calc(100vh - 60px);
   transition:transform .35s ease;
+  will-change:transform;
+  transform:translateX(0);
 }
 
 .tab{
@@ -79,6 +81,7 @@ button{background:#38bdf8;font-weight:bold;}
   height:100%;
   overflow:auto;
   box-sizing:border-box;
+  overflow-x:hidden;
   padding:10px;
 }
 /* =========================
@@ -102,8 +105,16 @@ button{background:#38bdf8;font-weight:bold;}
 .nav div{
   flex:1;
   display:flex;
+  flex-direction:column;
   justify-content:center;
   align-items:center;
+  gap:2px;
+  font-size:14px;
+}
+
+.nav small{
+  font-size:10px;
+  opacity:0.75;
 }
 
 .nav .active{
@@ -258,9 +269,22 @@ td{
      🧭 NAV BAR
 ========================= -->
 <div class="nav" id="nav">
-  <div onclick="App.switchTab(0,this)" class="active">Home</div>
-  <div onclick="App.switchTab(1,this)">Stats</div>
-  <div onclick="App.switchTab(2,this)">Products</div>
+
+  <div onclick="App.switchTab(0,this)" class="active">
+    <div>🏠</div>
+    <small>Home</small>
+  </div>
+
+  <div onclick="App.switchTab(1,this)">
+    <div>📈</div>
+    <small>Stats</small>
+  </div>
+
+  <div onclick="App.switchTab(2,this)">
+    <div>📦</div>
+    <small>Products</small>
+  </div>
+
 </div>
 
 
