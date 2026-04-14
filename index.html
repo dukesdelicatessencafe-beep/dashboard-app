@@ -8,33 +8,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
+html, body {
   margin:0;
+  padding:0;
+  width:100%;
+  overflow-x:hidden;
   font-family:system-ui;
   background:#0f172a;
   color:white;
-  overflow:hidden;
 }
-
-/* LOADING */
-#loading{
-  position:fixed;inset:0;
-  background:#0f172a;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:999;
-}
-
-.spinner{
-  width:40px;height:40px;
-  border:3px solid #334155;
-  border-top:3px solid #38bdf8;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 /* LOGIN */
 #login{
@@ -46,21 +28,30 @@ body{
   gap:10px;
 }
 
-/* APP WRAP (CRITICAL FIX) */
+input,button{
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+
+input{background:#0b1220;color:white;}
+button{background:#38bdf8;font-weight:bold;}
+
+/* APP */
 #app{
   display:none;
   height:100vh;
   overflow:hidden;
+  width:100%;
 }
 
-/* FIXED TABS SYSTEM (NO OVERFLOW) */
+/* SWIPE WRAPPER */
 .tabs-wrapper{
   display:flex;
   width:300%;
   height:calc(100vh - 70px);
-  transform:translateX(0);
-  transition:transform .35s cubic-bezier(.2,.8,.2,1);
-  will-change:transform;
+  transform:translateX(0px);
+  transition:transform .35s ease;
 }
 
 .tab{
@@ -68,17 +59,17 @@ body{
   flex-shrink:0;
   overflow:auto;
   padding:10px;
-  box-sizing:border-box; /* FIX CUT OFF ISSUE */
+  box-sizing:border-box;
 }
 
 /* HEADER */
 .header{
   position:sticky;
   top:0;
-  background:rgba(15,23,42,0.85);
-  backdrop-filter:blur(10px);
+  background:#0f172a;
+  padding-left:6px;
+  padding-right:6px;
   z-index:10;
-  padding-bottom:10px;
 }
 
 /* GRID */
@@ -93,7 +84,7 @@ body{
   border-radius:14px;
 }
 
-/* DATES */
+/* DATE CONTROLS */
 .dates{
   display:flex;
   gap:8px;
@@ -109,28 +100,54 @@ canvas{
 }
 
 /* TABLE */
-table{width:100%;border-collapse:collapse;}
-td{padding:8px;border-bottom:1px solid #334155;}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+td{
+  padding:8px;
+  border-bottom:1px solid #334155;
+}
 
-/* NAV GLASS (LUXURY) */
+/* NAV */
 .nav{
   position:fixed;
-  bottom:0;left:0;right:0;
+  bottom:0;
+  left:0;
+  right:0;
   height:60px;
   display:none;
   background:rgba(11,18,32,0.7);
   backdrop-filter:blur(12px);
-  border-top:1px solid rgba(255,255,255,0.05);
 }
-
 .nav div{
   flex:1;
   display:flex;
   justify-content:center;
   align-items:center;
-  font-weight:500;
 }
 .nav .active{color:#38bdf8;}
+
+/* LOADING */
+#loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  background:#0f172a;
+  z-index:999;
+}
+
+.spinner{
+  width:40px;height:40px;
+  border:3px solid #334155;
+  border-top:3px solid #38bdf8;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* TOAST */
 #toast{
@@ -139,29 +156,12 @@ td{padding:8px;border-bottom:1px solid #334155;}
   left:50%;
   transform:translateX(-50%);
   background:#1e293b;
-  padding:12px;
+  padding:10px 14px;
   border-radius:12px;
   opacity:0;
   transition:.2s;
 }
 #toast.show{opacity:1;}
-
-/* MODAL DRILLDOWN */
-#modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.6);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
-}
-#modal .box{
-  background:#1e293b;
-  padding:20px;
-  border-radius:16px;
-  width:80%;
-}
 </style>
 </head>
 
@@ -169,7 +169,7 @@ td{padding:8px;border-bottom:1px solid #334155;}
 
 <div id="loading">
   <div class="spinner"></div>
-  <p>Syncing data...</p>
+  <p>Syncing...</p>
 </div>
 
 <div id="login">
@@ -196,10 +196,11 @@ td{padding:8px;border-bottom:1px solid #334155;}
         <div class="dates">
           <input id="startDate" type="date">
           <input id="endDate" type="date">
-          <button onclick="setRange('apply')">Apply</button>
+
           <button onclick="setRange('today')">Today</button>
           <button onclick="setRange('7')">7D</button>
           <button onclick="setRange('30')">30D</button>
+          <button onclick="setRange('apply')">Apply</button>
         </div>
 
       </div>
@@ -220,18 +221,13 @@ td{padding:8px;border-bottom:1px solid #334155;}
     </div>
 
   </div>
+
 </div>
 
 <div class="nav" id="nav">
   <div class="active" onclick="switchTab(0,this)">Home</div>
   <div onclick="switchTab(1,this)">Stats</div>
   <div onclick="switchTab(2,this)">Products</div>
-</div>
-
-<div id="toast"></div>
-
-<div id="modal" onclick="this.style.display='none'">
-  <div class="box" id="modalBox"></div>
 </div>
 
 <script>
@@ -245,38 +241,28 @@ URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsE
 password:"1234"
 },
 
-get:id=>document.getElementById(id),
-
-toast(msg){
-const t=this.get("toast");
-t.innerText=msg;
-t.classList.add("show");
-setTimeout(()=>t.classList.remove("show"),1500);
-},
+get(id){return document.getElementById(id);},
 
 login(){
-if(this.get("pass").value!==this.config.password){
-this.toast("Wrong password");return;
+if(pass.value!==this.config.password){
+alert("Wrong password");return;
 }
-this.get("login").style.display="none";
-this.get("app").style.display="block";
-this.get("nav").style.display="flex";
+login.style.display="none";
+app.style.display="block";
+nav.style.display="flex";
 this.load();
 },
 
 async load(){
-this.get("loading").style.display="flex";
-try{
-const r=await fetch(this.config.URL,{cache:"no-store"});
-const d=await r.json();
-this.state.RAW=d;
-this.draw(d);
-}catch(e){this.toast("Load failed");}
-this.get("loading").style.display="none";
+loading.style.display="flex";
+const res=await fetch(this.config.URL,{cache:"no-store"});
+const data=await res.json();
+this.state.RAW=data;
+this.draw(data);
+loading.style.display="none";
 },
 
 setRange(t){
-if(t==="apply") return this.applyRange();
 
 const n=new Date();
 let s=new Date();
@@ -285,13 +271,16 @@ if(t==="today") s.setHours(0,0,0,0);
 if(t==="7") s.setDate(n.getDate()-7);
 if(t==="30") s.setDate(n.getDate()-30);
 
+if(t!=="apply"){
 startDate.value=s.toISOString().split("T")[0];
 endDate.value=n.toISOString().split("T")[0];
+}
 
 this.applyRange();
 },
 
 applyRange(){
+
 const s=new Date(startDate.value).getTime();
 const e=new Date(endDate.value).getTime();
 
@@ -327,7 +316,7 @@ products.innerText=sorted.length;
 top.innerText=top5[0]||"-";
 
 productTable.innerHTML=
-sorted.map(p=>`<tr onclick="App.openProduct('${p}')"><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
 const money=v=>"£"+v.toFixed(2);
 
@@ -346,9 +335,6 @@ options:{
 scales:{
 y:{ticks:{callback:money}},
 x:{stacked:true}
-},
-plugins:{
-tooltip:{callbacks:{label:c=>c.dataset.label+": "+money(c.raw)}}
 }
 }
 });
@@ -367,32 +353,12 @@ scales:{y:{ticks:{callback:money}}}
 
 },
 
-openProduct(p){
-const box=this.get("modalBox");
-box.innerHTML=`<h3>${p}</h3><p>More analytics coming next upgrade</p>`;
-this.get("modal").style.display="flex";
-},
-
 switchTab(i,el){
 this.state.tab=i;
-this.get("wrap").style.transform=`translateX(-${i*100}%)`;
+wrap.style.transform=`translateX(-${i*100}%)`;
 
 document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
 el.classList.add("active");
-},
-
-initGestures(){
-const w=this.get("wrap");
-let x=0;
-
-w.addEventListener("touchstart",e=>x=e.touches[0].clientX);
-
-w.addEventListener("touchend",e=>{
-let dx=e.changedTouches[0].clientX-x;
-
-if(dx>80&&this.state.tab>0) this.switchTab(this.state.tab-1,document.querySelectorAll(".nav div")[this.state.tab-1]);
-if(dx<-80&&this.state.tab<2) this.switchTab(this.state.tab+1,document.querySelectorAll(".nav div")[this.state.tab+1]);
-});
 }
 
 };
@@ -400,10 +366,6 @@ if(dx<-80&&this.state.tab<2) this.switchTab(this.state.tab+1,document.querySelec
 function login(){App.login();}
 function setRange(t){App.setRange(t);}
 function switchTab(i,el){App.switchTab(i,el);}
-
-document.addEventListener("DOMContentLoaded",()=>{
-App.initGestures();
-});
 
 </script>
 
