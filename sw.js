@@ -1,11 +1,10 @@
-const CACHE_NAME = "dashboard-pro-v1";
+const CACHE_NAME = "dashboard-pro-v2";
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.png",
-  "https://cdn.jsdelivr.net/npm/chart.js"
+  "./icon.png"
 ];
 
 /* INSTALL */
@@ -16,39 +15,44 @@ self.addEventListener("install", event => {
   );
 });
 
-/* ACTIVATE (CRITICAL FIX: prevents old cache bugs) */
+/* ACTIVATE (SAFE CLEANUP) */
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
+        keys.map(key => key !== CACHE_NAME && caches.delete(key))
       )
     )
   );
   self.clients.claim();
 });
 
-/* FETCH (NETWORK-FIRST FOR API, CACHE-FIRST FOR UI) */
+/* FETCH STRATEGY */
 self.addEventListener("fetch", event => {
 
   const url = new URL(event.request.url);
 
-  // NEVER cache API calls (prevents your JSON bug)
+  /* NEVER TOUCH API */
   if (url.href.includes("script.google.com")) {
+    return; // bypass completely
+  }
+
+  /* NETWORK FIRST FOR HTML */
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("./index.html"))
+    );
     return;
   }
 
+  /* CACHE FIRST FOR STATIC */
   event.respondWith(
-    fetch(event.request)
-      .then(res => {
+    caches.match(event.request).then(cached => {
+      return cached || fetch(event.request).then(res => {
         const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, clone);
-        });
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return res;
-      })
-      .catch(() => caches.match(event.request))
+      });
+    })
   );
 });
