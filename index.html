@@ -1,5 +1,6 @@
 <script>
 alert("SCRIPT IS RUNNING");
+
 const App = {
 
   state: {
@@ -16,18 +17,20 @@ const App = {
   ui: {},
 
   /* INIT */
-  init(){
+  init() {
     this.cacheDOM();
+    this.guardDOM();
     this.safeBoot();
     this.initGestures();
   },
 
   /* CACHE DOM */
-  cacheDOM(){
+  cacheDOM() {
     this.ui = {
       login: document.getElementById("login"),
       app: document.getElementById("app"),
       pass: document.getElementById("pass"),
+
       container: document.getElementById("container"),
 
       sales: document.getElementById("sales"),
@@ -44,30 +47,42 @@ const App = {
     };
   },
 
-  /* FAILSAFE BOOT (FIXES WHITE SCREEN) */
-  safeBoot(){
+  /* HARD FAIL DETECTION */
+  guardDOM() {
+    const required = ["login", "app", "pass"];
 
-    if(this.ui.login){
-      this.ui.login.style.display = "flex";
+    const missing = required.filter(k => !this.ui[k]);
+
+    if (missing.length) {
+      console.error("MISSING DOM ELEMENTS:", missing);
+      document.body.innerHTML =
+        "<h2 style='color:red;font-family:Arial'>ERROR: Missing HTML elements: " +
+        missing.join(", ") +
+        "</h2>";
+      throw new Error("DOM missing: " + missing.join(", "));
     }
+  },
 
-    if(this.ui.app){
-      this.ui.app.style.display = "none";
-    }
-
+  /* SAFE BOOT */
+  safeBoot() {
+    if (this.ui.login) this.ui.login.style.display = "flex";
+    if (this.ui.app) this.ui.app.style.display = "none";
   },
 
   /* LOGIN */
-  login(){
+  login() {
 
-    const { pass, login, app } = this.ui;
+    const pass = this.ui.pass;
+    const login = this.ui.login;
+    const app = this.ui.app;
 
-    if(!pass || !login || !app){
-      alert("UI missing elements");
+    if (!pass || !login || !app) {
+      console.error("LOGIN FAIL - UI MISSING", this.ui);
+      alert("UI missing elements (check HTML IDs)");
       return;
     }
 
-    if(pass.value === this.config.password){
+    if (pass.value === this.config.password) {
       login.style.display = "none";
       app.style.display = "block";
       this.load();
@@ -76,184 +91,158 @@ const App = {
     }
   },
 
-  /* LOAD */
-  async load(){
-
-    try{
+  /* LOAD API */
+  async load() {
+    try {
 
       const res = await fetch(this.config.URL);
-      const text = await res.text();
 
-      if(!text || text.includes("<!DOCTYPE")){
-        throw new Error("Invalid API response");
+      if (!res.ok) {
+        throw new Error("Network error: " + res.status);
       }
 
-      this.state.RAW = JSON.parse(text);
-      this.draw(this.state.RAW);
+      const text = await res.text();
 
-    } catch(e){
+      if (!text || text.includes("<!DOCTYPE")) {
+        throw new Error("Invalid API response (HTML returned)");
+      }
+
+      const data = JSON.parse(text);
+
+      this.state.RAW = data;
+      this.draw(data);
+
+    } catch (e) {
       console.error("LOAD ERROR:", e);
-      alert("Load failed — API issue");
+      alert("Load failed - check API");
     }
   },
 
   /* DRAW */
-  draw(data){
+  draw(data) {
 
-    if(!this.ui.barChartCanvas) return;
+    if (!this.ui.barChartCanvas || !this.ui.salesChartCanvas) {
+      console.error("Charts missing in HTML");
+      return;
+    }
 
-    let pt={}, dt={}, total=0;
-    let dates = Object.keys(data||{}).sort();
+    let pt = {}, dt = {}, total = 0;
 
-    for(let d of dates){
-      let day=data[d]||{};
-      dt[d]=0;
+    let dates = Object.keys(data || {}).sort();
 
-      for(let p in day){
-        let v=Number(day[p]||0);
-        pt[p]=(pt[p]||0)+v;
-        dt[d]+=v;
-        total+=v;
+    for (let d of dates) {
+      let day = data[d] || {};
+      dt[d] = 0;
+
+      for (let p in day) {
+        let v = Number(day[p] || 0);
+        pt[p] = (pt[p] || 0) + v;
+        dt[d] += v;
+        total += v;
       }
     }
 
-    let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-    let top5 = sorted.slice(0,5);
+    let sorted = Object.keys(pt).sort((a, b) => pt[b] - pt[a]);
+    let top5 = sorted.slice(0, 5);
 
-    this.ui.sales.innerText = "£"+total.toFixed(2);
-    this.ui.products.innerText = sorted.length;
-    this.ui.top.innerText = top5[0]||"-";
+    if (this.ui.sales) this.ui.sales.innerText = "£" + total.toFixed(2);
+    if (this.ui.products) this.ui.products.innerText = sorted.length;
+    if (this.ui.top) this.ui.top.innerText = top5[0] || "-";
 
     let avg = total / (dates.length || 1);
-    let anomalies = dates.filter(d=>dt[d] > avg*1.5);
+    let anomalies = dates.filter(d => dt[d] > avg * 1.5);
 
-    this.ui.insights.innerHTML =
-      "🏆 Top Products<br>" +
-      top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>") +
-      "<br><br>⚠️ High Sales Days<br>" +
-      (anomalies.length ? anomalies.join("<br>") : "None");
+    if (this.ui.insights) {
+      this.ui.insights.innerHTML =
+        "🏆 Top Products<br>" +
+        top5.map(p => "• " + p + " (£" + pt[p].toFixed(2) + ")").join("<br>") +
+        "<br><br>⚠️ High Sales Days<br>" +
+        (anomalies.length ? anomalies.join("<br>") : "None");
+    }
 
-    if(this.state.barChart) this.state.barChart.destroy();
+    /* BAR CHART */
+    if (this.state.barChart) this.state.barChart.destroy();
 
-    this.state.barChart = new Chart(this.ui.barChartCanvas,{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:top5.map(p=>({
-          label:p,
-          data:dates.map(d=>data[d]?.[p]||0),
-          stack:"s"
+    this.state.barChart = new Chart(this.ui.barChartCanvas, {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: top5.map(p => ({
+          label: p,
+          data: dates.map(d => data[d]?.[p] || 0),
+          stack: "s"
         }))
       },
-      options:{responsive:true,maintainAspectRatio:false}
+      options: { responsive: true, maintainAspectRatio: false }
     });
 
-    if(this.state.salesChart) this.state.salesChart.destroy();
+    /* SALES CHART */
+    if (this.state.salesChart) this.state.salesChart.destroy();
 
-    this.state.salesChart = new Chart(this.ui.salesChartCanvas,{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:[{
-          label:"Sales (£)",
-          data:dates.map(d=>dt[d]||0),
-          backgroundColor:"#38bdf8"
+    this.state.salesChart = new Chart(this.ui.salesChartCanvas, {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: [{
+          label: "Sales (£)",
+          data: dates.map(d => dt[d] || 0),
+          backgroundColor: "#38bdf8"
         }]
       }
     });
 
-    this.ui.table.innerHTML =
-      sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+    /* TABLE */
+    if (this.ui.table) {
+      this.ui.table.innerHTML =
+        sorted.map(p =>
+          `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
+        ).join("");
+    }
   },
 
-  /* FILTER */
-  applyFilter(){
+  /* LOGIN FILTER */
+  applyFilter() {
+    let s = new Date(this.ui.startDate?.value || 0).getTime();
+    let e = new Date(this.ui.endDate?.value || 9999999999999).getTime();
 
-    let s = new Date(this.ui.startDate.value).getTime();
-    let e = new Date(this.ui.endDate.value).getTime();
+    let out = {};
 
-    let out={};
-
-    for(let d in this.state.RAW){
+    for (let d in this.state.RAW) {
       let t = new Date(d).getTime();
-      if(t>=s && t<=e) out[d]=this.state.RAW[d];
+      if (t >= s && t <= e) out[d] = this.state.RAW[d];
     }
 
     this.draw(out);
   },
 
-  /* RANGE */
-  setRange(type){
-
-    let end = new Date();
-    let start = new Date();
-
-    if(type==="today") start.setHours(0,0,0,0);
-    if(type==="7") start.setDate(end.getDate()-7);
-    if(type==="30") start.setDate(end.getDate()-30);
-
-    this.ui.startDate.value = start.toISOString().split("T")[0];
-    this.ui.endDate.value = end.toISOString().split("T")[0];
-
-    this.applyFilter();
-  },
-
-  /* TABS */
-  switchTab(n,el){
-
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("tab"+n)?.classList.add("active");
-
-    document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-    el?.classList.add("active");
-  },
-
-  /* GESTURES (SAFE) */
-  initGestures(){
-
+  /* INIT */
+  initGestures() {
     const c = this.ui.container;
-    if(!c) return;
+    if (!c) return;
 
-    let startX=0, pulling=false;
+    let startX = 0;
 
-    c.addEventListener("touchstart",e=>{
-      startX=e.touches[0].clientX;
+    c.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
     });
 
-    c.addEventListener("touchend",e=>{
-      let diff=e.changedTouches[0].clientX-startX;
+    c.addEventListener("touchend", e => {
+      let diff = e.changedTouches[0].clientX - startX;
 
-      if(diff>80) this.switchTab(1,document.querySelectorAll(".nav div")[0]);
-      if(diff<-80) this.switchTab(3,document.querySelectorAll(".nav div")[2]);
-
-      if(pulling){
-        this.load();
-        pulling=false;
-      }
-    });
-
-    c.addEventListener("touchmove",e=>{
-      if(c.scrollTop===0 && e.touches[0].clientY>80){
-        pulling=true;
-      }
+      if (diff > 80) console.log("swipe right");
+      if (diff < -80) console.log("swipe left");
     });
   }
 
 };
 
-/* INIT */
+/* START */
 document.addEventListener("DOMContentLoaded", () => {
   App.init();
 });
 
-/* GLOBAL BRIDGE */
-function login(){ App.login(); }
-function switchTab(n,el){ App.switchTab(n,el); }
-function setRange(type){ App.setRange(type); }
-
-/* SERVICE WORKER (CACHE BUST) */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js?v=3");
+/* GLOBALS */
+function login() {
+  App.login();
 }
-
 </script>
