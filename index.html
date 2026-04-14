@@ -15,7 +15,7 @@ const App = {
     password: "1234"
   },
 
-  /* UI ELEMENTS */
+  /* UI */
   ui: {},
 
   /* INIT */
@@ -41,37 +41,40 @@ const App = {
       startDate: document.getElementById("startDate"),
       endDate: document.getElementById("endDate"),
 
-      barChart: document.getElementById("barChart"),
-      salesChart: document.getElementById("salesChart")
+      barChartCanvas: document.getElementById("barChart"),
+      salesChartCanvas: document.getElementById("salesChart")
     };
   },
 
   /* EVENTS */
   bindEvents(){
-
-    /* LOGIN BUTTON */
-    window.login = () => this.login();
-
-    /* SWIPE + PULL */
     this.initGestures();
   },
 
   /* LOGIN */
   login(){
 
-    if(this.ui.pass.value === this.config.password){
-      this.ui.login.style.display = "none";
-      this.ui.app.style.display = "block";
+    const { pass, login, app } = this.ui;
+
+    if(!pass || !login || !app){
+      alert("UI not loaded correctly");
+      return;
+    }
+
+    if(pass.value === this.config.password){
+      login.style.display = "none";
+      app.style.display = "block";
       this.load();
     } else {
       alert("Wrong password");
     }
   },
 
-  /* API LOAD */
+  /* LOAD */
   async load(){
 
     try{
+
       const res = await fetch(this.config.URL);
       const text = await res.text();
 
@@ -126,7 +129,7 @@ const App = {
     /* CHARTS */
     if(this.state.barChart) this.state.barChart.destroy();
 
-    this.state.barChart = new Chart(this.ui.barChart,{
+    this.state.barChart = new Chart(this.ui.barChartCanvas,{
       type:"bar",
       data:{
         labels:dates,
@@ -136,12 +139,19 @@ const App = {
           stack:"s"
         }))
       },
-      options:{responsive:true,maintainAspectRatio:false}
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{stacked:true},
+          y:{stacked:true}
+        }
+      }
     });
 
     if(this.state.salesChart) this.state.salesChart.destroy();
 
-    this.state.salesChart = new Chart(this.ui.salesChart,{
+    this.state.salesChart = new Chart(this.ui.salesChartCanvas,{
       type:"bar",
       data:{
         labels:dates,
@@ -150,6 +160,10 @@ const App = {
           data:dates.map(d=>dt[d]||0),
           backgroundColor:"#38bdf8"
         }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false
       }
     });
 
@@ -189,8 +203,9 @@ const App = {
     this.applyFilter();
   },
 
-  /* TABS */
+  /* TAB SWITCH */
   switchTab(n,el){
+
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     document.getElementById("tab"+n).classList.add("active");
 
@@ -231,10 +246,15 @@ const App = {
 
 };
 
-/* INIT AFTER DOM READY */
+/* INIT */
 document.addEventListener("DOMContentLoaded", () => {
   App.init();
 });
+
+/* GLOBAL BRIDGE (so your HTML still works) */
+function login(){ App.login(); }
+function switchTab(n,el){ App.switchTab(n,el); }
+function setRange(type){ App.setRange(type); }
 
 /* PWA */
 if("serviceWorker" in navigator){
