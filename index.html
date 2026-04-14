@@ -18,13 +18,11 @@
   --text:#fff;
 }
 
-/* GLOBAL */
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
   font-family:system-ui;
-  transition:0.2s ease;
 }
 
 body{
@@ -57,13 +55,10 @@ button{
   border:none;
   border-radius:10px;
   background:var(--accent);
-  color:black;
   font-weight:bold;
 }
 
-button:active{
-  transform:scale(0.96);
-}
+button:active{transform:scale(0.96);}
 
 /* APP */
 #app{
@@ -72,15 +67,14 @@ button:active{
   overflow:hidden;
 }
 
-/* TOP BAR */
+/* TOP */
 .topbar{
   padding:12px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
 
-/* CARDS */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -92,23 +86,33 @@ button:active{
   background:rgba(30,41,59,0.8);
   padding:12px;
   border-radius:16px;
-  backdrop-filter: blur(10px);
 }
 
-/* PAGES */
+/* DATE FILTER */
+.dates{
+  display:flex;
+  gap:8px;
+  padding:12px;
+  flex-wrap:wrap;
+}
+
+.dates input{
+  flex:1;
+}
+
+/* TABS */
 .tab{
   display:none;
-  height:calc(100vh - 120px);
+  height:calc(100vh - 220px);
   overflow:auto;
-  padding-bottom:80px;
 }
 
 .tab.active{
   display:block;
-  animation:fadeIn .25s ease;
+  animation:fade .2s ease;
 }
 
-@keyframes fadeIn{
+@keyframes fade{
   from{opacity:0;transform:translateY(10px)}
   to{opacity:1;transform:translateY(0)}
 }
@@ -119,8 +123,8 @@ button:active{
   bottom:0;
   left:0;
   right:0;
-  height:60px;
   display:flex;
+  height:60px;
   background:#0b1220;
   border-top:1px solid #1e293b;
 }
@@ -128,9 +132,8 @@ button:active{
 .nav div{
   flex:1;
   display:flex;
-  align-items:center;
   justify-content:center;
-  cursor:pointer;
+  align-items:center;
 }
 
 .nav div.active{
@@ -139,8 +142,8 @@ button:active{
 
 /* CHART */
 canvas{
-  background:rgba(30,41,59,0.6);
   margin:10px;
+  background:rgba(30,41,59,0.6);
   border-radius:12px;
   padding:10px;
 }
@@ -153,13 +156,12 @@ canvas{
   transform:translateX(-50%);
   background:#1e293b;
   padding:10px 16px;
-  border-radius:12px;
+  border-radius:10px;
   opacity:0;
 }
 
 .toast.show{
   opacity:1;
-  transform:translateX(-50%) translateY(-5px);
 }
 </style>
 </head>
@@ -170,7 +172,7 @@ canvas{
 <div id="login">
   <h2>Dashboard Login</h2>
   <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Enter</button>
+  <button onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
@@ -185,6 +187,15 @@ canvas{
     <div class="card">Products<br><b id="products">0</b></div>
     <div class="card">Top<br><b id="top">-</b></div>
     <div class="card">Live<br><b>OK</b></div>
+  </div>
+
+  <!-- DATE RANGE -->
+  <div class="dates">
+    <input id="startDate" type="date">
+    <input id="endDate" type="date">
+    <button onclick="setRange('apply')">Apply</button>
+    <button onclick="setRange('7')">7D</button>
+    <button onclick="setRange('30')">30D</button>
   </div>
 
   <!-- TAB 1 -->
@@ -215,6 +226,7 @@ const App = {
 
   state:{
     RAW:{},
+    FILTERED:{},
     barChart:null,
     salesChart:null
   },
@@ -259,6 +271,8 @@ const App = {
       const data=await res.json();
 
       this.state.RAW=data;
+      this.state.FILTERED=data;
+
       this.draw(data);
 
     }catch(e){
@@ -267,23 +281,56 @@ const App = {
     }
   },
 
+  setRange(type){
+
+    const now=new Date();
+    let start=new Date();
+
+    if(type==="7") start.setDate(now.getDate()-7);
+    if(type==="30") start.setDate(now.getDate()-30);
+
+    document.getElementById("startDate").value=start.toISOString().split("T")[0];
+    document.getElementById("endDate").value=now.toISOString().split("T")[0];
+
+    if(type==="apply") return this.applyRange();
+    this.applyRange();
+  },
+
+  applyRange(){
+
+    const s=new Date(document.getElementById("startDate").value).getTime();
+    const e=new Date(document.getElementById("endDate").value).getTime();
+
+    if(!s||!e){this.toast("Select dates");return;}
+
+    const out={};
+
+    for(const d in this.state.RAW){
+      const t=new Date(d).getTime();
+      if(t>=s && t<=e) out[d]=this.state.RAW[d];
+    }
+
+    this.state.FILTERED=out;
+    this.draw(out);
+  },
+
   draw(data){
 
     let pt={},dt={},total=0;
-    let dates=Object.keys(data).sort();
+    const dates=Object.keys(data).sort();
 
-    for(let d of dates){
+    for(const d of dates){
       dt[d]=0;
-      for(let p in data[d]){
-        let v=+data[d][p]||0;
+      for(const p in data[d]){
+        const v=+data[d][p]||0;
         pt[p]=(pt[p]||0)+v;
         dt[d]+=v;
         total+=v;
       }
     }
 
-    let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-    let top5=sorted.slice(0,5);
+    const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+    const top5=sorted.slice(0,5);
 
     document.getElementById("sales").innerText="£"+total.toFixed(2);
     document.getElementById("products").innerText=sorted.length;
@@ -314,12 +361,18 @@ const App = {
       }
     });
 
+    const i=document.getElementById("insights");
+    if(i){
+      i.innerHTML="<b>Top Products</b><br>"+
+      top5.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
+    }
   }
 
 };
 
 /* GLOBAL */
 function login(){App.login();}
+function setRange(t){App.setRange(t);}
 function switchTab(n){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   const el=document.getElementById("tab"+n);
@@ -330,9 +383,9 @@ function switchTab(n){
 let startX=0;
 document.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
 document.addEventListener("touchend",e=>{
-  let diff=e.changedTouches[0].clientX-startX;
-  if(Math.abs(diff)<80) return;
-  switchTab(diff>0?1:2);
+  let d=e.changedTouches[0].clientX-startX;
+  if(Math.abs(d)<80) return;
+  switchTab(d>0?1:2);
 });
 
 /* INIT */
