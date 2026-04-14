@@ -2,26 +2,24 @@
 
 const App = {
 
-  /* STATE */
   state: {
     RAW: {},
     barChart: null,
     salesChart: null
   },
 
-  /* CONFIG */
   config: {
     URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
     password: "1234"
   },
 
-  /* UI */
   ui: {},
 
   /* INIT */
   init(){
     this.cacheDOM();
-    this.bindEvents();
+    this.safeBoot();
+    this.initGestures();
   },
 
   /* CACHE DOM */
@@ -46,9 +44,17 @@ const App = {
     };
   },
 
-  /* EVENTS */
-  bindEvents(){
-    this.initGestures();
+  /* FAILSAFE BOOT (FIXES WHITE SCREEN) */
+  safeBoot(){
+
+    if(this.ui.login){
+      this.ui.login.style.display = "flex";
+    }
+
+    if(this.ui.app){
+      this.ui.app.style.display = "none";
+    }
+
   },
 
   /* LOGIN */
@@ -57,7 +63,7 @@ const App = {
     const { pass, login, app } = this.ui;
 
     if(!pass || !login || !app){
-      alert("UI not loaded correctly");
+      alert("UI missing elements");
       return;
     }
 
@@ -86,13 +92,15 @@ const App = {
       this.draw(this.state.RAW);
 
     } catch(e){
-      console.error(e);
+      console.error("LOAD ERROR:", e);
       alert("Load failed — API issue");
     }
   },
 
   /* DRAW */
   draw(data){
+
+    if(!this.ui.barChartCanvas) return;
 
     let pt={}, dt={}, total=0;
     let dates = Object.keys(data||{}).sort();
@@ -116,7 +124,6 @@ const App = {
     this.ui.products.innerText = sorted.length;
     this.ui.top.innerText = top5[0]||"-";
 
-    /* AI INSIGHTS */
     let avg = total / (dates.length || 1);
     let anomalies = dates.filter(d=>dt[d] > avg*1.5);
 
@@ -126,7 +133,6 @@ const App = {
       "<br><br>⚠️ High Sales Days<br>" +
       (anomalies.length ? anomalies.join("<br>") : "None");
 
-    /* CHARTS */
     if(this.state.barChart) this.state.barChart.destroy();
 
     this.state.barChart = new Chart(this.ui.barChartCanvas,{
@@ -139,14 +145,7 @@ const App = {
           stack:"s"
         }))
       },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true}
-        }
-      }
+      options:{responsive:true,maintainAspectRatio:false}
     });
 
     if(this.state.salesChart) this.state.salesChart.destroy();
@@ -160,10 +159,6 @@ const App = {
           data:dates.map(d=>dt[d]||0),
           backgroundColor:"#38bdf8"
         }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false
       }
     });
 
@@ -187,7 +182,7 @@ const App = {
     this.draw(out);
   },
 
-  /* DATE PRESETS */
+  /* RANGE */
   setRange(type){
 
     let end = new Date();
@@ -203,17 +198,17 @@ const App = {
     this.applyFilter();
   },
 
-  /* TAB SWITCH */
+  /* TABS */
   switchTab(n,el){
 
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("tab"+n).classList.add("active");
+    document.getElementById("tab"+n)?.classList.add("active");
 
     document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-    el.classList.add("active");
+    el?.classList.add("active");
   },
 
-  /* GESTURES */
+  /* GESTURES (SAFE) */
   initGestures(){
 
     const c = this.ui.container;
@@ -251,14 +246,14 @@ document.addEventListener("DOMContentLoaded", () => {
   App.init();
 });
 
-/* GLOBAL BRIDGE (so your HTML still works) */
+/* GLOBAL BRIDGE */
 function login(){ App.login(); }
 function switchTab(n,el){ App.switchTab(n,el); }
 function setRange(type){ App.setRange(type); }
 
-/* PWA */
+/* SERVICE WORKER (CACHE BUST) */
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.register("./sw.js?v=3");
 }
 
 </script>
