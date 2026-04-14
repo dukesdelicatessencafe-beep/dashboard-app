@@ -1,5 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { margin:0; font-family:Arial; background:#0f172a; color:white; }
+
+#login, #app { padding:20px; }
+
+#login {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  height:100vh;
+  justify-content:center;
+  align-items:center;
+}
+
+input {
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  width:200px;
+}
+
+button {
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+#app { display:none; }
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.card {
+  background:#1e293b;
+  padding:15px;
+  border-radius:10px;
+}
+
+canvas {
+  background:#1e293b;
+  border-radius:10px;
+  padding:10px;
+}
+
+table {
+  width:100%;
+  margin-top:20px;
+  border-collapse:collapse;
+}
+
+td {
+  padding:8px;
+  border-bottom:1px solid #334155;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>Login</h2>
+  <input id="pass" type="password" placeholder="Password"/>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <div class="grid">
+    <div class="card">Sales: <div id="sales">£0</div></div>
+    <div class="card">Products: <div id="products">0</div></div>
+    <div class="card">Top: <div id="top">-</div></div>
+  </div>
+
+  <canvas id="barChart" height="120"></canvas>
+  <br><br>
+  <canvas id="salesChart" height="120"></canvas>
+
+  <div id="insights" style="margin-top:20px"></div>
+
+  <table id="table"></table>
+
+</div>
+
 <script>
-alert("SCRIPT IS RUNNING");
 
 const App = {
 
@@ -14,127 +112,52 @@ const App = {
     password: "1234"
   },
 
-  ui: {},
-
-  /* INIT */
-  init() {
-    this.cacheDOM();
-    this.guardDOM();
-    this.safeBoot();
-    this.initGestures();
+  init(){
+    console.log("INIT OK");
   },
 
-  /* CACHE DOM */
-  cacheDOM() {
-    this.ui = {
-      login: document.getElementById("login"),
-      app: document.getElementById("app"),
-      pass: document.getElementById("pass"),
+  login(){
 
-      container: document.getElementById("container"),
+    const pass = document.getElementById("pass");
+    const loginEl = document.getElementById("login");
+    const appEl = document.getElementById("app");
 
-      sales: document.getElementById("sales"),
-      products: document.getElementById("products"),
-      top: document.getElementById("top"),
-      insights: document.getElementById("insights"),
-      table: document.getElementById("table"),
-
-      startDate: document.getElementById("startDate"),
-      endDate: document.getElementById("endDate"),
-
-      barChartCanvas: document.getElementById("barChart"),
-      salesChartCanvas: document.getElementById("salesChart")
-    };
-  },
-
-  /* HARD FAIL DETECTION */
-  guardDOM() {
-    const required = ["login", "app", "pass"];
-
-    const missing = required.filter(k => !this.ui[k]);
-
-    if (missing.length) {
-      console.error("MISSING DOM ELEMENTS:", missing);
-      document.body.innerHTML =
-        "<h2 style='color:red;font-family:Arial'>ERROR: Missing HTML elements: " +
-        missing.join(", ") +
-        "</h2>";
-      throw new Error("DOM missing: " + missing.join(", "));
-    }
-  },
-
-  /* SAFE BOOT */
-  safeBoot() {
-    if (this.ui.login) this.ui.login.style.display = "flex";
-    if (this.ui.app) this.ui.app.style.display = "none";
-  },
-
-  /* LOGIN */
-  login() {
-
-    const pass = this.ui.pass;
-    const login = this.ui.login;
-    const app = this.ui.app;
-
-    if (!pass || !login || !app) {
-      console.error("LOGIN FAIL - UI MISSING", this.ui);
-      alert("UI missing elements (check HTML IDs)");
+    if(pass.value !== this.config.password){
+      alert("Wrong password");
       return;
     }
 
-    if (pass.value === this.config.password) {
-      login.style.display = "none";
-      app.style.display = "block";
-      this.load();
-    } else {
-      alert("Wrong password");
-    }
+    loginEl.style.display = "none";
+    appEl.style.display = "block";
+
+    this.load();
   },
 
-  /* LOAD API */
-  async load() {
-    try {
+  async load(){
+    try{
 
       const res = await fetch(this.config.URL);
-
-      if (!res.ok) {
-        throw new Error("Network error: " + res.status);
-      }
-
-      const text = await res.text();
-
-      if (!text || text.includes("<!DOCTYPE")) {
-        throw new Error("Invalid API response (HTML returned)");
-      }
-
-      const data = JSON.parse(text);
+      const data = await res.json();
 
       this.state.RAW = data;
       this.draw(data);
 
-    } catch (e) {
-      console.error("LOAD ERROR:", e);
-      alert("Load failed - check API");
+    } catch(e){
+      console.error(e);
+      alert("API load failed");
     }
   },
 
-  /* DRAW */
-  draw(data) {
-
-    if (!this.ui.barChartCanvas || !this.ui.salesChartCanvas) {
-      console.error("Charts missing in HTML");
-      return;
-    }
+  draw(data){
 
     let pt = {}, dt = {}, total = 0;
+    let dates = Object.keys(data).sort();
 
-    let dates = Object.keys(data || {}).sort();
-
-    for (let d of dates) {
+    for(let d of dates){
       let day = data[d] || {};
       dt[d] = 0;
 
-      for (let p in day) {
+      for(let p in day){
         let v = Number(day[p] || 0);
         pt[p] = (pt[p] || 0) + v;
         dt[d] += v;
@@ -142,107 +165,67 @@ const App = {
       }
     }
 
-    let sorted = Object.keys(pt).sort((a, b) => pt[b] - pt[a]);
-    let top5 = sorted.slice(0, 5);
+    let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+    let top5 = sorted.slice(0,5);
 
-    if (this.ui.sales) this.ui.sales.innerText = "£" + total.toFixed(2);
-    if (this.ui.products) this.ui.products.innerText = sorted.length;
-    if (this.ui.top) this.ui.top.innerText = top5[0] || "-";
+    document.getElementById("sales").innerText = "£" + total.toFixed(2);
+    document.getElementById("products").innerText = sorted.length;
+    document.getElementById("top").innerText = top5[0] || "-";
 
-    let avg = total / (dates.length || 1);
-    let anomalies = dates.filter(d => dt[d] > avg * 1.5);
-
-    if (this.ui.insights) {
-      this.ui.insights.innerHTML =
-        "🏆 Top Products<br>" +
-        top5.map(p => "• " + p + " (£" + pt[p].toFixed(2) + ")").join("<br>") +
-        "<br><br>⚠️ High Sales Days<br>" +
-        (anomalies.length ? anomalies.join("<br>") : "None");
-    }
+    document.getElementById("insights").innerHTML =
+      "<h3>Top Products</h3>" +
+      top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
 
     /* BAR CHART */
-    if (this.state.barChart) this.state.barChart.destroy();
+    if(this.state.barChart) this.state.barChart.destroy();
 
-    this.state.barChart = new Chart(this.ui.barChartCanvas, {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: top5.map(p => ({
-          label: p,
-          data: dates.map(d => data[d]?.[p] || 0),
-          stack: "s"
-        }))
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
+    this.state.barChart = new Chart(
+      document.getElementById("barChart"),
+      {
+        type:"bar",
+        data:{
+          labels:dates,
+          datasets:top5.map(p=>({
+            label:p,
+            data:dates.map(d=>data[d]?.[p]||0)
+          }))
+        }
+      }
+    );
 
     /* SALES CHART */
-    if (this.state.salesChart) this.state.salesChart.destroy();
+    if(this.state.salesChart) this.state.salesChart.destroy();
 
-    this.state.salesChart = new Chart(this.ui.salesChartCanvas, {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: [{
-          label: "Sales (£)",
-          data: dates.map(d => dt[d] || 0),
-          backgroundColor: "#38bdf8"
-        }]
+    this.state.salesChart = new Chart(
+      document.getElementById("salesChart"),
+      {
+        type:"bar",
+        data:{
+          labels:dates,
+          datasets:[{
+            label:"Sales",
+            data:dates.map(d=>dt[d]||0)
+          }]
+        }
       }
-    });
+    );
 
     /* TABLE */
-    if (this.ui.table) {
-      this.ui.table.innerHTML =
-        sorted.map(p =>
-          `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
-        ).join("");
-    }
-  },
-
-  /* LOGIN FILTER */
-  applyFilter() {
-    let s = new Date(this.ui.startDate?.value || 0).getTime();
-    let e = new Date(this.ui.endDate?.value || 9999999999999).getTime();
-
-    let out = {};
-
-    for (let d in this.state.RAW) {
-      let t = new Date(d).getTime();
-      if (t >= s && t <= e) out[d] = this.state.RAW[d];
-    }
-
-    this.draw(out);
-  },
-
-  /* INIT */
-  initGestures() {
-    const c = this.ui.container;
-    if (!c) return;
-
-    let startX = 0;
-
-    c.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-    });
-
-    c.addEventListener("touchend", e => {
-      let diff = e.changedTouches[0].clientX - startX;
-
-      if (diff > 80) console.log("swipe right");
-      if (diff < -80) console.log("swipe left");
-    });
+    document.getElementById("table").innerHTML =
+      sorted.map(p =>
+        `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
+      ).join("");
   }
 
 };
 
-/* START */
-document.addEventListener("DOMContentLoaded", () => {
-  App.init();
-});
-
-/* GLOBALS */
-function login() {
+function login(){
   App.login();
 }
+
+window.onload = () => App.init();
+
 </script>
+
+</body>
+</html>
