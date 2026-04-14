@@ -104,13 +104,13 @@ const App = (() => {
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
 // =========================
-// HOME TOP PRODUCTS (SAFE)
+// HOME TOP PRODUCTS (CLEAN FIX)
 // =========================
 const homeTop = document.getElementById("homeTopList");
 
 if (homeTop) {
   homeTop.innerHTML =
-    top5 && top5.length
+    top5.length
       ? top5.map((p, i) =>
           `<div>${i + 1}. ${p} — £${pt[p].toFixed(2)}</div>`
         ).join("")
