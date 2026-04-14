@@ -220,37 +220,39 @@ td{
     <!-- =========================
          🏠 TAB 1: HOME
     ========================= -->
-    <div class="tab">
+<div class="tab">
 
-      <div class="header">
+  <div class="header">
 
-        <div class="grid">
-          <div class="card">Sales<br><b id="sales">£0</b></div>
-          <div class="card">Products<br><b id="products">0</b></div>
-          <div class="card">Top<br><b id="top">-</b></div>
-        </div>
-
-        <div class="dates">
-          <input id="startDate" type="date">
-          <input id="endDate" type="date">
-          <button onclick="App.applyRange()">Apply</button>
-          <button onclick="App.setRange('today')">Today</button>
-          <button onclick="App.setRange('7')">7D</button>
-          <button onclick="App.setRange('30')">30D</button>
-        </div>
-<!-- =========================
-   🏆 TOP PRODUCTS (HOME ONLY)
-========================= -->
-<div id="homeTopProducts" style="margin-top:10px; background:#1e293b; padding:10px; border-radius:12px;">
-  <b>Top Products</b>
-  <div id="homeTopList" style="margin-top:6px; font-size:14px; line-height:1.6;">
-    -
-  </div>
-</div>
-      </div>
-
-      <canvas id="barChart"></canvas>
+    <div class="grid">
+      <div class="card">Sales<br><b id="sales">£0</b></div>
+      <div class="card">Products<br><b id="products">0</b></div>
+      <div class="card">Top<br><b id="top">-</b></div>
     </div>
+
+    <div class="dates">
+      <input id="startDate" type="date">
+      <input id="endDate" type="date">
+      <button onclick="App.applyRange()">Apply</button>
+      <button onclick="App.setRange('today')">Today</button>
+      <button onclick="App.setRange('7')">7D</button>
+      <button onclick="App.setRange('30')">30D</button>
+    </div>
+
+  </div>
+
+  <!-- TOP PRODUCTS -->
+  <div id="homeTopProducts" style="margin-top:10px; background:#1e293b; padding:10px; border-radius:12px;">
+    <b>Top Products</b>
+    <div id="homeTopList" style="margin-top:6px; font-size:14px; line-height:1.6;">
+      -
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <canvas id="barChart"></canvas>
+
+</div>
 
 
     <!-- =========================
