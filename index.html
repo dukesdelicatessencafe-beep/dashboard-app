@@ -1,93 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Sales Dashboard PWA</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard Pro</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f172a"/>
+<meta name="theme-color" content="#0f172a">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-* { box-sizing: border-box; }
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --accent:#38bdf8;
+  --text:#fff;
+}
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: white;
+/* GLOBAL */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui;
+  transition:0.2s ease;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
 }
 
 /* LOGIN */
-#login {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
+#login{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
 }
 
-input {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  width: 220px;
+input{
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  width:220px;
+  background:#0b1220;
+  color:white;
 }
 
-button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+button{
+  padding:12px 16px;
+  border:none;
+  border-radius:10px;
+  background:var(--accent);
+  color:black;
+  font-weight:bold;
+}
+
+button:active{
+  transform:scale(0.96);
 }
 
 /* APP */
-#app {
-  display: none;
-  padding: 16px;
+#app{
+  display:none;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* TOP BAR */
+.topbar{
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 /* CARDS */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-  margin-bottom: 15px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  padding:12px;
 }
 
-.card {
-  background: #1e293b;
-  padding: 12px;
-  border-radius: 12px;
+.card{
+  background:rgba(30,41,59,0.8);
+  padding:12px;
+  border-radius:16px;
+  backdrop-filter: blur(10px);
 }
 
-/* CHARTS */
-canvas {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 10px;
-  margin-top: 10px;
+/* PAGES */
+.tab{
+  display:none;
+  height:calc(100vh - 120px);
+  overflow:auto;
+  padding-bottom:80px;
 }
 
-/* TABLE */
-table {
-  width: 100%;
-  margin-top: 15px;
-  border-collapse: collapse;
+.tab.active{
+  display:block;
+  animation:fadeIn .25s ease;
 }
 
-td {
-  padding: 8px;
-  border-bottom: 1px solid #334155;
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
-/* MOBILE */
-@media (max-width: 600px) {
-  body { font-size: 14px; }
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:60px;
+  display:flex;
+  background:#0b1220;
+  border-top:1px solid #1e293b;
+}
+
+.nav div{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.nav div.active{
+  color:var(--accent);
+}
+
+/* CHART */
+canvas{
+  background:rgba(30,41,59,0.6);
+  margin:10px;
+  border-radius:12px;
+  padding:10px;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#1e293b;
+  padding:10px 16px;
+  border-radius:12px;
+  opacity:0;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(-5px);
 }
 </style>
 </head>
@@ -98,169 +170,173 @@ td {
 <div id="login">
   <h2>Dashboard Login</h2>
   <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+  <button onclick="login()">Enter</button>
 </div>
 
 <!-- APP -->
 <div id="app">
 
-  <div class="grid">
-    <div class="card">Sales <div id="sales">£0</div></div>
-    <div class="card">Products <div id="products">0</div></div>
-    <div class="card">Top <div id="top">-</div></div>
+  <div class="topbar">
+    <div>📊 Dashboard</div>
+    <div id="sales">£0</div>
   </div>
 
-  <canvas id="barChart" height="120"></canvas>
-  <canvas id="salesChart" height="120"></canvas>
+  <div class="grid">
+    <div class="card">Products<br><b id="products">0</b></div>
+    <div class="card">Top<br><b id="top">-</b></div>
+    <div class="card">Live<br><b>OK</b></div>
+  </div>
 
-  <div id="insights" style="margin-top:15px"></div>
+  <!-- TAB 1 -->
+  <div id="tab1" class="tab active">
+    <canvas id="barChart"></canvas>
+  </div>
 
-  <table id="table"></table>
+  <!-- TAB 2 -->
+  <div id="tab2" class="tab">
+    <canvas id="salesChart"></canvas>
+    <div id="insights" style="padding:12px"></div>
+  </div>
 
 </div>
+
+<!-- NAV -->
+<div class="nav">
+  <div onclick="switchTab(1)">Home</div>
+  <div onclick="switchTab(2)">Stats</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
 <script>
 
 const App = {
 
-  state: {
-    RAW: {},
-    barChart: null,
-    salesChart: null
+  state:{
+    RAW:{},
+    barChart:null,
+    salesChart:null
   },
 
-  config: {
-    URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
-    password: "1234"
+  config:{
+    URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+    password:"1234"
   },
 
   init(){
-    console.log("PWA INIT OK");
+    console.log("APP READY");
+  },
+
+  toast(msg){
+    const t=document.getElementById("toast");
+    if(!t) return;
+    t.innerText=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),1500);
   },
 
   login(){
+    const p=document.getElementById("pass");
 
-    const pass = document.getElementById("pass");
-
-    if(!pass){
-      alert("UI not loaded");
+    if(!p || p.value!==this.config.password){
+      this.toast("Wrong password");
       return;
     }
 
-    if(pass.value !== this.config.password){
-      alert("Wrong password");
-      return;
-    }
-
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").style.display = "block";
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
 
     this.load();
   },
 
   async load(){
-
     try{
 
-      const res = await fetch(this.config.URL, { cache: "no-store" });
+      this.toast("Loading...");
 
-      if(!res.ok){
-        throw new Error("HTTP " + res.status);
-      }
+      const res=await fetch(this.config.URL,{cache:"no-store"});
+      const data=await res.json();
 
-      const data = await res.json();
-
-      this.state.RAW = data;
+      this.state.RAW=data;
       this.draw(data);
 
-    } catch(err){
-      console.error(err);
-      alert("API failed / offline mode");
+    }catch(e){
+      console.error(e);
+      this.toast("API failed");
     }
   },
 
   draw(data){
 
-    let pt = {}, dt = {}, total = 0;
-    let dates = Object.keys(data || {}).sort();
+    let pt={},dt={},total=0;
+    let dates=Object.keys(data).sort();
 
     for(let d of dates){
-      let day = data[d] || {};
-      dt[d] = 0;
-
-      for(let p in day){
-        let v = Number(day[p] || 0);
-        pt[p] = (pt[p] || 0) + v;
-        dt[d] += v;
-        total += v;
+      dt[d]=0;
+      for(let p in data[d]){
+        let v=+data[d][p]||0;
+        pt[p]=(pt[p]||0)+v;
+        dt[d]+=v;
+        total+=v;
       }
     }
 
-    let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-    let top5 = sorted.slice(0,5);
+    let sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+    let top5=sorted.slice(0,5);
 
-    document.getElementById("sales").innerText = "£" + total.toFixed(2);
-    document.getElementById("products").innerText = sorted.length;
-    document.getElementById("top").innerText = top5[0] || "-";
+    document.getElementById("sales").innerText="£"+total.toFixed(2);
+    document.getElementById("products").innerText=sorted.length;
+    document.getElementById("top").innerText=top5[0]||"-";
 
-    document.getElementById("insights").innerHTML =
-      "<h3>Top Products</h3>" +
-      top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
-
-    /* BAR CHART */
     if(this.state.barChart) this.state.barChart.destroy();
-
-    this.state.barChart = new Chart(
-      document.getElementById("barChart"),
-      {
-        type: "bar",
-        data: {
-          labels: dates,
-          datasets: top5.map(p => ({
-            label: p,
-            data: dates.map(d => data[d]?.[p] || 0)
-          }))
-        }
-      }
-    );
-
-    /* SALES CHART */
     if(this.state.salesChart) this.state.salesChart.destroy();
 
-    this.state.salesChart = new Chart(
-      document.getElementById("salesChart"),
-      {
-        type: "bar",
-        data: {
-          labels: dates,
-          datasets: [{
-            label: "Sales (£)",
-            data: dates.map(d => dt[d] || 0)
-          }]
-        }
+    this.state.barChart=new Chart(document.getElementById("barChart"),{
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:top5.map(p=>({
+          label:p,
+          data:dates.map(d=>data[d]?.[p]||0)
+        }))
       }
-    );
+    });
 
-    /* TABLE */
-    document.getElementById("table").innerHTML =
-      sorted.map(p =>
-        `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
-      ).join("");
+    this.state.salesChart=new Chart(document.getElementById("salesChart"),{
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:[{
+          label:"Sales (£)",
+          data:dates.map(d=>dt[d]||0)
+        }]
+      }
+    });
+
   }
+
 };
 
 /* GLOBAL */
-function login(){
-  App.login();
+function login(){App.login();}
+function switchTab(n){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  const el=document.getElementById("tab"+n);
+  if(el) el.classList.add("active");
 }
 
-/* START */
-window.addEventListener("load", () => App.init());
+/* SWIPE */
+let startX=0;
+document.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
+document.addEventListener("touchend",e=>{
+  let diff=e.changedTouches[0].clientX-startX;
+  if(Math.abs(diff)<80) return;
+  switchTab(diff>0?1:2);
+});
 
-/* SERVICE WORKER */
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js");
-}
+/* INIT */
+window.addEventListener("load",()=>App.init());
 
 </script>
 
