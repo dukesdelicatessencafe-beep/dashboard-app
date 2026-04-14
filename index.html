@@ -3,68 +3,91 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard</title>
+
+<title>Sales Dashboard PWA</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a"/>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#0f172a; color:white; }
+* { box-sizing: border-box; }
 
-#login, #app { padding:20px; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+}
 
+/* LOGIN */
 #login {
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  height:100vh;
-  justify-content:center;
-  align-items:center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
 
 input {
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  width:200px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  width: 220px;
 }
 
 button {
-  padding:10px 15px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
 
-#app { display:none; }
+/* APP */
+#app {
+  display: none;
+  padding: 16px;
+}
 
+/* CARDS */
 .grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:10px;
-  margin-bottom:20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .card {
-  background:#1e293b;
-  padding:15px;
-  border-radius:10px;
+  background: #1e293b;
+  padding: 12px;
+  border-radius: 12px;
 }
 
+/* CHARTS */
 canvas {
-  background:#1e293b;
-  border-radius:10px;
-  padding:10px;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 10px;
+  margin-top: 10px;
 }
 
+/* TABLE */
 table {
-  width:100%;
-  margin-top:20px;
-  border-collapse:collapse;
+  width: 100%;
+  margin-top: 15px;
+  border-collapse: collapse;
 }
 
 td {
-  padding:8px;
-  border-bottom:1px solid #334155;
+  padding: 8px;
+  border-bottom: 1px solid #334155;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  body { font-size: 14px; }
 }
 </style>
 </head>
@@ -73,8 +96,8 @@ td {
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>Login</h2>
-  <input id="pass" type="password" placeholder="Password"/>
+  <h2>Dashboard Login</h2>
+  <input id="pass" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
 
@@ -82,16 +105,15 @@ td {
 <div id="app">
 
   <div class="grid">
-    <div class="card">Sales: <div id="sales">£0</div></div>
-    <div class="card">Products: <div id="products">0</div></div>
-    <div class="card">Top: <div id="top">-</div></div>
+    <div class="card">Sales <div id="sales">£0</div></div>
+    <div class="card">Products <div id="products">0</div></div>
+    <div class="card">Top <div id="top">-</div></div>
   </div>
 
   <canvas id="barChart" height="120"></canvas>
-  <br><br>
   <canvas id="salesChart" height="120"></canvas>
 
-  <div id="insights" style="margin-top:20px"></div>
+  <div id="insights" style="margin-top:15px"></div>
 
   <table id="table"></table>
 
@@ -113,45 +135,54 @@ const App = {
   },
 
   init(){
-    console.log("INIT OK");
+    console.log("PWA INIT OK");
   },
 
   login(){
 
     const pass = document.getElementById("pass");
-    const loginEl = document.getElementById("login");
-    const appEl = document.getElementById("app");
+
+    if(!pass){
+      alert("UI not loaded");
+      return;
+    }
 
     if(pass.value !== this.config.password){
       alert("Wrong password");
       return;
     }
 
-    loginEl.style.display = "none";
-    appEl.style.display = "block";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
 
     this.load();
   },
 
   async load(){
+
     try{
 
-      const res = await fetch(this.config.URL);
+      const res = await fetch(this.config.URL, { cache: "no-store" });
+
+      if(!res.ok){
+        throw new Error("HTTP " + res.status);
+      }
+
       const data = await res.json();
 
       this.state.RAW = data;
       this.draw(data);
 
-    } catch(e){
-      console.error(e);
-      alert("API load failed");
+    } catch(err){
+      console.error(err);
+      alert("API failed / offline mode");
     }
   },
 
   draw(data){
 
     let pt = {}, dt = {}, total = 0;
-    let dates = Object.keys(data).sort();
+    let dates = Object.keys(data || {}).sort();
 
     for(let d of dates){
       let day = data[d] || {};
@@ -182,12 +213,12 @@ const App = {
     this.state.barChart = new Chart(
       document.getElementById("barChart"),
       {
-        type:"bar",
-        data:{
-          labels:dates,
-          datasets:top5.map(p=>({
-            label:p,
-            data:dates.map(d=>data[d]?.[p]||0)
+        type: "bar",
+        data: {
+          labels: dates,
+          datasets: top5.map(p => ({
+            label: p,
+            data: dates.map(d => data[d]?.[p] || 0)
           }))
         }
       }
@@ -199,12 +230,12 @@ const App = {
     this.state.salesChart = new Chart(
       document.getElementById("salesChart"),
       {
-        type:"bar",
-        data:{
-          labels:dates,
-          datasets:[{
-            label:"Sales",
-            data:dates.map(d=>dt[d]||0)
+        type: "bar",
+        data: {
+          labels: dates,
+          datasets: [{
+            label: "Sales (£)",
+            data: dates.map(d => dt[d] || 0)
           }]
         }
       }
@@ -216,14 +247,20 @@ const App = {
         `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
       ).join("");
   }
-
 };
 
+/* GLOBAL */
 function login(){
   App.login();
 }
 
-window.onload = () => App.init();
+/* START */
+window.addEventListener("load", () => App.init());
+
+/* SERVICE WORKER */
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
+}
 
 </script>
 
