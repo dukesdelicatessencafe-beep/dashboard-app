@@ -103,15 +103,20 @@ const App = (() => {
     $("sales").textContent = "£" + total.toFixed(2);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
+// =========================
+// HOME TOP PRODUCTS (SAFE)
+// =========================
+const homeTop = document.getElementById("homeTopList");
 
-    // =========================
-    // HOME TOP PRODUCTS (NEW)
-    // =========================
-    $("homeTopList").innerHTML =
-      top5.map((p, i) =>
-        `<div>${i + 1}. ${p} — £${pt[p].toFixed(2)}</div>`
-      ).join("");
-
+if (homeTop) {
+  homeTop.innerHTML =
+    top5 && top5.length
+      ? top5.map((p, i) =>
+          `<div>${i + 1}. ${p} — £${pt[p].toFixed(2)}</div>`
+        ).join("")
+      : "-";
+}
+  
     // =========================
     // PRODUCTS TABLE
     // =========================
