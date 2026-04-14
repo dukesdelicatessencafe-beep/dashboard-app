@@ -13,25 +13,66 @@ body{
   font-family:system-ui;
   background:#0f172a;
   color:white;
+  overflow:hidden;
 }
 
-#login, #app{
-  padding:20px;
+/* LOADING */
+#loading{
+  position:fixed;
+  inset:0;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:999;
+  transition:0.4s;
 }
 
-#app{display:none;}
+#loading.hidden{
+  opacity:0;
+  pointer-events:none;
+}
+
+/* LOGIN */
+#login{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
 
 input,button{
-  padding:10px;
-  margin:5px;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+
+input{
+  background:#0b1220;
+  color:white;
 }
 
 button{
   background:#38bdf8;
-  border:none;
-  border-radius:8px;
+  font-weight:bold;
 }
 
+/* APP */
+#app{
+  display:none;
+  padding:12px;
+  animation:fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -41,24 +82,93 @@ button{
 .card{
   background:#1e293b;
   padding:10px;
-  border-radius:12px;
+  border-radius:14px;
+  transition:0.2s;
 }
 
+.card:hover{
+  transform:translateY(-2px);
+}
+
+/* DATE */
+.dates{
+  display:flex;
+  gap:8px;
+  margin:10px 0;
+}
+
+.dates input{
+  flex:1;
+}
+
+/* CHART */
 canvas{
   background:#1e293b;
-  border-radius:12px;
+  border-radius:14px;
   margin-top:10px;
+  padding:10px;
+  transition:0.3s;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  margin-top:10px;
+  border-collapse:collapse;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #334155;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:90px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(30,41,59,0.95);
+  padding:12px 16px;
+  border-radius:14px;
+  opacity:0;
+  transition:0.25s ease;
+}
+
+#toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+/* SPINNER */
+.spinner{
+  width:40px;
+  height:40px;
+  border:3px solid #334155;
+  border-top:3px solid #38bdf8;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Syncing data...</p>
+</div>
+
 <!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+  <button onclick="login()">Enter</button>
 </div>
 
 <!-- APP -->
@@ -72,7 +182,7 @@ canvas{
     <div class="card">Top<br><b id="top">-</b></div>
   </div>
 
-  <div style="margin-top:10px;">
+  <div class="dates">
     <input id="startDate" type="date">
     <input id="endDate" type="date">
     <button onclick="setRange('apply')">Apply</button>
@@ -84,31 +194,35 @@ canvas{
   <canvas id="salesChart"></canvas>
 
   <h3>All Products</h3>
-  <table id="productTable" width="100%"></table>
+  <table id="productTable"></table>
 
 </div>
 
+<!-- TOAST -->
+<div id="toast"></div>
+
 <script>
 
-const App = {
+const App={
 
-  state:{
-    RAW:{},
-    FILTERED:{},
-    barChart:null,
-    salesChart:null
-  },
+  state:{RAW:{},barChart:null,salesChart:null},
 
   config:{
     URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
     password:"1234"
   },
 
+  toast(msg){
+    const t=document.getElementById("toast");
+    t.innerText=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),1800);
+  },
+
   login(){
     const p=document.getElementById("pass");
-
-    if(!p || p.value!==this.config.password){
-      alert("Wrong password");
+    if(!p||p.value!==this.config.password){
+      this.toast("Wrong password");
       return;
     }
 
@@ -119,13 +233,27 @@ const App = {
   },
 
   async load(){
-    const res=await fetch(this.config.URL);
-    const data=await res.json();
+    try{
 
-    this.state.RAW=data;
-    this.state.FILTERED=data;
+      document.getElementById("loading").classList.remove("hidden");
 
-    this.draw(data);
+      const res=await fetch(this.config.URL,{cache:"no-store"});
+      const data=await res.json();
+
+      this.state.RAW=data;
+
+      this.draw(data);
+
+      this.toast("Dashboard ready");
+
+    }catch(e){
+      console.error(e);
+      this.toast("Load failed");
+    }
+
+    setTimeout(()=>{
+      document.getElementById("loading").classList.add("hidden");
+    },600);
   },
 
   setRange(type){
@@ -151,25 +279,21 @@ const App = {
 
     for(const d in this.state.RAW){
       const t=new Date(d).getTime();
-      if(t>=s && t<=e) out[d]=this.state.RAW[d];
+      if(t>=s&&t<=e) out[d]=this.state.RAW[d];
     }
 
-    this.state.FILTERED=out;
     this.draw(out);
   },
 
   draw(data){
 
-    let pt={}, dt={}, total=0;
+    let pt={},dt={},total=0;
     const dates=Object.keys(data).sort();
 
     for(const d of dates){
-
       dt[d]=0;
-
       for(const p in data[d]){
         const v=+data[d][p]||0;
-
         pt[p]=(pt[p]||0)+v;
         dt[d]+=v;
         total+=v;
@@ -179,22 +303,20 @@ const App = {
     const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5=sorted.slice(0,5);
 
-    /* HEADER */
     document.getElementById("sales").innerText="£"+total.toFixed(2);
     document.getElementById("products").innerText=sorted.length;
     document.getElementById("top").innerText=top5[0]||"-";
 
-    /* FULL PRODUCT TABLE */
-    document.getElementById("productTable").innerHTML =
-      sorted.map(p=>
-        `<tr>
+    document.getElementById("productTable").innerHTML=
+      sorted.map(p=>`
+        <tr>
           <td>${p}</td>
           <td style="text-align:right">£${pt[p].toFixed(2)}</td>
-        </tr>`
-      ).join("");
+        </tr>
+      `).join("");
 
-    /* STACKED TOP 5 PER DAY (FIX YOU LOST THIS) */
     if(this.state.barChart) this.state.barChart.destroy();
+    if(this.state.salesChart) this.state.salesChart.destroy();
 
     this.state.barChart=new Chart(document.getElementById("barChart"),{
       type:"bar",
@@ -203,20 +325,15 @@ const App = {
         datasets:top5.map(p=>({
           label:p,
           data:dates.map(d=>data[d]?.[p]||0),
-          stack:"stack1"
+          stack:"s"
         }))
       },
       options:{
         responsive:true,
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true}
-        }
+        animation:{duration:500},
+        scales:{x:{stacked:true},y:{stacked:true}}
       }
     });
-
-    /* DAILY TOTAL SALES */
-    if(this.state.salesChart) this.state.salesChart.destroy();
 
     this.state.salesChart=new Chart(document.getElementById("salesChart"),{
       type:"bar",
@@ -226,15 +343,17 @@ const App = {
           label:"Sales (£)",
           data:dates.map(d=>dt[d]||0)
         }]
-      }
+      },
+      options:{animation:{duration:500}}
     });
   }
 
 };
 
-/* GLOBAL */
 function login(){App.login();}
 function setRange(t){App.setRange(t);}
+
+window.addEventListener("load",()=>App.load());
 
 </script>
 
