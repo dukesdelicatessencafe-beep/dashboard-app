@@ -2,166 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Pro</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f172a">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --accent:#38bdf8;
-  --text:#fff;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:system-ui;
-}
-
 body{
-  background:var(--bg);
-  color:var(--text);
-  overflow:hidden;
-}
-
-/* LOGIN */
-#login{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:12px;
-}
-
-input{
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  width:220px;
-  background:#0b1220;
+  margin:0;
+  font-family:system-ui;
+  background:#0f172a;
   color:white;
 }
 
+#login, #app{
+  padding:20px;
+}
+
+#app{display:none;}
+
+input,button{
+  padding:10px;
+  margin:5px;
+}
+
 button{
-  padding:12px 16px;
+  background:#38bdf8;
   border:none;
-  border-radius:10px;
-  background:var(--accent);
-  font-weight:bold;
+  border-radius:8px;
 }
 
-button:active{transform:scale(0.96);}
-
-/* APP */
-#app{
-  display:none;
-  height:100vh;
-  overflow:hidden;
-}
-
-/* TOP */
-.topbar{
-  padding:12px;
-  display:flex;
-  justify-content:space-between;
-}
-
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;
-  padding:12px;
 }
 
 .card{
-  background:rgba(30,41,59,0.8);
-  padding:12px;
-  border-radius:16px;
-}
-
-/* DATE FILTER */
-.dates{
-  display:flex;
-  gap:8px;
-  padding:12px;
-  flex-wrap:wrap;
-}
-
-.dates input{
-  flex:1;
-}
-
-/* TABS */
-.tab{
-  display:none;
-  height:calc(100vh - 220px);
-  overflow:auto;
-}
-
-.tab.active{
-  display:block;
-  animation:fade .2s ease;
-}
-
-@keyframes fade{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  display:flex;
-  height:60px;
-  background:#0b1220;
-  border-top:1px solid #1e293b;
-}
-
-.nav div{
-  flex:1;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.nav div.active{
-  color:var(--accent);
-}
-
-/* CHART */
-canvas{
-  margin:10px;
-  background:rgba(30,41,59,0.6);
-  border-radius:12px;
-  padding:10px;
-}
-
-/* TOAST */
-.toast{
-  position:fixed;
-  bottom:80px;
-  left:50%;
-  transform:translateX(-50%);
   background:#1e293b;
-  padding:10px 16px;
-  border-radius:10px;
-  opacity:0;
+  padding:10px;
+  border-radius:12px;
 }
 
-.toast.show{
-  opacity:1;
+canvas{
+  background:#1e293b;
+  border-radius:12px;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -170,7 +56,7 @@ canvas{
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>Dashboard Login</h2>
+  <h2>Login</h2>
   <input id="pass" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
@@ -178,19 +64,15 @@ canvas{
 <!-- APP -->
 <div id="app">
 
-  <div class="topbar">
-    <div>📊 Dashboard</div>
-    <div id="sales">£0</div>
-  </div>
+  <h2>Dashboard</h2>
 
   <div class="grid">
+    <div class="card">Sales<br><b id="sales">£0</b></div>
     <div class="card">Products<br><b id="products">0</b></div>
     <div class="card">Top<br><b id="top">-</b></div>
-    <div class="card">Live<br><b>OK</b></div>
   </div>
 
-  <!-- DATE RANGE -->
-  <div class="dates">
+  <div style="margin-top:10px;">
     <input id="startDate" type="date">
     <input id="endDate" type="date">
     <button onclick="setRange('apply')">Apply</button>
@@ -198,27 +80,13 @@ canvas{
     <button onclick="setRange('30')">30D</button>
   </div>
 
-  <!-- TAB 1 -->
-  <div id="tab1" class="tab active">
-    <canvas id="barChart"></canvas>
-  </div>
+  <canvas id="barChart"></canvas>
+  <canvas id="salesChart"></canvas>
 
-  <!-- TAB 2 -->
-  <div id="tab2" class="tab">
-    <canvas id="salesChart"></canvas>
-    <div id="insights" style="padding:12px"></div>
-  </div>
+  <h3>All Products</h3>
+  <table id="productTable" width="100%"></table>
 
 </div>
-
-<!-- NAV -->
-<div class="nav">
-  <div onclick="switchTab(1)">Home</div>
-  <div onclick="switchTab(2)">Stats</div>
-</div>
-
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
 
 <script>
 
@@ -236,23 +104,11 @@ const App = {
     password:"1234"
   },
 
-  init(){
-    console.log("APP READY");
-  },
-
-  toast(msg){
-    const t=document.getElementById("toast");
-    if(!t) return;
-    t.innerText=msg;
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),1500);
-  },
-
   login(){
     const p=document.getElementById("pass");
 
     if(!p || p.value!==this.config.password){
-      this.toast("Wrong password");
+      alert("Wrong password");
       return;
     }
 
@@ -263,22 +119,13 @@ const App = {
   },
 
   async load(){
-    try{
+    const res=await fetch(this.config.URL);
+    const data=await res.json();
 
-      this.toast("Loading...");
+    this.state.RAW=data;
+    this.state.FILTERED=data;
 
-      const res=await fetch(this.config.URL,{cache:"no-store"});
-      const data=await res.json();
-
-      this.state.RAW=data;
-      this.state.FILTERED=data;
-
-      this.draw(data);
-
-    }catch(e){
-      console.error(e);
-      this.toast("API failed");
-    }
+    this.draw(data);
   },
 
   setRange(type){
@@ -292,7 +139,6 @@ const App = {
     document.getElementById("startDate").value=start.toISOString().split("T")[0];
     document.getElementById("endDate").value=now.toISOString().split("T")[0];
 
-    if(type==="apply") return this.applyRange();
     this.applyRange();
   },
 
@@ -300,8 +146,6 @@ const App = {
 
     const s=new Date(document.getElementById("startDate").value).getTime();
     const e=new Date(document.getElementById("endDate").value).getTime();
-
-    if(!s||!e){this.toast("Select dates");return;}
 
     const out={};
 
@@ -316,13 +160,16 @@ const App = {
 
   draw(data){
 
-    let pt={},dt={},total=0;
+    let pt={}, dt={}, total=0;
     const dates=Object.keys(data).sort();
 
     for(const d of dates){
+
       dt[d]=0;
+
       for(const p in data[d]){
         const v=+data[d][p]||0;
+
         pt[p]=(pt[p]||0)+v;
         dt[d]+=v;
         total+=v;
@@ -332,12 +179,22 @@ const App = {
     const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5=sorted.slice(0,5);
 
+    /* HEADER */
     document.getElementById("sales").innerText="£"+total.toFixed(2);
     document.getElementById("products").innerText=sorted.length;
     document.getElementById("top").innerText=top5[0]||"-";
 
+    /* FULL PRODUCT TABLE */
+    document.getElementById("productTable").innerHTML =
+      sorted.map(p=>
+        `<tr>
+          <td>${p}</td>
+          <td style="text-align:right">£${pt[p].toFixed(2)}</td>
+        </tr>`
+      ).join("");
+
+    /* STACKED TOP 5 PER DAY (FIX YOU LOST THIS) */
     if(this.state.barChart) this.state.barChart.destroy();
-    if(this.state.salesChart) this.state.salesChart.destroy();
 
     this.state.barChart=new Chart(document.getElementById("barChart"),{
       type:"bar",
@@ -345,10 +202,21 @@ const App = {
         labels:dates,
         datasets:top5.map(p=>({
           label:p,
-          data:dates.map(d=>data[d]?.[p]||0)
+          data:dates.map(d=>data[d]?.[p]||0),
+          stack:"stack1"
         }))
+      },
+      options:{
+        responsive:true,
+        scales:{
+          x:{stacked:true},
+          y:{stacked:true}
+        }
       }
     });
+
+    /* DAILY TOTAL SALES */
+    if(this.state.salesChart) this.state.salesChart.destroy();
 
     this.state.salesChart=new Chart(document.getElementById("salesChart"),{
       type:"bar",
@@ -360,12 +228,6 @@ const App = {
         }]
       }
     });
-
-    const i=document.getElementById("insights");
-    if(i){
-      i.innerHTML="<b>Top Products</b><br>"+
-      top5.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
-    }
   }
 
 };
@@ -373,23 +235,6 @@ const App = {
 /* GLOBAL */
 function login(){App.login();}
 function setRange(t){App.setRange(t);}
-function switchTab(n){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  const el=document.getElementById("tab"+n);
-  if(el) el.classList.add("active");
-}
-
-/* SWIPE */
-let startX=0;
-document.addEventListener("touchstart",e=>startX=e.touches[0].clientX);
-document.addEventListener("touchend",e=>{
-  let d=e.changedTouches[0].clientX-startX;
-  if(Math.abs(d)<80) return;
-  switchTab(d>0?1:2);
-});
-
-/* INIT */
-window.addEventListener("load",()=>App.init());
 
 </script>
 
