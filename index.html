@@ -1,235 +1,239 @@
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec";
+const App = {
 
-let RAW = {};
-let barChart = null;
-let salesChart = null;
+  /* STATE */
+  state: {
+    RAW: {},
+    barChart: null,
+    salesChart: null
+  },
 
-/* LOGIN */
-function login(){
+  /* CONFIG */
+  config: {
+    URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+    password: "1234"
+  },
 
-  const passEl = document.getElementById("pass");
-  const loginEl = document.getElementById("login");
-  const appEl = document.getElementById("app");
+  /* UI ELEMENTS */
+  ui: {},
 
-  if(!passEl || !loginEl || !appEl){
-    alert("UI not loaded correctly");
-    return;
-  }
+  /* INIT */
+  init(){
+    this.cacheDOM();
+    this.bindEvents();
+  },
 
-  if(passEl.value === "1234"){
-    loginEl.style.display = "none";
-    appEl.style.display = "block";
-    load();
-  } else {
-    alert("Wrong password");
-  }
-}
+  /* CACHE DOM */
+  cacheDOM(){
+    this.ui = {
+      login: document.getElementById("login"),
+      app: document.getElementById("app"),
+      pass: document.getElementById("pass"),
+      container: document.getElementById("container"),
 
-/* LOAD DATA (SAFE) */
-async function load(){
+      sales: document.getElementById("sales"),
+      products: document.getElementById("products"),
+      top: document.getElementById("top"),
+      insights: document.getElementById("insights"),
+      table: document.getElementById("table"),
 
-  try{
+      startDate: document.getElementById("startDate"),
+      endDate: document.getElementById("endDate"),
 
-    const res = await fetch(URL);
-    const text = await res.text();
+      barChart: document.getElementById("barChart"),
+      salesChart: document.getElementById("salesChart")
+    };
+  },
 
-    if(!text || text.includes("<!DOCTYPE")){
-      throw new Error("API returned HTML");
+  /* EVENTS */
+  bindEvents(){
+
+    /* LOGIN BUTTON */
+    window.login = () => this.login();
+
+    /* SWIPE + PULL */
+    this.initGestures();
+  },
+
+  /* LOGIN */
+  login(){
+
+    if(this.ui.pass.value === this.config.password){
+      this.ui.login.style.display = "none";
+      this.ui.app.style.display = "block";
+      this.load();
+    } else {
+      alert("Wrong password");
     }
+  },
 
-    const data = JSON.parse(text);
+  /* API LOAD */
+  async load(){
 
-    RAW = data;
-    draw(RAW);
+    try{
+      const res = await fetch(this.config.URL);
+      const text = await res.text();
 
-  } catch(e){
-    console.error("LOAD ERROR:", e);
-    alert("Load failed — API issue");
-  }
-}
+      if(!text || text.includes("<!DOCTYPE")){
+        throw new Error("Invalid API response");
+      }
 
-/* DRAW DASHBOARD */
-function draw(data){
+      this.state.RAW = JSON.parse(text);
+      this.draw(this.state.RAW);
 
-  let pt = {};
-  let dt = {};
-  let total = 0;
-
-  let dates = Object.keys(data || {}).sort();
-
-  for(let d of dates){
-
-    let day = data[d] || {};
-    dt[d] = 0;
-
-    for(let p in day){
-
-      let v = Number(day[p] || 0);
-
-      pt[p] = (pt[p] || 0) + v;
-      dt[d] += v;
-      total += v;
+    } catch(e){
+      console.error(e);
+      alert("Load failed — API issue");
     }
-  }
+  },
 
-  let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-  let top5 = sorted.slice(0,5);
+  /* DRAW */
+  draw(data){
 
-  document.getElementById("sales").innerText = "£" + total.toFixed(2);
-  document.getElementById("products").innerText = sorted.length;
-  document.getElementById("top").innerText = top5[0] || "-";
+    let pt={}, dt={}, total=0;
+    let dates = Object.keys(data||{}).sort();
 
-  // AI INSIGHTS
-  let avg = total / (dates.length || 1);
-  let anomalies = dates.filter(d => dt[d] > avg * 1.5);
+    for(let d of dates){
+      let day=data[d]||{};
+      dt[d]=0;
 
-  document.getElementById("insights").innerHTML =
-    "🏆 Top Products<br>" +
-    top5.map(p => "• " + p + " (£" + pt[p].toFixed(2) + ")").join("<br>") +
-    "<br><br>⚠️ High Sales Days<br>" +
-    (anomalies.length ? anomalies.join("<br>") : "None");
-
-  const barCanvas = document.getElementById("barChart");
-  const salesCanvas = document.getElementById("salesChart");
-
-  if(barChart) barChart.destroy();
-
-  barChart = new Chart(barCanvas,{
-    type:"bar",
-    data:{
-      labels:dates,
-      datasets:top5.map(p=>({
-        label:p,
-        data:dates.map(d=>data[d]?.[p] || 0),
-        stack:"stack1"
-      }))
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        x:{stacked:true},
-        y:{stacked:true}
+      for(let p in day){
+        let v=Number(day[p]||0);
+        pt[p]=(pt[p]||0)+v;
+        dt[d]+=v;
+        total+=v;
       }
     }
-  });
 
-  if(salesChart) salesChart.destroy();
+    let sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+    let top5 = sorted.slice(0,5);
 
-  salesChart = new Chart(salesCanvas,{
-    type:"bar",
-    data:{
-      labels:dates,
-      datasets:[{
-        label:"Sales (£)",
-        data:dates.map(d=>dt[d] || 0),
-        backgroundColor:"#38bdf8"
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false
+    this.ui.sales.innerText = "£"+total.toFixed(2);
+    this.ui.products.innerText = sorted.length;
+    this.ui.top.innerText = top5[0]||"-";
+
+    /* AI INSIGHTS */
+    let avg = total / (dates.length || 1);
+    let anomalies = dates.filter(d=>dt[d] > avg*1.5);
+
+    this.ui.insights.innerHTML =
+      "🏆 Top Products<br>" +
+      top5.map(p=>"• "+p+" (£"+pt[p].toFixed(2)+")").join("<br>") +
+      "<br><br>⚠️ High Sales Days<br>" +
+      (anomalies.length ? anomalies.join("<br>") : "None");
+
+    /* CHARTS */
+    if(this.state.barChart) this.state.barChart.destroy();
+
+    this.state.barChart = new Chart(this.ui.barChart,{
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:top5.map(p=>({
+          label:p,
+          data:dates.map(d=>data[d]?.[p]||0),
+          stack:"s"
+        }))
+      },
+      options:{responsive:true,maintainAspectRatio:false}
+    });
+
+    if(this.state.salesChart) this.state.salesChart.destroy();
+
+    this.state.salesChart = new Chart(this.ui.salesChart,{
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:[{
+          label:"Sales (£)",
+          data:dates.map(d=>dt[d]||0),
+          backgroundColor:"#38bdf8"
+        }]
+      }
+    });
+
+    this.ui.table.innerHTML =
+      sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+  },
+
+  /* FILTER */
+  applyFilter(){
+
+    let s = new Date(this.ui.startDate.value).getTime();
+    let e = new Date(this.ui.endDate.value).getTime();
+
+    let out={};
+
+    for(let d in this.state.RAW){
+      let t = new Date(d).getTime();
+      if(t>=s && t<=e) out[d]=this.state.RAW[d];
     }
-  });
 
-  document.getElementById("table").innerHTML =
-    sorted.map(p =>
-      `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
-    ).join("");
-}
+    this.draw(out);
+  },
 
-/* TAB SWITCH */
-function switchTab(n,el){
+  /* DATE PRESETS */
+  setRange(type){
 
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.getElementById("tab"+n).classList.add("active");
+    let end = new Date();
+    let start = new Date();
 
-  document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-  el.classList.add("active");
-}
+    if(type==="today") start.setHours(0,0,0,0);
+    if(type==="7") start.setDate(end.getDate()-7);
+    if(type==="30") start.setDate(end.getDate()-30);
 
-/* DATE PRESETS */
-function setRange(type){
+    this.ui.startDate.value = start.toISOString().split("T")[0];
+    this.ui.endDate.value = end.toISOString().split("T")[0];
 
-  let end = new Date();
-  let start = new Date();
+    this.applyFilter();
+  },
 
-  if(type==="today"){
-    start.setHours(0,0,0,0);
+  /* TABS */
+  switchTab(n,el){
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.getElementById("tab"+n).classList.add("active");
+
+    document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+    el.classList.add("active");
+  },
+
+  /* GESTURES */
+  initGestures(){
+
+    const c = this.ui.container;
+    if(!c) return;
+
+    let startX=0, pulling=false;
+
+    c.addEventListener("touchstart",e=>{
+      startX=e.touches[0].clientX;
+    });
+
+    c.addEventListener("touchend",e=>{
+      let diff=e.changedTouches[0].clientX-startX;
+
+      if(diff>80) this.switchTab(1,document.querySelectorAll(".nav div")[0]);
+      if(diff<-80) this.switchTab(3,document.querySelectorAll(".nav div")[2]);
+
+      if(pulling){
+        this.load();
+        pulling=false;
+      }
+    });
+
+    c.addEventListener("touchmove",e=>{
+      if(c.scrollTop===0 && e.touches[0].clientY>80){
+        pulling=true;
+      }
+    });
   }
 
-  if(type==="7"){
-    start.setDate(end.getDate()-7);
-  }
+};
 
-  if(type==="30"){
-    start.setDate(end.getDate()-30);
-  }
-
-  document.getElementById("startDate").value =
-    start.toISOString().split("T")[0];
-
-  document.getElementById("endDate").value =
-    end.toISOString().split("T")[0];
-
-  applyFilter();
-}
-
-/* FILTER */
-function applyFilter(){
-
-  let s = new Date(document.getElementById("startDate").value).getTime();
-  let e = new Date(document.getElementById("endDate").value).getTime();
-
-  let out = {};
-
-  for(let d in RAW){
-    let t = new Date(d).getTime();
-    if(t >= s && t <= e){
-      out[d] = RAW[d];
-    }
-  }
-
-  draw(out);
-}
-
-/* SWIPE */
-let startX = 0;
-
-const container = document.getElementById("container");
-
-container.addEventListener("touchstart", e=>{
-  startX = e.touches[0].clientX;
-});
-
-container.addEventListener("touchend", e=>{
-  let diff = e.changedTouches[0].clientX - startX;
-
-  if(diff > 80){
-    switchTab(1, document.querySelectorAll(".nav div")[0]);
-  }
-
-  if(diff < -80){
-    switchTab(3, document.querySelectorAll(".nav div")[2]);
-  }
-});
-
-/* PULL TO REFRESH */
-let pulling = false;
-
-container.addEventListener("touchmove", e=>{
-  if(container.scrollTop === 0 && e.touches[0].clientY > 80){
-    pulling = true;
-  }
-});
-
-container.addEventListener("touchend", ()=>{
-  if(pulling){
-    load();
-  }
-  pulling = false;
+/* INIT AFTER DOM READY */
+document.addEventListener("DOMContentLoaded", () => {
+  App.init();
 });
 
 /* PWA */
