@@ -18,8 +18,12 @@ body{
 
 /* LOADING */
 #loading{
-  position:fixed;inset:0;background:#0f172a;
-  display:none;justify-content:center;align-items:center;flex-direction:column;
+  position:fixed;inset:0;
+  background:#0f172a;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
   z-index:999;
 }
 
@@ -42,43 +46,38 @@ body{
   gap:10px;
 }
 
-/* NAV hidden until login */
-.nav{display:none;}
-
-input,button{
-  padding:12px;border-radius:10px;border:none;
-}
-input{background:#0b1220;color:white;}
-button{background:#38bdf8;font-weight:bold;}
-
-/* APP */
+/* APP WRAP (CRITICAL FIX) */
 #app{
   display:none;
   height:100vh;
   overflow:hidden;
-  position:relative;
 }
 
-/* WRAPPER FIX */
+/* FIXED TABS SYSTEM (NO OVERFLOW) */
 .tabs-wrapper{
   display:flex;
-  height:calc(100vh - 60px);
-  transition:transform .3s ease;
+  width:300%;
+  height:calc(100vh - 70px);
+  transform:translateX(0);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+  will-change:transform;
 }
 
-/* TAB FIX */
 .tab{
-  min-width:100%;
+  width:100%;
+  flex-shrink:0;
   overflow:auto;
   padding:10px;
+  box-sizing:border-box; /* FIX CUT OFF ISSUE */
 }
 
 /* HEADER */
 .header{
   position:sticky;
   top:0;
-  background:#0f172a;
-  z-index:5;
+  background:rgba(15,23,42,0.85);
+  backdrop-filter:blur(10px);
+  z-index:10;
   padding-bottom:10px;
 }
 
@@ -113,19 +112,23 @@ canvas{
 table{width:100%;border-collapse:collapse;}
 td{padding:8px;border-bottom:1px solid #334155;}
 
-/* NAV */
+/* NAV GLASS (LUXURY) */
 .nav{
   position:fixed;
   bottom:0;left:0;right:0;
   height:60px;
   display:none;
-  background:#0b1220;
+  background:rgba(11,18,32,0.7);
+  backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,0.05);
 }
+
 .nav div{
   flex:1;
   display:flex;
   justify-content:center;
   align-items:center;
+  font-weight:500;
 }
 .nav .active{color:#38bdf8;}
 
@@ -139,8 +142,26 @@ td{padding:8px;border-bottom:1px solid #334155;}
   padding:12px;
   border-radius:12px;
   opacity:0;
+  transition:.2s;
 }
 #toast.show{opacity:1;}
+
+/* MODAL DRILLDOWN */
+#modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+#modal .box{
+  background:#1e293b;
+  padding:20px;
+  border-radius:16px;
+  width:80%;
+}
 </style>
 </head>
 
@@ -159,10 +180,11 @@ td{padding:8px;border-bottom:1px solid #334155;}
 
 <div id="app">
 
-  <div class="tabs-wrapper" id="tabsWrapper">
+  <div class="tabs-wrapper" id="wrap">
 
     <!-- TAB 1 -->
     <div class="tab">
+
       <div class="header">
 
         <div class="grid">
@@ -198,7 +220,6 @@ td{padding:8px;border-bottom:1px solid #334155;}
     </div>
 
   </div>
-
 </div>
 
 <div class="nav" id="nav">
@@ -208,6 +229,10 @@ td{padding:8px;border-bottom:1px solid #334155;}
 </div>
 
 <div id="toast"></div>
+
+<div id="modal" onclick="this.style.display='none'">
+  <div class="box" id="modalBox"></div>
+</div>
 
 <script>
 
@@ -220,7 +245,7 @@ URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsE
 password:"1234"
 },
 
-get(id){return document.getElementById(id);},
+get:id=>document.getElementById(id),
 
 toast(msg){
 const t=this.get("toast");
@@ -242,30 +267,26 @@ this.load();
 async load(){
 this.get("loading").style.display="flex";
 try{
-const res=await fetch(this.config.URL,{cache:"no-store"});
-const data=await res.json();
-this.state.RAW=data;
-this.draw(data);
+const r=await fetch(this.config.URL,{cache:"no-store"});
+const d=await r.json();
+this.state.RAW=d;
+this.draw(d);
 }catch(e){this.toast("Load failed");}
 this.get("loading").style.display="none";
 },
 
-setRange(type){
+setRange(t){
+if(t==="apply") return this.applyRange();
 
-const startEl=this.get("startDate");
-const endEl=this.get("endDate");
+const n=new Date();
+let s=new Date();
 
-const now=new Date();
-let start=new Date();
+if(t==="today") s.setHours(0,0,0,0);
+if(t==="7") s.setDate(n.getDate()-7);
+if(t==="30") s.setDate(n.getDate()-30);
 
-if(type==="today") start.setHours(0,0,0,0);
-if(type==="7") start.setDate(now.getDate()-7);
-if(type==="30") start.setDate(now.getDate()-30);
-
-if(type==="apply") return this.applyRange();
-
-startEl.value=start.toISOString().split("T")[0];
-endEl.value=now.toISOString().split("T")[0];
+startDate.value=s.toISOString().split("T")[0];
+endDate.value=n.toISOString().split("T")[0];
 
 this.applyRange();
 },
@@ -286,7 +307,7 @@ this.draw(out);
 draw(data){
 
 let pt={},dt={},total=0;
-const dates=Object.keys(data||{}).sort();
+const dates=Object.keys(data).sort();
 
 for(const d of dates){
 dt[d]=0;
@@ -301,28 +322,33 @@ total+=v;
 const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
 const top5=sorted.slice(0,5);
 
-this.get("sales").innerText="£"+total.toFixed(2);
-this.get("products").innerText=sorted.length;
-this.get("top").innerText=top5[0]||"-";
+sales.innerText="£"+total.toFixed(2);
+products.innerText=sorted.length;
+top.innerText=top5[0]||"-";
 
-this.get("productTable").innerHTML=
-sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+productTable.innerHTML=
+sorted.map(p=>`<tr onclick="App.openProduct('${p}')"><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
-const money = v => "£"+v.toFixed(2);
+const money=v=>"£"+v.toFixed(2);
 
 if(this.state.barChart) this.state.barChart.destroy();
 this.state.barChart=new Chart(barChart,{
 type:"bar",
-data:{labels:dates,datasets:top5.map(p=>({
-label:p,data:dates.map(d=>data[d]?.[p]||0),stack:"s"
-}))},
+data:{
+labels:dates,
+datasets:top5.map(p=>({
+label:p,
+data:dates.map(d=>data[d]?.[p]||0),
+stack:"s"
+}))
+},
 options:{
 scales:{
-y:{stacked:true,ticks:{callback:money}},
+y:{ticks:{callback:money}},
 x:{stacked:true}
 },
 plugins:{
-tooltip:{callbacks:{label:(c)=>c.dataset.label+": "+money(c.raw)}}
+tooltip:{callbacks:{label:c=>c.dataset.label+": "+money(c.raw)}}
 }
 }
 });
@@ -330,30 +356,54 @@ tooltip:{callbacks:{label:(c)=>c.dataset.label+": "+money(c.raw)}}
 if(this.state.salesChart) this.state.salesChart.destroy();
 this.state.salesChart=new Chart(salesChart,{
 type:"bar",
-data:{labels:dates,datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d])}]},
+data:{
+labels:dates,
+datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d])}]
+},
 options:{
-scales:{y:{ticks:{callback:money}}},
-plugins:{tooltip:{callbacks:{label:(c)=>money(c.raw)}}}
+scales:{y:{ticks:{callback:money}}}
 }
 });
 
-this.get("insights").innerHTML="<b>Top Products</b><br>"+
-top5.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
+},
+
+openProduct(p){
+const box=this.get("modalBox");
+box.innerHTML=`<h3>${p}</h3><p>More analytics coming next upgrade</p>`;
+this.get("modal").style.display="flex";
 },
 
 switchTab(i,el){
 this.state.tab=i;
-this.get("tabsWrapper").style.transform=`translateX(-${i*100}%)`;
+this.get("wrap").style.transform=`translateX(-${i*100}%)`;
 
 document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
 el.classList.add("active");
+},
+
+initGestures(){
+const w=this.get("wrap");
+let x=0;
+
+w.addEventListener("touchstart",e=>x=e.touches[0].clientX);
+
+w.addEventListener("touchend",e=>{
+let dx=e.changedTouches[0].clientX-x;
+
+if(dx>80&&this.state.tab>0) this.switchTab(this.state.tab-1,document.querySelectorAll(".nav div")[this.state.tab-1]);
+if(dx<-80&&this.state.tab<2) this.switchTab(this.state.tab+1,document.querySelectorAll(".nav div")[this.state.tab+1]);
+});
 }
 
 };
 
 function login(){App.login();}
 function setRange(t){App.setRange(t);}
-function switchTab(n,el){App.switchTab(n,el);}
+function switchTab(i,el){App.switchTab(i,el);}
+
+document.addEventListener("DOMContentLoaded",()=>{
+App.initGestures();
+});
 
 </script>
 
