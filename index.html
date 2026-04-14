@@ -21,15 +21,14 @@ body{
   position:fixed;
   inset:0;
   background:#0f172a;
-  display:flex;
+  display:none;
   justify-content:center;
   align-items:center;
   flex-direction:column;
   z-index:999;
-  transition:.4s;
 }
-#loading.hidden{opacity:0;pointer-events:none;}
 
+/* SPINNER */
 .spinner{
   width:40px;height:40px;
   border:3px solid #334155;
@@ -86,9 +85,7 @@ button{background:#38bdf8;font-weight:bold;}
   background:#1e293b;
   padding:10px;
   border-radius:14px;
-  transition:.2s;
 }
-.card:active{transform:scale(.97);}
 
 /* DATES */
 .dates{
@@ -133,9 +130,9 @@ td{padding:8px;border-bottom:1px solid #334155;}
   bottom:80px;
   left:50%;
   transform:translateX(-50%) translateY(20px);
-  background:rgba(30,41,59,0.95);
-  padding:12px 18px;
-  border-radius:14px;
+  background:#1e293b;
+  padding:12px;
+  border-radius:12px;
   opacity:0;
   transition:.25s;
 }
@@ -148,23 +145,19 @@ td{padding:8px;border-bottom:1px solid #334155;}
 
 <body>
 
-<!-- LOADING -->
 <div id="loading">
   <div class="spinner"></div>
   <p>Syncing data...</p>
 </div>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
-  <input id="pass" type="password" placeholder="Password">
+  <input id="pass" type="password">
   <button onclick="login()">Enter</button>
 </div>
 
-<!-- APP -->
 <div id="app">
 
-  <!-- TAB 1 -->
   <div id="tab1" class="tab active">
 
     <div class="grid">
@@ -185,13 +178,11 @@ td{padding:8px;border-bottom:1px solid #334155;}
 
   </div>
 
-  <!-- TAB 2 -->
   <div id="tab2" class="tab">
     <canvas id="salesChart"></canvas>
     <div id="insights"></div>
   </div>
 
-  <!-- TAB 3 -->
   <div id="tab3" class="tab">
     <h3>Products</h3>
     <table id="productTable"></table>
@@ -199,7 +190,6 @@ td{padding:8px;border-bottom:1px solid #334155;}
 
 </div>
 
-<!-- NAV -->
 <div class="nav">
   <div class="active" onclick="switchTab(1,this)">Home</div>
   <div onclick="switchTab(2,this)">Stats</div>
@@ -227,33 +217,30 @@ setTimeout(()=>t.classList.remove("show"),1800);
 },
 
 login(){
-const p=document.getElementById("pass");
-if(!p||p.value!==this.config.password){
+if(pass.value!==this.config.password){
 this.toast("Wrong password");return;
 }
-document.getElementById("login").style.display="none";
-document.getElementById("app").style.display="block";
+login.style.display="none";
+app.style.display="block";
 this.load();
 },
 
 async load(){
-try{
-document.getElementById("loading").classList.remove("hidden");
+const loader=document.getElementById("loading");
+loader.style.display="flex";
 
+try{
 const res=await fetch(this.config.URL,{cache:"no-store"});
 const data=await res.json();
-
 this.state.RAW=data;
 this.draw(data);
-
-this.toast("Dashboard ready");
-
+this.toast("Updated");
 }catch(e){
 console.error(e);
 this.toast("Load failed");
 }
 
-setTimeout(()=>document.getElementById("loading").classList.add("hidden"),600);
+loader.style.display="none";
 },
 
 setRange(type){
@@ -320,10 +307,7 @@ data:dates.map(d=>data[d]?.[p]||0),
 stack:"s"
 }))
 },
-options:{
-animation:{duration:500},
-scales:{x:{stacked:true},y:{stacked:true}}
-}
+options:{scales:{x:{stacked:true},y:{stacked:true}}}
 });
 
 if(this.state.salesChart) this.state.salesChart.destroy();
@@ -332,8 +316,7 @@ type:"bar",
 data:{
 labels:dates,
 datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d])}]
-},
-options:{animation:{duration:500}}
+}
 });
 
 insights.innerHTML="<b>Top Products</b><br>"+
@@ -350,8 +333,6 @@ el.classList.add("active");
 
 initGestures(){
 const c=document.getElementById("app");
-if(!c) return;
-
 let startX=0;
 
 c.addEventListener("touchstart",e=>{
@@ -374,6 +355,7 @@ function switchTab(n,el){App.switchTab(n,el);}
 
 document.addEventListener("DOMContentLoaded",()=>{
 App.initGestures();
+setInterval(()=>App.load(),30000); // auto refresh
 });
 
 </script>
