@@ -33,19 +33,26 @@ const App = (() => {
 
     load();
   };
+const load = async () => {
+  try {
+    // ✅ SHOW loader BEFORE fetch
+    $("loading").style.display = "flex";
 
-  const load = async () => {
-    try {
-      const res = await fetch(CONFIG.URL, { cache: "no-store" });
-      const data = await res.json();
+    const res = await fetch(CONFIG.URL, { cache: "no-store" });
+    const data = await res.json();
 
-      STATE.raw = data;
-      draw(data);
+    STATE.raw = data;
+    draw(data);
 
-    } catch (e) {
-      toast("Load failed");
-    }
-  };
+    // ✅ HIDE loader AFTER everything is drawn
+    $("loading").style.display = "none";
+
+  } catch (e) {
+    $("loading").style.display = "none";
+    toast("Load failed");
+  }
+};
+
 
   const setRange = (type) => {
     const now = new Date();
