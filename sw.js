@@ -7,22 +7,28 @@ const App = (() => {
 
   const STATE = {
     raw: {},
-    tab: 0,
+    filtered: {},
     barChart: null,
     salesChart: null
   };
 
   const $ = (id) => document.getElementById(id);
 
+  const fmt = (v) => "£" + (Number(v || 0)).toFixed(2);
+
   const toast = (msg) => {
     const t = $("toast");
+    if (!t) return;
     t.textContent = msg;
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 1500);
   };
 
+  // =========================
+  // LOGIN
+  // =========================
   const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) {
+    if ($("pass")?.value !== CONFIG.PASSWORD) {
       toast("Wrong password");
       return;
     }
@@ -34,29 +40,36 @@ const App = (() => {
     load();
   };
 
+  // =========================
+  // LOADING (with skeleton feel)
+  // =========================
   const load = async () => {
     try {
-      $("loading").style.display = "flex";
+      if ($("loading")) $("loading").style.display = "flex";
 
       const res = await fetch(CONFIG.URL, { cache: "no-store" });
       const data = await res.json();
 
       STATE.raw = data;
+      STATE.filtered = data;
+
       draw(data);
 
-      $("loading").style.display = "none";
-
     } catch (e) {
-      $("loading").style.display = "none";
       toast("Load failed");
+    } finally {
+      if ($("loading")) $("loading").style.display = "none";
     }
   };
 
+  // =========================
+  // RANGE FILTER
+  // =========================
   const setRange = (type) => {
     const now = new Date();
     let start = new Date();
 
-    if (type === "today") start.setHours(0,0,0,0);
+    if (type === "today") start.setHours(0, 0, 0, 0);
     if (type === "7") start.setDate(now.getDate() - 7);
     if (type === "30") start.setDate(now.getDate() - 30);
 
@@ -74,23 +87,25 @@ const App = (() => {
 
     for (const d in STATE.raw) {
       const t = new Date(d).getTime();
-      if (t >= s && t <= e) out[d] = STATE.raw[d];
+      if (!isNaN(t) && t >= s && t <= e) {
+        out[d] = STATE.raw[d];
+      }
     }
 
+    STATE.filtered = out;
     draw(out);
   };
 
-  const draw = (data) => {
-
-    let pt = {};
-    let dt = {};
-    let total = 0;
+  // =========================
+  // CORE CALCULATION
+  // =========================
+  const compute = (data) => {
+    let pt = {}, dt = {}, total = 0;
 
     const dates = Object.keys(data || {}).sort();
 
     for (const d of dates) {
       dt[d] = 0;
-
       for (const p in data[d]) {
         const v = Number(data[d][p] || 0);
         pt[p] = (pt[p] || 0) + v;
@@ -102,41 +117,90 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a, b) => pt[b] - pt[a]);
     const top5 = sorted.slice(0, 5);
 
-    // =========================
-    // HOME CARDS
-    // =========================
-    $("sales").textContent = "£" + total.toFixed(2);
+    return { pt, dt, total, dates, sorted, top5 };
+  };
+
+  // =========================
+  // % CHANGE (SAAS KPI)
+  // =========================
+  const getPreviousComparison = (currentTotal) => {
+    const dates = Object.keys(STATE.raw).sort();
+    const half = Math.floor(dates.length / 2);
+
+    let prevTotal = 0;
+
+    dates.slice(0, half).forEach(d => {
+      for (const p in STATE.raw[d]) {
+        prevTotal += Number(STATE.raw[d][p] || 0);
+      }
+    });
+
+    if (!prevTotal) return { pct: 0, dir: "flat" };
+
+    const pct = ((currentTotal - prevTotal) / prevTotal) * 100;
+
+    return {
+      pct: Math.abs(pct.toFixed(1)),
+      dir: pct > 0 ? "up" : pct < 0 ? "down" : "flat"
+    };
+  };
+
+  // =========================
+  // DRAW UI
+  // =========================
+  const draw = (data) => {
+
+    const { pt, dt, total, dates, sorted, top5 } = compute(data);
+    const trend = getPreviousComparison(total);
+
+    // KPI
+    $("sales").textContent = fmt(total);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
 
-    // =========================
-    // TOP PRODUCTS (HOME)
-    // =========================
+    // KPI trend enhancement
+    const salesEl = $("sales");
+    if (salesEl) {
+      salesEl.innerHTML =
+        `${fmt(total)} <small style="opacity:.7">
+        ${trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "•"}
+        ${trend.pct}%
+        </small>`;
+    }
+
+    // TOP PRODUCTS
     const homeTop = $("homeTopList");
     if (homeTop) {
       homeTop.innerHTML = top5.length
         ? top5.map((p, i) =>
-            `<div>${i + 1}. ${p} — £${(pt[p] || 0).toFixed(2)}</div>`
+            `<div style="display:flex;justify-content:space-between">
+              <span>${i + 1}. ${p}</span>
+              <span>${fmt(pt[p])}</span>
+            </div>`
           ).join("")
         : "-";
     }
 
-    // =========================
-    // PRODUCTS TABLE
-    // =========================
+    // TABLE
     const table = $("productTable");
     if (table) {
-      table.innerHTML =
-        sorted.map(p =>
-          `<tr><td>${p}</td><td>£${(pt[p] || 0).toFixed(2)}</td></tr>`
-        ).join("");
+      table.innerHTML = sorted.map(p =>
+        `<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`
+      ).join("");
     }
 
-    const money = v => "£" + v.toFixed(2);
+    // SEARCH FILTER (SAAS FEATURE)
+    window.filterProducts = (q) => {
+      const rows = document.querySelectorAll("#productTable tr");
+      rows.forEach(r => {
+        r.style.display =
+          r.innerText.toLowerCase().includes(q.toLowerCase())
+            ? ""
+            : "none";
+      });
+    };
 
-    // =========================
-    // BAR CHART (STACKED)
-    // =========================
+    // BAR CHART (STACKED FIXED)
     if (STATE.barChart) STATE.barChart.destroy();
 
     STATE.barChart = new Chart($("barChart"), {
@@ -151,21 +215,25 @@ const App = (() => {
       },
       options: {
         responsive: true,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: £${ctx.raw}`
+            }
+          }
+        },
         scales: {
           x: { stacked: true },
           y: {
             stacked: true,
-            ticks: {
-              callback: v => "£" + v
-            }
+            ticks: { callback: v => "£" + v }
           }
         }
       }
     });
 
-    // =========================
-    // SALES CHART (STATS)
-    // =========================
+    // SALES CHART
     if (STATE.salesChart) STATE.salesChart.destroy();
 
     STATE.salesChart = new Chart($("salesChart"), {
@@ -178,26 +246,56 @@ const App = (() => {
         }]
       },
       options: {
-        scales: {
-          y: {
-            ticks: {
-              callback: v => "£" + v
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => "£" + ctx.raw
             }
           }
         }
       }
     });
+
+    // INSIGHTS
+    const insights = $("insights");
+    if (insights) {
+      insights.innerHTML =
+        "<b>Top Products</b><br>" +
+        top5.map(p => `• ${p} (${fmt(pt[p])})`).join("<br>");
+    }
   };
 
+  // =========================
+  // EXPORT CSV (SAAS FEATURE)
+  // =========================
+  const exportCSV = () => {
+    let rows = [["Product", "Value"]];
+
+    const { pt } = compute(STATE.filtered);
+
+    Object.keys(pt).forEach(p => {
+      rows.push([p, pt[p]]);
+    });
+
+    const csv = rows.map(r => r.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "export.csv";
+    a.click();
+  };
+
+  // =========================
+  // NAV
+  // =========================
   const switchTab = (i, el) => {
-    STATE.tab = i;
-
     $("tabs").style.transform = `translateX(-${i * 100}%)`;
-
-    document.querySelectorAll("#nav div")
+    document.querySelectorAll(".nav div")
       .forEach(b => b.classList.remove("active"));
-
-    el.classList.add("active");
+    if (el) el.classList.add("active");
   };
 
   return {
@@ -205,7 +303,8 @@ const App = (() => {
     load,
     setRange,
     applyRange,
-    switchTab
+    switchTab,
+    exportCSV
   };
 
 })();
