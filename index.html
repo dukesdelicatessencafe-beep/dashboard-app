@@ -3,27 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard SaaS Pro</title>
+<title>SaaS Dashboard Pro Stable</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --text:white;
-}
-.light{
-  --bg:#f1f5f9;
-  --card:white;
-  --text:#0f172a;
-}
-
 body{
   margin:0;
   font-family:system-ui;
-  background:var(--bg);
-  color:var(--text);
+  background:#0f172a;
+  color:white;
+  overflow:hidden;
 }
 
 /* LOGIN */
@@ -33,82 +23,15 @@ body{
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap:12px;
-}
-
-/* INPUTS */
-input,button{
-  padding:12px;
-  border-radius:10px;
-  border:none;
-}
-button{background:#38bdf8;font-weight:bold;cursor:pointer;}
-input{background:#0b1220;color:white;}
-
-/* APP */
-#app{display:none;height:100vh;overflow:hidden;}
-
-.tabs{
-  display:flex;
-  width:100%;
-  height:calc(100vh - 70px);
-  transition:.35s;
-}
-.tab{
-  min-width:100%;
-  padding:12px;
-  overflow-y:auto;
-}
-
-/* NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:70px;
-  display:flex;
-  background:#0b1220;
-}
-.nav div{
-  flex:1;
-  text-align:center;
-  font-size:12px;
-  padding-top:8px;
-}
-.nav .active{color:#38bdf8;}
-
-/* CARDS */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
   gap:10px;
 }
-.card{
-  background:var(--card);
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-}
 
-/* DATE */
-.dates{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  margin-top:10px;
+/* APP */
+#app{
+  display:none;
+  height:100vh;
+  position:relative;
 }
-.dates input{flex:1;min-width:120px;}
-
-/* CHART */
-.chartWrap{
-  height:280px;
-  margin-top:10px;
-}
-
-/* TABLE */
-table{width:100%;border-collapse:collapse;}
-td{padding:8px;border-bottom:1px solid #334155;}
 
 /* LOADER */
 #loading{
@@ -117,14 +40,129 @@ td{padding:8px;border-bottom:1px solid #334155;}
   display:none;
   justify-content:center;
   align-items:center;
-  background:#0008;
+  background:#0f172a;
   z-index:999;
+}
+
+/* TABS */
+.tabs{
+  display:flex;
+  height:calc(100vh - 60px);
+  transition:transform .35s ease;
+  will-change:transform;
+}
+
+.tab{
+  min-width:100%;
+  padding:12px;
+  overflow:auto;
+  box-sizing:border-box;
+}
+
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:60px;
+  display:flex;
+  background:#0b1220;
+}
+
+.nav div{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+}
+
+.nav .active{
+  color:#38bdf8;
+}
+
+/* KPI */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.card{
+  background:#1e293b;
+  padding:12px;
+  border-radius:12px;
+  text-align:center;
+}
+
+.kpi{
+  font-size:22px;
+  font-weight:bold;
+  display:block;
+  margin-top:6px;
+}
+
+/* INPUTS */
+.dates{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+input,button{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+}
+
+input{
+  background:#0b1220;
+  color:white;
+}
+
+button{
+  background:#38bdf8;
+  font-weight:bold;
+}
+
+/* PANELS */
+.panel{
+  background:#1e293b;
+  padding:10px;
+  border-radius:12px;
+  margin-top:10px;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #334155;
+}
+
+/* CHART */
+canvas{
+  background:#1e293b;
+  border-radius:12px;
+  margin-top:10px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .grid{ grid-template-columns:1fr; }
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOADER -->
 <div id="loading">Loading...</div>
 
 <!-- LOGIN -->
@@ -137,318 +175,238 @@ td{padding:8px;border-bottom:1px solid #334155;}
 <!-- APP -->
 <div id="app">
 
-<div class="tabs" id="tabs">
+  <div class="tabs" id="tabs">
 
-<!-- HOME -->
-<div class="tab">
+    <!-- HOME -->
+    <div class="tab">
 
-<div class="grid">
-  <div class="card">Sales<br><b id="sales">£0</b></div>
-  <div class="card">Products<br><b id="products">0</b></div>
-  <div class="card">Top<br><b id="top">-</b></div>
-</div>
+      <div class="grid">
+        <div class="card">
+          Sales
+          <span id="sales" class="kpi">£0</span>
+        </div>
 
-<div class="dates">
-  <input id="startDate" type="date">
-  <input id="endDate" type="date">
-  <button onclick="App.applyRange()">Apply</button>
-  <button onclick="App.setRange('today')">Today</button>
-  <button onclick="App.setRange('7')">7D</button>
-  <button onclick="App.setRange('30')">30D</button>
-  <button onclick="App.savePreset()">💾</button>
-  <button onclick="App.loadPreset()">📂</button>
-</div>
+        <div class="card">
+          Products
+          <span id="products" class="kpi">0</span>
+        </div>
 
-<div class="card">
-  <b>Top Products</b>
-  <div id="homeTopList"></div>
-</div>
+        <div class="card">
+          Top
+          <span id="top" class="kpi">-</span>
+        </div>
+      </div>
 
-<div class="chartWrap">
-  <canvas id="barChart"></canvas>
-</div>
+      <div class="dates">
+        <input id="startDate" type="date">
+        <input id="endDate" type="date">
 
-</div>
+        <button onclick="App.applyRange()">Apply</button>
+        <button onclick="App.setRange('today')">Today</button>
+        <button onclick="App.setRange('7')">7D</button>
+        <button onclick="App.setRange('30')">30D</button>
+      </div>
 
-<!-- STATS -->
-<div class="tab">
+      <div class="panel">
+        <b>Top Products</b>
+        <div id="homeTopList">-</div>
+      </div>
 
-<button onclick="App.toggleGroup()">Toggle Day/Week</button>
+      <canvas id="barChart"></canvas>
+    </div>
 
-<div class="chartWrap">
-  <canvas id="salesChart"></canvas>
-</div>
+    <!-- STATS -->
+    <div class="tab">
+      <canvas id="salesChart"></canvas>
+    </div>
 
-<div class="chartWrap">
-  <canvas id="trendChart"></canvas>
-</div>
+    <!-- PRODUCTS -->
+    <div class="tab">
+      <table id="productTable"></table>
+    </div>
 
-<div id="insights"></div>
-
-</div>
-
-<!-- PRODUCTS -->
-<div class="tab">
-
-<input id="search" placeholder="Search..." style="width:100%;padding:10px;margin-bottom:8px;">
-<button onclick="App.exportCSV()">Export CSV</button>
-
-<table id="productTable"></table>
-
-</div>
-
-</div>
+  </div>
 </div>
 
 <!-- NAV -->
 <div class="nav">
-<div onclick="App.switchTab(0,this)" class="active">🏠<br>Home</div>
-<div onclick="App.switchTab(1,this)">📈<br>Stats</div>
-<div onclick="App.switchTab(2,this)">📦<br>Products</div>
-<div onclick="App.toggleTheme()">🌗<br>Theme</div>
+  <div onclick="App.switchTab(0,this)" class="active">Home</div>
+  <div onclick="App.switchTab(1,this)">Stats</div>
+  <div onclick="App.switchTab(2,this)">Products</div>
 </div>
 
 <script>
 
 const App = (() => {
 
-const CONFIG={
-URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
-PASSWORD:"1234"
-};
+  const CONFIG = {
+    URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+    PASSWORD: "1234"
+  };
 
-const STATE={
-raw:{},
-group:"day",
-bar:null,
-sales:null,
-trend:null
-};
+  const STATE = {
+    raw: {},
+    barChart: null,
+    salesChart: null
+  };
 
-const $=id=>document.getElementById(id);
-const fmt=v=>"£"+Number(v||0).toFixed(2);
+  const $ = id => document.getElementById(id);
 
-/* KPI ANIMATION */
-const animate=(el,val)=>{
-let start=0;
-const step=val/20;
-const i=setInterval(()=>{
-start+=step;
-if(start>=val){el.textContent=fmt(val);clearInterval(i);}
-else el.textContent=fmt(start);
-},20);
-};
+  // ================= KPI ANIMATION =================
+  const animateKPI = (el, value) => {
+    if (!el) return;
+    let cur = 0;
+    const step = value / 25;
 
-/* CACHE */
-const cacheSave=d=>localStorage.setItem("cache",JSON.stringify(d));
-const cacheLoad=()=>JSON.parse(localStorage.getItem("cache")||"null");
+    const t = setInterval(() => {
+      cur += step;
+      if (cur >= value) {
+        el.textContent = "£" + value.toFixed(2);
+        clearInterval(t);
+      } else {
+        el.textContent = "£" + cur.toFixed(2);
+      }
+    }, 15);
+  };
 
-/* LOGIN */
-const login=()=>{
-if($("pass").value!==CONFIG.PASSWORD) return;
-$("login").style.display="none";
-$("app").style.display="block";
-load();
-};
+  // ================= LOGIN =================
+  const login = () => {
+    if ($("pass").value !== CONFIG.PASSWORD) return;
 
-/* LOAD */
-const load=async()=>{
-$("loading").style.display="flex";
+    $("login").style.display = "none";
+    $("app").style.display = "block";
 
-let data=cacheLoad();
-if(!data){
-const res=await fetch(CONFIG.URL);
-data=await res.json();
-cacheSave(data);
-}
+    load();
+  };
 
-STATE.raw=data;
-draw(data);
+  // ================= LOAD =================
+  const load = async () => {
+    $("loading").style.display = "flex";
 
-$("loading").style.display="none";
-};
+    const res = await fetch(CONFIG.URL);
+    const data = await res.json();
 
-/* RANGE */
-const setRange=(t)=>{
-const now=new Date();
-let s=new Date();
-if(t==="today") s.setHours(0,0,0,0);
-if(t==="7") s.setDate(now.getDate()-7);
-if(t==="30") s.setDate(now.getDate()-30);
+    STATE.raw = data;
+    draw(data);
 
-$("startDate").value=s.toISOString().split("T")[0];
-$("endDate").value=now.toISOString().split("T")[0];
+    $("loading").style.display = "none";
+  };
 
-applyRange();
-};
+  // ================= RANGE =================
+  const setRange = (type) => {
+    const now = new Date();
+    let start = new Date();
 
-const applyRange=()=>{
-const s=new Date($("startDate").value+"T00:00").getTime();
-const e=new Date($("endDate").value+"T23:59").getTime();
-const out={};
+    if (type === "today") start.setHours(0,0,0,0);
+    if (type === "7") start.setDate(now.getDate()-7);
+    if (type === "30") start.setDate(now.getDate()-30);
 
-for(const d in STATE.raw){
-const t=new Date(d).getTime();
-if(t>=s&&t<=e) out[d]=STATE.raw[d];
-}
+    $("startDate").value = start.toISOString().split("T")[0];
+    $("endDate").value = now.toISOString().split("T")[0];
 
-draw(out);
-};
+    applyRange();
+  };
 
-/* GROUP */
-const groupData=(data)=>{
-if(STATE.group==="day") return data;
+  const applyRange = () => {
+    const s = new Date($("startDate").value).getTime();
+    const e = new Date($("endDate").value).getTime();
 
-const out={};
+    const out = {};
+    for (const d in STATE.raw) {
+      const t = new Date(d).getTime();
+      if (t >= s && t <= e) out[d] = STATE.raw[d];
+    }
 
-for(const d in data){
-const wk=new Date(d);
-const key=wk.getFullYear()+"-W"+Math.ceil(wk.getDate()/7);
+    draw(out);
+  };
 
-if(!out[key]) out[key]={};
+  // ================= DRAW =================
+  const draw = (data) => {
 
-for(const p in data[d]){
-out[key][p]=(out[key][p]||0)+data[d][p];
-}
-}
-return out;
-};
+    let pt = {}, dt = {}, total = 0;
+    const dates = Object.keys(data || {}).sort();
 
-const toggleGroup=()=>{
-STATE.group=STATE.group==="day"?"week":"day";
-draw(STATE.raw);
-};
+    for (const d of dates) {
+      dt[d] = 0;
 
-/* DRAW */
-const draw=(data)=>{
+      for (const p in data[d]) {
+        const v = Number(data[d][p] || 0);
+        pt[p] = (pt[p] || 0) + v;
+        dt[d] += v;
+        total += v;
+      }
+    }
 
-data=groupData(data);
+    const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+    const top5 = sorted.slice(0,5);
 
-let pt={},dt={},total=0;
-const dates=Object.keys(data).sort();
+    // KPI
+    animateKPI($("sales"), total);
+    if ($("products")) $("products").textContent = sorted.length;
+    if ($("top")) $("top").textContent = top5[0] || "-";
 
-for(const d of dates){
-dt[d]=0;
-for(const p in data[d]){
-const v=Number(data[d][p]||0);
-pt[p]=(pt[p]||0)+v;
-dt[d]+=v;
-total+=v;
-}
-}
+    // TOP LIST
+    if ($("homeTopList")) {
+      $("homeTopList").innerHTML =
+        top5.map((p,i)=>`${i+1}. ${p} (£${pt[p].toFixed(2)})`).join("<br>");
+    }
 
-const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-const top5=sorted.slice(0,5);
+    // TABLE
+    if ($("productTable")) {
+      $("productTable").innerHTML =
+        sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+    }
 
-/* KPI */
-animate($("sales"),total);
-$("products").textContent=sorted.length;
-$("top").textContent=top5[0]||"-";
+    // BAR CHART (STACKED + COLOURS RESTORED)
+    if (STATE.barChart) STATE.barChart.destroy();
 
-/* TOP */
-$("homeTopList").innerHTML=top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>");
+    STATE.barChart = new Chart($("barChart"), {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: top5.map((p,i)=>({
+          label: p,
+          data: dates.map(d=>data[d]?.[p]||0),
+          backgroundColor: `hsl(${i*60},70%,55%)`
+        }))
+      },
+      options: {
+        responsive:true,
+        scales: {
+          x: { stacked:true },
+          y: { stacked:true }
+        }
+      }
+    });
 
-/* TABLE */
-const q=$("search")?.value?.toLowerCase()||"";
-$("productTable").innerHTML=sorted.filter(p=>p.toLowerCase().includes(q))
-.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
+    // SALES CHART
+    if (STATE.salesChart) STATE.salesChart.destroy();
 
-/* GRADIENT */
-const ctx=$("barChart").getContext("2d");
-const grad=ctx.createLinearGradient(0,0,0,300);
-grad.addColorStop(0,"#38bdf8");
-grad.addColorStop(1,"#6366f1");
+    STATE.salesChart = new Chart($("salesChart"), {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: [{
+          label: "Sales",
+          data: dates.map(d=>dt[d]||0)
+        }]
+      }
+    });
+  };
 
-/* BAR */
-if(STATE.bar) STATE.bar.destroy();
-STATE.bar=new Chart(ctx,{
-type:"bar",
-data:{
-labels:dates,
-datasets:top5.map(p=>({
-label:p,
-data:dates.map(d=>data[d]?.[p]||0),
-backgroundColor:grad,
-stack:"s"
-}))
-},
-options:{
-responsive:true,
-maintainAspectRatio:false,
-scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>"£"+v}}}
-}
-});
+  // ================= TABS =================
+  const switchTab = (i,el) => {
+    $("tabs").style.transform = `translateX(-${i*100}%)`;
+    document.querySelectorAll(".nav div")
+      .forEach(b=>b.classList.remove("active"));
+    if (el) el.classList.add("active");
+  };
 
-/* SALES */
-if(STATE.sales) STATE.sales.destroy();
-STATE.sales=new Chart($("salesChart"),{
-type:"bar",
-data:{labels:dates,datasets:[{data:dates.map(d=>dt[d]),backgroundColor:"#22c55e"}]},
-options:{maintainAspectRatio:false}
-});
-
-/* TREND */
-if(STATE.trend) STATE.trend.destroy();
-STATE.trend=new Chart($("trendChart"),{
-type:"line",
-data:{
-labels:dates,
-datasets:[{
-label:top5[0]||"",
-data:dates.map(d=>data[d]?.[top5[0]]||0),
-borderColor:"#38bdf8"
-}]
-},
-options:{maintainAspectRatio:false}
-});
-
-/* INSIGHTS */
-$("insights").innerHTML=`Top product: ${top5[0]||"-"}<br>Total: ${fmt(total)}`;
-
-};
-
-/* PRESETS */
-const savePreset=()=>{
-localStorage.setItem("preset",JSON.stringify({
-s:$("startDate").value,
-e:$("endDate").value
-}));
-};
-
-const loadPreset=()=>{
-const p=JSON.parse(localStorage.getItem("preset")||"{}");
-$("startDate").value=p.s;
-$("endDate").value=p.e;
-applyRange();
-};
-
-/* CSV */
-const exportCSV=()=>{
-let csv="Product,Value\n";
-document.querySelectorAll("#productTable tr").forEach(r=>{
-csv+=r.innerText.replace("\t",",")+"\n";
-});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([csv]));
-a.download="data.csv";
-a.click();
-};
-
-/* NAV */
-const switchTab=(i,el)=>{
-$("tabs").style.transform=`translateX(-${i*100}%)`;
-document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-el.classList.add("active");
-};
-
-/* THEME */
-const toggleTheme=()=>document.body.classList.toggle("light");
-
-return {login,setRange,applyRange,switchTab,exportCSV,toggleTheme,toggleGroup,savePreset,loadPreset};
+  return {login,setRange,applyRange,switchTab};
 
 })();
 
-window.App=App;
+window.App = App;
 
 </script>
 
