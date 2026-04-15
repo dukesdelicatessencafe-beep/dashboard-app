@@ -3,26 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard</title>
+<title>SaaS Dashboard Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
-/* =========================
-   🌌 BASE
-========================= */
+/* ================= SaaS UI BASE ================= */
 body{
   margin:0;
   font-family:system-ui;
-  background:radial-gradient(circle at top,#111827,#0f172a);
-  color:white;
+  background:#0b1220;
+  color:#e2e8f0;
   overflow:hidden;
 }
 
-/* =========================
-   🔐 LOGIN
-========================= */
+/* ================= LOGIN ================= */
 #login{
   height:100vh;
   display:flex;
@@ -34,129 +30,103 @@ body{
 
 input,button{
   padding:12px;
-  border-radius:12px;
+  border-radius:10px;
   border:none;
-}
-
-input{
-  background:#0b1220;
-  color:white;
   outline:none;
 }
 
-button{
-  background:linear-gradient(135deg,#38bdf8,#3b82f6);
-  font-weight:bold;
-  cursor:pointer;
-}
+input{background:#0f172a;color:white;width:220px;}
+button{background:#38bdf8;font-weight:600;cursor:pointer;}
 
-/* =========================
-   📦 APP
-========================= */
+/* ================= APP ================= */
 #app{
   display:none;
   height:100vh;
+  position:relative;
 }
 
-/* =========================
-   🌊 TABS
-========================= */
+/* ================= LOADING ================= */
+#loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,6,23,0.9);
+  z-index:999;
+  font-size:18px;
+  color:#38bdf8;
+}
+
+/* ================= TABS ================= */
 .tabs{
   display:flex;
-  width:100%;
-  height:calc(100vh - 70px);
-  transition:transform .5s cubic-bezier(.2,.8,.2,1);
+  height:calc(100vh - 60px);
+  transition:transform .35s ease;
 }
 
 .tab{
   min-width:100%;
-  padding:16px;
+  padding:14px;
   overflow:auto;
-  box-sizing:border-box;
 }
 
-/* =========================
-   🧭 NAV
-========================= */
+/* ================= NAV ================= */
 .nav{
   position:fixed;
   bottom:0;
   left:0;
   right:0;
-  height:70px;
+  height:60px;
   display:flex;
-  backdrop-filter:blur(12px);
-  background:rgba(15,23,42,.7);
-  border-top:1px solid rgba(255,255,255,.05);
+  background:#0f172a;
+  border-top:1px solid #1e293b;
 }
 
 .nav div{
   flex:1;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
-  font-size:14px;
-  opacity:.7;
-  transition:.2s;
-}
-
-.nav div:hover{
-  opacity:1;
+  align-items:center;
+  font-size:13px;
+  cursor:pointer;
 }
 
 .nav .active{
-  opacity:1;
   color:#38bdf8;
 }
 
-/* =========================
-   📊 CARDS
-========================= */
+/* ================= CARDS ================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:10px;
 }
 
 .card{
-  background:rgba(30,41,59,.6);
-  backdrop-filter:blur(10px);
-  padding:14px;
-  border-radius:16px;
-  transition:.2s;
-  border:1px solid rgba(255,255,255,.05);
+  background:#111827;
+  padding:12px;
+  border-radius:14px;
 }
 
-.card:hover{
-  transform:translateY(-2px);
-  border-color:#38bdf8;
-}
-
-/* =========================
-   📅 DATES
-========================= */
+/* ================= INPUT ROW ================= */
 .dates{
   display:flex;
-  gap:10px;
+  gap:8px;
   margin-top:12px;
 }
 
 .dates input{flex:1;}
 
-/* =========================
-   📈 CHARTS
-========================= */
+/* ================= CHART ================= */
 canvas{
-  background:rgba(30,41,59,.4);
-  border-radius:16px;
+  background:#111827;
+  border-radius:14px;
   margin-top:12px;
-  padding:10px;
 }
 
-/* =========================
-   📦 TABLE
-========================= */
+/* ================= TABLE ================= */
 table{
   width:100%;
   border-collapse:collapse;
@@ -164,70 +134,38 @@ table{
 
 td{
   padding:10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid #1f2937;
 }
 
-/* =========================
-   💬 TOP PRODUCTS
-========================= */
-#homeTopList div{
-  padding:6px;
-  border-radius:8px;
-  transition:.2s;
-  cursor:pointer;
-}
-
-#homeTopList div:hover{
-  background:rgba(56,189,248,.1);
-}
-
-/* =========================
-   ⏳ LOADING
-========================= */
-#loading{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:#0f172a;
-  z-index:999;
-}
-
-/* =========================
-   🍞 TOAST
-========================= */
-#toast{
-  position:fixed;
-  bottom:90px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#1e293b;
+/* ================= TOP BOX ================= */
+.box{
+  margin-top:12px;
+  background:#111827;
   padding:12px;
-  border-radius:12px;
-  opacity:0;
-  transition:.2s;
+  border-radius:14px;
 }
-#toast.show{opacity:1;}
 
 </style>
 </head>
 
 <body>
 
-<div id="loading">Loading...</div>
+<!-- LOADER -->
+<div id="loading">Loading dashboard...</div>
 
+<!-- LOGIN -->
 <div id="login">
-  <h2>Dashboard Login</h2>
-  <input id="pass" type="password">
+  <h2>SaaS Login</h2>
+  <input id="pass" type="password" placeholder="Password">
   <button onclick="App.login()">Enter</button>
 </div>
 
+<!-- APP -->
 <div id="app">
 
   <div class="tabs" id="tabs">
 
-    <!-- HOME -->
+    <!-- ================= HOME ================= -->
     <div class="tab">
 
       <div class="grid">
@@ -245,21 +183,21 @@ td{
         <button onclick="App.setRange('30')">30D</button>
       </div>
 
-      <div style="margin-top:12px;">
+      <div class="box">
         <b>Top Products</b>
-        <div id="homeTopList"></div>
+        <div id="homeTopList">-</div>
       </div>
 
       <canvas id="barChart"></canvas>
     </div>
 
-    <!-- STATS -->
+    <!-- ================= STATS ================= -->
     <div class="tab">
       <canvas id="salesChart"></canvas>
-      <div id="insights"></div>
+      <div class="box" id="insights"></div>
     </div>
 
-    <!-- PRODUCTS -->
+    <!-- ================= PRODUCTS ================= -->
     <div class="tab">
       <table id="productTable"></table>
     </div>
@@ -267,13 +205,12 @@ td{
   </div>
 </div>
 
+<!-- NAV -->
 <div class="nav" id="nav">
-  <div onclick="App.switchTab(0,this)" class="active">Home</div>
-  <div onclick="App.switchTab(1,this)">Stats</div>
-  <div onclick="App.switchTab(2,this)">Products</div>
+  <div onclick="App.switchTab(0,this)" class="active">🏠 Home</div>
+  <div onclick="App.switchTab(1,this)">📊 Stats</div>
+  <div onclick="App.switchTab(2,this)">📦 Products</div>
 </div>
-
-<div id="toast"></div>
 
 <script>
 
@@ -287,17 +224,11 @@ const App = (() => {
   const STATE = {
     raw: {},
     barChart: null,
-    salesChart: null
+    salesChart: null,
+    tab: 0
   };
 
   const $ = id => document.getElementById(id);
-
-  const animate = (el, value) => {
-    if (!el) return;
-    el.style.transform = "scale(1.05)";
-    el.textContent = value;
-    setTimeout(()=>el.style.transform="scale(1)",120);
-  };
 
   const login = () => {
     if ($("pass").value !== CONFIG.PASSWORD) return;
@@ -310,15 +241,18 @@ const App = (() => {
   };
 
   const load = async () => {
-    $("loading").style.display = "flex";
+    try {
+      $("loading").style.display = "flex";
 
-    const res = await fetch(CONFIG.URL);
-    const data = await res.json();
+      const res = await fetch(CONFIG.URL);
+      const data = await res.json();
 
-    STATE.raw = data;
-    draw(data);
+      STATE.raw = data;
+      draw(data);
 
-    $("loading").style.display = "none";
+    } finally {
+      $("loading").style.display = "none";
+    }
   };
 
   const setRange = (type) => {
@@ -326,8 +260,8 @@ const App = (() => {
     let start = new Date();
 
     if (type === "today") start.setHours(0,0,0,0);
-    if (type === "7") start.setDate(now.getDate()-7);
-    if (type === "30") start.setDate(now.getDate()-30);
+    if (type === "7") start.setDate(now.getDate() - 7);
+    if (type === "30") start.setDate(now.getDate() - 30);
 
     $("startDate").value = start.toISOString().split("T")[0];
     $("endDate").value = now.toISOString().split("T")[0];
@@ -336,8 +270,8 @@ const App = (() => {
   };
 
   const applyRange = () => {
-    const s = new Date($("startDate").value + "T00:00:00").getTime();
-    const e = new Date($("endDate").value + "T23:59:59").getTime();
+    const s = new Date($("startDate").value).getTime();
+    const e = new Date($("endDate").value).getTime();
 
     const out = {};
 
@@ -352,10 +286,12 @@ const App = (() => {
   const draw = (data) => {
 
     let pt = {}, dt = {}, total = 0;
+
     const dates = Object.keys(data || {}).sort();
 
     for (const d of dates) {
       dt[d] = 0;
+
       for (const p in data[d]) {
         const v = Number(data[d][p] || 0);
         pt[p] = (pt[p] || 0) + v;
@@ -367,18 +303,19 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    animate($("sales"), "£"+total.toFixed(2));
-    animate($("products"), sorted.length);
-    animate($("top"), top5[0] || "-");
+    $("sales").textContent = "£" + total.toFixed(2);
+    $("products").textContent = sorted.length;
+    $("top").textContent = top5[0] || "-";
 
     $("homeTopList").innerHTML =
-      top5.map((p,i)=>`<div>${i+1}. ${p} — £${pt[p].toFixed(2)}</div>`).join("");
+      top5.length
+        ? top5.map((p,i)=>`${i+1}. ${p} — £${pt[p].toFixed(2)}`).join("<br>")
+        : "-";
 
     $("productTable").innerHTML =
       sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
     if (STATE.barChart) STATE.barChart.destroy();
-
     STATE.barChart = new Chart($("barChart"), {
       type: "bar",
       data: {
@@ -390,40 +327,56 @@ const App = (() => {
         }))
       },
       options: {
-        responsive:true,
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true}
+        responsive: true,
+        scales: {
+          x: { stacked: true },
+          y: {
+            stacked: true,
+            ticks: {
+              callback: v => "£" + v
+            }
+          }
         }
       }
     });
 
     if (STATE.salesChart) STATE.salesChart.destroy();
-
     STATE.salesChart = new Chart($("salesChart"), {
       type: "bar",
       data: {
         labels: dates,
         datasets: [{
-          label:"Sales",
-          data: dates.map(d=>dt[d]||0)
+          label: "Sales (£)",
+          data: dates.map(d => dt[d] || 0)
         }]
+      },
+      options: {
+        scales: {
+          y: {
+            ticks: {
+              callback: v => "£" + v
+            }
+          }
+        }
       }
     });
 
     $("insights").innerHTML =
-      `<div style="margin-top:10px;padding:10px;background:#1e293b;border-radius:12px;">
-        Avg Daily: £${(total/(dates.length||1)).toFixed(2)}
-      </div>`;
+      "<b>Top Products</b><br>" +
+      top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
   };
 
-  const switchTab = (i,el) => {
+  const switchTab = (i, el) => {
+    STATE.tab = i;
     $("tabs").style.transform = `translateX(-${i*100}%)`;
-    document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+
+    document.querySelectorAll(".nav div")
+      .forEach(b => b.classList.remove("active"));
+
     el.classList.add("active");
   };
 
-  return {login,setRange,applyRange,switchTab};
+  return { login, setRange, applyRange, switchTab };
 
 })();
 
