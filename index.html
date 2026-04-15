@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Pro Stable</title>
+<title>SaaS Dashboard Stable Final</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -30,7 +30,6 @@ body{
 #app{
   display:none;
   height:100vh;
-  position:relative;
 }
 
 /* LOADER */
@@ -44,19 +43,71 @@ body{
   z-index:999;
 }
 
-/* TABS */
-.tabs{
+/* HEADER */
+.header{
+  height:60px;
   display:flex;
-  height:calc(100vh - 60px);
-  transition:transform .35s ease;
-  will-change:transform;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 15px;
+  background:#0b1220;
+  border-bottom:1px solid #1e293b;
 }
 
-.tab{
+/* VIEWS */
+.views{
+  display:flex;
+  height:calc(100vh - 120px);
+  transition:transform .35s ease;
+}
+
+.view{
   min-width:100%;
-  padding:12px;
+  padding:14px;
   overflow:auto;
-  box-sizing:border-box;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.card{
+  background:#1e293b;
+  padding:14px;
+  border-radius:14px;
+}
+
+.kpi{
+  font-size:26px;
+  font-weight:800;
+}
+
+/* FILTERS */
+.filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+input,button{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+}
+
+input{background:#0b1220;color:white;}
+button{background:#38bdf8;font-weight:600;cursor:pointer;}
+
+/* PANEL */
+.panel{
+  background:#1e293b;
+  padding:12px;
+  border-radius:14px;
+  margin-top:12px;
 }
 
 /* NAV */
@@ -68,341 +119,232 @@ body{
   height:60px;
   display:flex;
   background:#0b1220;
+  border-top:1px solid #1e293b;
 }
 
 .nav div{
   flex:1;
   display:flex;
+  flex-direction:column;
   justify-content:center;
   align-items:center;
   cursor:pointer;
 }
 
-.nav .active{
-  color:#38bdf8;
-}
-
-/* KPI */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-
-.card{
-  background:#1e293b;
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-}
-
-.kpi{
-  font-size:22px;
-  font-weight:bold;
-  display:block;
-  margin-top:6px;
-}
-
-/* INPUTS */
-.dates{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-  flex-wrap:wrap;
-}
-
-input,button{
-  padding:10px;
-  border-radius:10px;
-  border:none;
-}
-
-input{
-  background:#0b1220;
-  color:white;
-}
-
-button{
-  background:#38bdf8;
-  font-weight:bold;
-}
-
-/* PANELS */
-.panel{
-  background:#1e293b;
-  padding:10px;
-  border-radius:12px;
-  margin-top:10px;
-}
+.nav .icon{font-size:18px;}
+.nav .active{color:#38bdf8}
 
 /* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-}
+table{width:100%;border-collapse:collapse;}
+td{padding:8px;border-bottom:1px solid #334155;}
 
 /* CHART */
 canvas{
   background:#1e293b;
-  border-radius:12px;
+  border-radius:14px;
   margin-top:10px;
 }
 
 /* MOBILE */
 @media(max-width:768px){
-  .grid{ grid-template-columns:1fr; }
+.grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOADER -->
 <div id="loading">Loading...</div>
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>Login</h2>
-  <input id="pass" type="password">
-  <button onclick="App.login()">Enter</button>
+<h2>Login</h2>
+<input id="pass" type="password">
+<button onclick="App.login()">Enter</button>
 </div>
 
 <!-- APP -->
 <div id="app">
 
-  <div class="tabs" id="tabs">
+<div class="header">
+<div>SaaS Dashboard</div>
+<div id="top">-</div>
+</div>
 
-    <!-- HOME -->
-    <div class="tab">
+<div class="views" id="views">
 
-      <div class="grid">
-        <div class="card">
-          Sales
-          <span id="sales" class="kpi">£0</span>
-        </div>
+<!-- HOME -->
+<div class="view">
 
-        <div class="card">
-          Products
-          <span id="products" class="kpi">0</span>
-        </div>
+<div class="grid">
+<div class="card">Sales<div id="sales" class="kpi">£0.00</div></div>
+<div class="card">Products<div id="products" class="kpi">0</div></div>
+<div class="card">Top<div id="topCard" class="kpi">-</div></div>
+</div>
 
-        <div class="card">
-          Top
-          <span id="top" class="kpi">-</span>
-        </div>
-      </div>
+<div class="filters">
+<input id="startDate" type="date">
+<input id="endDate" type="date">
+<button onclick="App.applyRange()">Apply</button>
+<button onclick="App.setRange(7)">7D</button>
+<button onclick="App.setRange(30)">30D</button>
+</div>
 
-      <div class="dates">
-        <input id="startDate" type="date">
-        <input id="endDate" type="date">
+<div class="panel">
+<b>Top Products</b>
+<div id="homeTopList"></div>
+</div>
 
-        <button onclick="App.applyRange()">Apply</button>
-        <button onclick="App.setRange('today')">Today</button>
-        <button onclick="App.setRange('7')">7D</button>
-        <button onclick="App.setRange('30')">30D</button>
-      </div>
+<canvas id="barChart"></canvas>
 
-      <div class="panel">
-        <b>Top Products</b>
-        <div id="homeTopList">-</div>
-      </div>
+</div>
 
-      <canvas id="barChart"></canvas>
-    </div>
+<!-- STATS -->
+<div class="view">
+<canvas id="salesChart"></canvas>
+</div>
 
-    <!-- STATS -->
-    <div class="tab">
-      <canvas id="salesChart"></canvas>
-    </div>
+<!-- PRODUCTS -->
+<div class="view">
+<table id="productTable"></table>
+</div>
 
-    <!-- PRODUCTS -->
-    <div class="tab">
-      <table id="productTable"></table>
-    </div>
-
-  </div>
+</div>
 </div>
 
 <!-- NAV -->
 <div class="nav">
-  <div onclick="App.switchTab(0,this)" class="active">Home</div>
-  <div onclick="App.switchTab(1,this)">Stats</div>
-  <div onclick="App.switchTab(2,this)">Products</div>
+<div onclick="App.switchTab(0,this)" class="active"><div class="icon">🏠</div>Home</div>
+<div onclick="App.switchTab(1,this)"><div class="icon">📊</div>Stats</div>
+<div onclick="App.switchTab(2,this)"><div class="icon">📦</div>Products</div>
 </div>
 
 <script>
 
 const App = (() => {
 
-  const CONFIG = {
-    URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
-    PASSWORD: "1234"
-  };
+const CONFIG = {
+URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+PASSWORD: "1234"
+};
 
-  const STATE = {
-    raw: {},
-    barChart: null,
-    salesChart: null
-  };
+const STATE = {
+raw: {},
+bar: null,
+sales: null
+};
 
-  const $ = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-  // ================= KPI ANIMATION =================
-  const animateKPI = (el, value) => {
-    if (!el) return;
-    let cur = 0;
-    const step = value / 25;
+/* LOGIN */
+const login = () => {
+if ($("pass").value !== CONFIG.PASSWORD) return;
+$("login").style.display = "none";
+$("app").style.display = "block";
+load();
+};
 
-    const t = setInterval(() => {
-      cur += step;
-      if (cur >= value) {
-        el.textContent = "£" + value.toFixed(2);
-        clearInterval(t);
-      } else {
-        el.textContent = "£" + cur.toFixed(2);
-      }
-    }, 15);
-  };
+/* LOAD */
+const load = async () => {
+$("loading").style.display = "flex";
+const res = await fetch(CONFIG.URL);
+STATE.raw = await res.json();
+draw(STATE.raw);
+$("loading").style.display = "none";
+};
 
-  // ================= LOGIN =================
-  const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) return;
+/* RANGE */
+const setRange = (d) => {
+const now = new Date();
+const s = new Date();
+s.setDate(now.getDate() - d);
 
-    $("login").style.display = "none";
-    $("app").style.display = "block";
+$("startDate").value = s.toISOString().split("T")[0];
+$("endDate").value = now.toISOString().split("T")[0];
+applyRange();
+};
 
-    load();
-  };
+const applyRange = () => {
+const s = new Date($("startDate").value).getTime();
+const e = new Date($("endDate").value).getTime();
 
-  // ================= LOAD =================
-  const load = async () => {
-    $("loading").style.display = "flex";
+let out = {};
+for (const d in STATE.raw) {
+const t = new Date(d).getTime();
+if (t >= s && t <= e) out[d] = STATE.raw[d];
+}
 
-    const res = await fetch(CONFIG.URL);
-    const data = await res.json();
+draw(out);
+};
 
-    STATE.raw = data;
-    draw(data);
+/* DRAW */
+const draw = (data) => {
 
-    $("loading").style.display = "none";
-  };
+let pt = {}, dt = {}, total = 0;
+const dates = Object.keys(data || {}).sort();
 
-  // ================= RANGE =================
-  const setRange = (type) => {
-    const now = new Date();
-    let start = new Date();
+for (const d of dates) {
+dt[d] = 0;
+for (const p in data[d]) {
+const v = +data[d][p] || 0;
+pt[p] = (pt[p] || 0) + v;
+dt[d] += v;
+total += v;
+}
+}
 
-    if (type === "today") start.setHours(0,0,0,0);
-    if (type === "7") start.setDate(now.getDate()-7);
-    if (type === "30") start.setDate(now.getDate()-30);
+const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+const top5 = sorted.slice(0,5);
 
-    $("startDate").value = start.toISOString().split("T")[0];
-    $("endDate").value = now.toISOString().split("T")[0];
+/* KPI */
+$("sales").textContent = "£" + total.toFixed(2);
+$("products").textContent = sorted.length;
+$("topCard").textContent = top5[0] || "-";
 
-    applyRange();
-  };
+/* LIST */
+$("homeTopList").innerHTML =
+top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
 
-  const applyRange = () => {
-    const s = new Date($("startDate").value).getTime();
-    const e = new Date($("endDate").value).getTime();
+/* TABLE */
+$("productTable").innerHTML =
+sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
-    const out = {};
-    for (const d in STATE.raw) {
-      const t = new Date(d).getTime();
-      if (t >= s && t <= e) out[d] = STATE.raw[d];
-    }
+/* BAR */
+if (STATE.bar) STATE.bar.destroy();
+STATE.bar = new Chart($("barChart"), {
+type: "bar",
+data: {
+labels: dates,
+datasets: top5.map((p,i)=>({
+label: p,
+data: dates.map(d=>data[d]?.[p] || 0),
+backgroundColor: ["#38bdf8","#6366f1","#22c55e","#f59e0b","#ef4444"][i]
+}))
+}
+});
 
-    draw(out);
-  };
+/* SALES */
+if (STATE.sales) STATE.sales.destroy();
+STATE.sales = new Chart($("salesChart"), {
+type: "bar",
+data: {
+labels: dates,
+datasets: [{
+label: "Sales",
+data: dates.map(d => dt[d] || 0)
+}]
+}
+});
 
-  // ================= DRAW =================
-  const draw = (data) => {
+};
 
-    let pt = {}, dt = {}, total = 0;
-    const dates = Object.keys(data || {}).sort();
+const switchTab = (i, el) => {
+$("views").style.transform = `translateX(-${i*100}%)`;
+document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+el.classList.add("active");
+};
 
-    for (const d of dates) {
-      dt[d] = 0;
-
-      for (const p in data[d]) {
-        const v = Number(data[d][p] || 0);
-        pt[p] = (pt[p] || 0) + v;
-        dt[d] += v;
-        total += v;
-      }
-    }
-
-    const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-    const top5 = sorted.slice(0,5);
-
-    // KPI
-    animateKPI($("sales"), total);
-    if ($("products")) $("products").textContent = sorted.length;
-    if ($("top")) $("top").textContent = top5[0] || "-";
-
-    // TOP LIST
-    if ($("homeTopList")) {
-      $("homeTopList").innerHTML =
-        top5.map((p,i)=>`${i+1}. ${p} (£${pt[p].toFixed(2)})`).join("<br>");
-    }
-
-    // TABLE
-    if ($("productTable")) {
-      $("productTable").innerHTML =
-        sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
-    }
-
-    // BAR CHART (STACKED + COLOURS RESTORED)
-    if (STATE.barChart) STATE.barChart.destroy();
-
-    STATE.barChart = new Chart($("barChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: top5.map((p,i)=>({
-          label: p,
-          data: dates.map(d=>data[d]?.[p]||0),
-          backgroundColor: `hsl(${i*60},70%,55%)`
-        }))
-      },
-      options: {
-        responsive:true,
-        scales: {
-          x: { stacked:true },
-          y: { stacked:true }
-        }
-      }
-    });
-
-    // SALES CHART
-    if (STATE.salesChart) STATE.salesChart.destroy();
-
-    STATE.salesChart = new Chart($("salesChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: [{
-          label: "Sales",
-          data: dates.map(d=>dt[d]||0)
-        }]
-      }
-    });
-  };
-
-  // ================= TABS =================
-  const switchTab = (i,el) => {
-    $("tabs").style.transform = `translateX(-${i*100}%)`;
-    document.querySelectorAll(".nav div")
-      .forEach(b=>b.classList.remove("active"));
-    if (el) el.classList.add("active");
-  };
-
-  return {login,setRange,applyRange,switchTab};
+return { login, load, setRange, applyRange, switchTab };
 
 })();
 
