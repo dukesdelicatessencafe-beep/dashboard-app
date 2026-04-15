@@ -3,144 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pro - Production</title>
+<title>SaaS Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+/* =========================
+   🌌 BASE
+========================= */
 body{
   margin:0;
   font-family:system-ui;
-  background:#0f172a;
+  background:radial-gradient(circle at top,#111827,#0f172a);
   color:white;
   overflow:hidden;
 }
 
-/* LOGIN */
+/* =========================
+   🔐 LOGIN
+========================= */
 #login{
   height:100vh;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
-/* INPUTS */
 input,button{
   padding:12px;
-  border-radius:10px;
+  border-radius:12px;
   border:none;
 }
-input{background:#0b1220;color:white;}
-button{background:#38bdf8;font-weight:bold;cursor:pointer;}
 
-/* APP */
+input{
+  background:#0b1220;
+  color:white;
+  outline:none;
+}
+
+button{
+  background:linear-gradient(135deg,#38bdf8,#3b82f6);
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* =========================
+   📦 APP
+========================= */
 #app{
   display:none;
   height:100vh;
 }
 
-/* TABS */
+/* =========================
+   🌊 TABS
+========================= */
 .tabs{
   display:flex;
   width:100%;
-  height:calc(100vh - 60px);
-  transition:transform .35s ease;
-}
-.tab{
-  min-width:100%;
-  padding:10px;
-  overflow:auto;
+  height:calc(100vh - 70px);
+  transition:transform .5s cubic-bezier(.2,.8,.2,1);
 }
 
-/* NAV */
+.tab{
+  min-width:100%;
+  padding:16px;
+  overflow:auto;
+  box-sizing:border-box;
+}
+
+/* =========================
+   🧭 NAV
+========================= */
 .nav{
   position:fixed;
   bottom:0;
   left:0;
   right:0;
-  height:60px;
+  height:70px;
   display:flex;
-  background:#0b1220;
+  backdrop-filter:blur(12px);
+  background:rgba(15,23,42,.7);
+  border-top:1px solid rgba(255,255,255,.05);
 }
+
 .nav div{
   flex:1;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
+  font-size:14px;
+  opacity:.7;
+  transition:.2s;
 }
-.nav .active{color:#38bdf8}
 
-/* CARDS */
+.nav div:hover{
+  opacity:1;
+}
+
+.nav .active{
+  opacity:1;
+  color:#38bdf8;
+}
+
+/* =========================
+   📊 CARDS
+========================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-.card{
-  background:#1e293b;
-  padding:10px;
-  border-radius:12px;
+  gap:12px;
 }
 
-/* DATES */
+.card{
+  background:rgba(30,41,59,.6);
+  backdrop-filter:blur(10px);
+  padding:14px;
+  border-radius:16px;
+  transition:.2s;
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.card:hover{
+  transform:translateY(-2px);
+  border-color:#38bdf8;
+}
+
+/* =========================
+   📅 DATES
+========================= */
 .dates{
   display:flex;
-  gap:8px;
-  margin-top:10px;
+  gap:10px;
+  margin-top:12px;
 }
+
 .dates input{flex:1;}
 
-/* CHART */
+/* =========================
+   📈 CHARTS
+========================= */
 canvas{
-  background:#1e293b;
-  border-radius:12px;
-  margin-top:10px;
+  background:rgba(30,41,59,.4);
+  border-radius:16px;
+  margin-top:12px;
+  padding:10px;
 }
 
-/* TABLE */
+/* =========================
+   📦 TABLE
+========================= */
 table{
   width:100%;
   border-collapse:collapse;
 }
+
 td{
-  padding:8px;
-  border-bottom:1px solid #334155;
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-/* LOADER */
+/* =========================
+   💬 TOP PRODUCTS
+========================= */
+#homeTopList div{
+  padding:6px;
+  border-radius:8px;
+  transition:.2s;
+  cursor:pointer;
+}
+
+#homeTopList div:hover{
+  background:rgba(56,189,248,.1);
+}
+
+/* =========================
+   ⏳ LOADING
+========================= */
 #loading{
   position:fixed;
   inset:0;
   display:none;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   background:#0f172a;
   z-index:999;
 }
 
-/* TOAST */
+/* =========================
+   🍞 TOAST
+========================= */
 #toast{
   position:fixed;
-  bottom:80px;
+  bottom:90px;
   left:50%;
   transform:translateX(-50%);
   background:#1e293b;
-  padding:10px;
-  border-radius:10px;
+  padding:12px;
+  border-radius:12px;
   opacity:0;
+  transition:.2s;
 }
-#toast.show{opacity:1}
+#toast.show{opacity:1;}
 
-/* INSIGHTS */
-#insights{
-  margin-top:10px;
-  padding:10px;
-  background:#1e293b;
-  border-radius:10px;
-}
 </style>
 </head>
 
@@ -149,7 +218,7 @@ td{
 <div id="loading">Loading...</div>
 
 <div id="login">
-  <h2>Login</h2>
+  <h2>Dashboard Login</h2>
   <input id="pass" type="password">
   <button onclick="App.login()">Enter</button>
 </div>
@@ -176,9 +245,9 @@ td{
         <button onclick="App.setRange('30')">30D</button>
       </div>
 
-      <div style="margin-top:10px;background:#1e293b;padding:10px;border-radius:12px;">
+      <div style="margin-top:12px;">
         <b>Top Products</b>
-        <div id="homeTopList">-</div>
+        <div id="homeTopList"></div>
       </div>
 
       <canvas id="barChart"></canvas>
@@ -223,7 +292,13 @@ const App = (() => {
 
   const $ = id => document.getElementById(id);
 
-  /* ---------------- LOGIN ---------------- */
+  const animate = (el, value) => {
+    if (!el) return;
+    el.style.transform = "scale(1.05)";
+    el.textContent = value;
+    setTimeout(()=>el.style.transform="scale(1)",120);
+  };
+
   const login = () => {
     if ($("pass").value !== CONFIG.PASSWORD) return;
 
@@ -234,11 +309,10 @@ const App = (() => {
     load();
   };
 
-  /* ---------------- LOAD ---------------- */
   const load = async () => {
     $("loading").style.display = "flex";
 
-    const res = await fetch(CONFIG.URL, { cache: "no-store" });
+    const res = await fetch(CONFIG.URL);
     const data = await res.json();
 
     STATE.raw = data;
@@ -247,7 +321,6 @@ const App = (() => {
     $("loading").style.display = "none";
   };
 
-  /* ---------------- RANGE ---------------- */
   const setRange = (type) => {
     const now = new Date();
     let start = new Date();
@@ -276,14 +349,10 @@ const App = (() => {
     draw(out);
   };
 
-  /* ---------------- DRAW ---------------- */
   const draw = (data) => {
 
-    if (!data || Object.keys(data).length === 0) return;
-
     let pt = {}, dt = {}, total = 0;
-
-    const dates = Object.keys(data).sort();
+    const dates = Object.keys(data || {}).sort();
 
     for (const d of dates) {
       dt[d] = 0;
@@ -298,18 +367,16 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    /* ---------------- STATS ---------------- */
-    animateText("sales", "£" + total.toFixed(2));
-    animateText("products", sorted.length);
-    animateText("top", top5[0] || "-");
+    animate($("sales"), "£"+total.toFixed(2));
+    animate($("products"), sorted.length);
+    animate($("top"), top5[0] || "-");
 
     $("homeTopList").innerHTML =
-      top5.map((p,i)=>`<div onclick="App.filterProduct('${p}')">${i+1}. ${p} — £${pt[p].toFixed(2)}</div>`).join("<br>");
+      top5.map((p,i)=>`<div>${i+1}. ${p} — £${pt[p].toFixed(2)}</div>`).join("");
 
     $("productTable").innerHTML =
       sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
-    /* ---------------- CHARTS ---------------- */
     if (STATE.barChart) STATE.barChart.destroy();
 
     STATE.barChart = new Chart($("barChart"), {
@@ -323,9 +390,10 @@ const App = (() => {
         }))
       },
       options: {
-        scales: {
-          x: { stacked: true },
-          y: { stacked: true }
+        responsive:true,
+        scales:{
+          x:{stacked:true},
+          y:{stacked:true}
         }
       }
     });
@@ -337,47 +405,25 @@ const App = (() => {
       data: {
         labels: dates,
         datasets: [{
-          label: "Sales",
-          data: dates.map(d => dt[d] || 0)
+          label:"Sales",
+          data: dates.map(d=>dt[d]||0)
         }]
       }
     });
 
-    /* ---------------- INSIGHTS ---------------- */
-    const avg = total / (dates.length || 1);
     $("insights").innerHTML =
-      `<b>Insights</b><br>
-       Avg Daily: £${avg.toFixed(2)}<br>`;
-  };
-
-  /* ---------------- INTERACTION ---------------- */
-  const filterProduct = (name) => {
-    const filtered = {};
-
-    for (const d in STATE.raw) {
-      if (STATE.raw[d][name]) {
-        filtered[d] = { [name]: STATE.raw[d][name] };
-      }
-    }
-
-    draw(filtered);
+      `<div style="margin-top:10px;padding:10px;background:#1e293b;border-radius:12px;">
+        Avg Daily: £${(total/(dates.length||1)).toFixed(2)}
+      </div>`;
   };
 
   const switchTab = (i,el) => {
     $("tabs").style.transform = `translateX(-${i*100}%)`;
-    document.querySelectorAll(".nav div")
-      .forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
     el.classList.add("active");
   };
 
-  /* ---------------- ANIMATION ---------------- */
-  const animateText = (id, value) => {
-    const el = $(id);
-    if (!el) return;
-    el.textContent = value;
-  };
-
-  return {login,setRange,applyRange,switchTab,filterProduct};
+  return {login,setRange,applyRange,switchTab};
 
 })();
 
