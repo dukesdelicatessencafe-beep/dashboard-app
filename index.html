@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Pro</title>
+<title>SaaS Pro Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -20,9 +20,7 @@ body{
   overflow:hidden;
 }
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -32,6 +30,7 @@ body{
   gap:10px;
 }
 
+/* INPUTS */
 input,button{
   padding:12px;
   border-radius:10px;
@@ -41,9 +40,7 @@ input,button{
 input{background:#0b1220;color:white;}
 button{background:#38bdf8;font-weight:bold;}
 
-/* =========================
-   APP
-========================= */
+/* APP */
 #app{
   display:none;
   height:100vh;
@@ -51,26 +48,21 @@ button{background:#38bdf8;font-weight:bold;}
   position:relative;
 }
 
-/* =========================
-   TABS
-========================= */
+/* TABS */
 .tabs{
   display:flex;
   width:100%;
   height:calc(100vh - 60px);
-  transition:transform .35s ease;
+  transition:transform .4s ease;
 }
 
 .tab{
   min-width:100%;
-  padding:12px;
+  padding:14px;
   overflow:auto;
-  box-sizing:border-box;
 }
 
-/* =========================
-   NAV (RESTORED ICONS)
-========================= */
+/* NAV */
 .nav{
   position:fixed;
   bottom:0;
@@ -88,22 +80,12 @@ button{background:#38bdf8;font-weight:bold;}
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  font-size:13px;
   cursor:pointer;
 }
 
-.nav small{
-  font-size:10px;
-  opacity:.7;
-}
+.nav .active{color:#38bdf8;}
 
-.nav .active{
-  color:#38bdf8;
-}
-
-/* =========================
-   KPI / GRID
-========================= */
+/* KPI GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -112,47 +94,19 @@ button{background:#38bdf8;font-weight:bold;}
 
 .card{
   background:#1e293b;
-  padding:12px;
+  padding:14px;
   border-radius:12px;
-  transition:all .2s ease;
+  transition:transform .2s ease;
 }
 
-/* =========================
-   DATE BAR
-========================= */
-.dates{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.dates input{flex:1;}
-
-/* =========================
-   CHARTS
-========================= */
+/* CHARTS */
 canvas{
   background:#1e293b;
   border-radius:12px;
-  margin-top:10px;
+  margin-top:12px;
 }
 
-/* =========================
-   TABLE
-========================= */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-}
-
-/* =========================
-   TOP PRODUCTS
-========================= */
+/* TOP PRODUCTS */
 #homeTopProducts{
   margin-top:10px;
   background:#1e293b;
@@ -160,9 +114,7 @@ td{
   border-radius:12px;
 }
 
-/* =========================
-   TOAST
-========================= */
+/* TOAST */
 #toast{
   position:fixed;
   bottom:80px;
@@ -177,9 +129,7 @@ td{
 
 #toast.show{opacity:1;}
 
-/* =========================
-   LOADER
-========================= */
+/* LOADER */
 #loading{
   position:fixed;
   inset:0;
@@ -190,28 +140,11 @@ td{
   z-index:999;
 }
 
-/* =========================
-   RESPONSIVE (FIXED)
-========================= */
+/* RESPONSIVE */
 @media (max-width:768px){
-
   body{overflow:auto;}
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .dates{
-    flex-direction:column;
-  }
-
-  canvas{
-    height:260px !important;
-  }
-
-  .tab{
-    padding-bottom:90px;
-  }
+  .grid{grid-template-columns:1fr;}
+  .tab{padding-bottom:90px;}
 }
 
 </style>
@@ -219,7 +152,6 @@ td{
 
 <body>
 
-<!-- LOADER -->
 <div id="loading">Loading...</div>
 
 <!-- LOGIN -->
@@ -241,15 +173,6 @@ td{
         <div class="card">Sales<br><b id="sales">£0</b></div>
         <div class="card">Products<br><b id="products">0</b></div>
         <div class="card">Top<br><b id="top">-</b></div>
-      </div>
-
-      <div class="dates">
-        <input id="startDate" type="date">
-        <input id="endDate" type="date">
-        <button onclick="App.applyRange()">Apply</button>
-        <button onclick="App.setRange('today')">Today</button>
-        <button onclick="App.setRange('7')">7D</button>
-        <button onclick="App.setRange('30')">30D</button>
       </div>
 
       <div id="homeTopProducts">
@@ -276,22 +199,9 @@ td{
 
 <!-- NAV -->
 <div class="nav" id="nav">
-
-  <div onclick="App.switchTab(0,this)" class="active">
-    <div>🏠</div>
-    <small>Home</small>
-  </div>
-
-  <div onclick="App.switchTab(1,this)">
-    <div>📈</div>
-    <small>Stats</small>
-  </div>
-
-  <div onclick="App.switchTab(2,this)">
-    <div>📦</div>
-    <small>Products</small>
-  </div>
-
+  <div onclick="App.switchTab(0,this)" class="active">🏠</div>
+  <div onclick="App.switchTab(1,this)">📈</div>
+  <div onclick="App.switchTab(2,this)">📦</div>
 </div>
 
 <div id="toast"></div>
@@ -299,7 +209,7 @@ td{
 <script>
 
 /* =========================
-   APP CORE (STABLE v2)
+   SAAS PRO ENGINE (MODULAR)
 ========================= */
 const App = (() => {
 
@@ -316,8 +226,44 @@ const App = (() => {
 
   const $ = id => document.getElementById(id);
 
+  /* =========================
+     UX HELPERS (SAAS LAYER)
+  ========================= */
+
+  const toast = (msg) => {
+    const t = $("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1500);
+  };
+
+  const animateValue = (el, end) => {
+    if (!el) return;
+    let start = 0;
+    const duration = 600;
+    const step = Math.max(1, Math.floor(end / 30));
+
+    const interval = setInterval(() => {
+      start += step;
+      if (start >= end) {
+        el.textContent = "£" + end.toFixed(2);
+        clearInterval(interval);
+      } else {
+        el.textContent = "£" + start.toFixed(2);
+      }
+    }, 16);
+  };
+
+  /* =========================
+     AUTH
+  ========================= */
+
   const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) return;
+    if ($("pass").value !== CONFIG.PASSWORD) {
+      toast("Wrong password");
+      return;
+    }
 
     $("login").style.display = "none";
     $("app").style.display = "block";
@@ -326,45 +272,27 @@ const App = (() => {
     load();
   };
 
+  /* =========================
+     DATA LAYER
+  ========================= */
+
   const load = async () => {
     $("loading").style.display = "flex";
 
-    const res = await fetch(CONFIG.URL, { cache: "no-store" });
-    const data = await res.json();
-
-    STATE.raw = data;
-    draw(data);
-
-    $("loading").style.display = "none";
-  };
-
-  const setRange = (type) => {
-    const now = new Date();
-    let start = new Date();
-
-    if (type === "today") start.setHours(0,0,0,0);
-    if (type === "7") start.setDate(now.getDate()-7);
-    if (type === "30") start.setDate(now.getDate()-30);
-
-    $("startDate").value = start.toISOString().split("T")[0];
-    $("endDate").value = now.toISOString().split("T")[0];
-
-    applyRange();
-  };
-
-  const applyRange = () => {
-    const s = new Date($("startDate").value).getTime();
-    const e = new Date($("endDate").value).getTime();
-
-    const out = {};
-
-    for (const d in STATE.raw) {
-      const t = new Date(d).getTime();
-      if (t >= s && t <= e) out[d] = STATE.raw[d];
+    try {
+      const res = await fetch(CONFIG.URL, { cache: "no-store" });
+      STATE.raw = await res.json();
+      draw(STATE.raw);
+    } catch (e) {
+      toast("Load failed");
+    } finally {
+      $("loading").style.display = "none";
     }
-
-    draw(out);
   };
+
+  /* =========================
+     CORE LOGIC
+  ========================= */
 
   const draw = (data) => {
 
@@ -385,51 +313,66 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    $("sales").textContent = "£" + total.toFixed(2);
+    /* ================= KPI ANIMATION ================= */
+    animateValue($("sales"), total);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
 
+    /* TOP LIST */
     $("homeTopList").innerHTML =
       top5.length
         ? top5.map((p,i)=>`${i+1}. ${p} — £${pt[p].toFixed(2)}`).join("<br>")
         : "-";
 
+    /* TABLE */
     $("productTable").innerHTML =
       sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
+    /* CHARTS */
     if (STATE.barChart) STATE.barChart.destroy();
     STATE.barChart = new Chart($("barChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: top5.map(p => ({
-          label: p,
-          data: dates.map(d => data[d]?.[p] || 0)
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:top5.map(p=>({
+          label:p,
+          data:dates.map(d=>data[d]?.[p]||0),
+          stack:"s"
         }))
+      },
+      options:{
+        responsive:true,
+        scales:{
+          x:{stacked:true},
+          y:{stacked:true}
+        }
       }
     });
 
     if (STATE.salesChart) STATE.salesChart.destroy();
     STATE.salesChart = new Chart($("salesChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: [{
-          label: "Sales",
-          data: dates.map(d => dt[d] || 0)
+      type:"bar",
+      data:{
+        labels:dates,
+        datasets:[{
+          label:"Sales",
+          data:dates.map(d=>dt[d]||0)
         }]
       }
     });
-
   };
 
-  const switchTab = (i,el) => {
+  /* =========================
+     NAV
+  ========================= */
+
+  const switchTab = (i, el) => {
     $("tabs").style.transform = `translateX(-${i*100}%)`;
     document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
     el.classList.add("active");
   };
 
-  return { login, load, setRange, applyRange, switchTab };
+  return { login, load, switchTab };
 
 })();
 
