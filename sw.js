@@ -1,20 +1,33 @@
 const App = (() => {
 
+  // =========================
+  // CONFIG
+  // =========================
   const CONFIG = {
     URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
     PASSWORD: "1234"
   };
 
+  // =========================
+  // STATE
+  // =========================
   const STATE = {
     raw: {},
-    tab: 0,
     barChart: null,
     salesChart: null
   };
 
+  // =========================
+  // HELPERS
+  // =========================
   const $ = (id) => document.getElementById(id);
 
   const fmt = (v) => "£" + (Number(v || 0)).toFixed(2);
+
+  const safeSet = (id, value) => {
+    const el = $(id);
+    if (el) el.textContent = value;
+  };
 
   const toast = (msg) => {
     const t = $("toast");
@@ -24,46 +37,65 @@ const App = (() => {
     setTimeout(() => t.classList.remove("show"), 1500);
   };
 
+  // =========================
+  // LOGIN
+  // =========================
   const login = () => {
-    if ($("pass")?.value !== CONFIG.PASSWORD) {
+    const pass = $("pass");
+    if (!pass || pass.value !== CONFIG.PASSWORD) {
       toast("Wrong password");
       return;
     }
 
-    $("login").style.display = "none";
-    $("app").style.display = "block";
-    $("nav").style.display = "flex";
+    const loginEl = $("login");
+    const appEl = $("app");
+    const navEl = $("nav");
+
+    if (loginEl) loginEl.style.display = "none";
+    if (appEl) appEl.style.display = "block";
+    if (navEl) navEl.style.display = "flex";
 
     load();
   };
 
+  // =========================
+  // LOAD DATA
+  // =========================
   const load = async () => {
     try {
-      if ($("loading")) $("loading").style.display = "flex";
+      const loader = $("loading");
+      if (loader) loader.style.display = "flex";
 
       const res = await fetch(CONFIG.URL, { cache: "no-store" });
       const data = await res.json();
 
-      STATE.raw = data;
-      draw(data);
+      STATE.raw = data || {};
+      draw(STATE.raw);
 
     } catch (e) {
       toast("Load failed");
     } finally {
-      if ($("loading")) $("loading").style.display = "none";
+      const loader = $("loading");
+      if (loader) loader.style.display = "none";
     }
   };
 
+  // =========================
+  // DATE RANGE
+  // =========================
   const setRange = (type) => {
     const now = new Date();
-    let start = new Date();
+    const start = new Date();
 
     if (type === "today") start.setHours(0, 0, 0, 0);
     if (type === "7") start.setDate(now.getDate() - 7);
     if (type === "30") start.setDate(now.getDate() - 30);
 
-    if ($("startDate")) $("startDate").value = start.toISOString().split("T")[0];
-    if ($("endDate")) $("endDate").value = now.toISOString().split("T")[0];
+    const s = $("startDate");
+    const e = $("endDate");
+
+    if (s) s.value = start.toISOString().split("T")[0];
+    if (e) e.value = now.toISOString().split("T")[0];
 
     applyRange();
   };
@@ -71,25 +103,28 @@ const App = (() => {
   const applyRange = () => {
     const sEl = $("startDate");
     const eEl = $("endDate");
+
     if (!sEl || !eEl) return;
 
     const s = new Date(sEl.value + "T00:00:00").getTime();
     const e = new Date(eEl.value + "T23:59:59").getTime();
 
-    const out = {};
+    const filtered = {};
 
     for (const d in STATE.raw) {
       const t = new Date(d).getTime();
       if (!isNaN(t) && t >= s && t <= e) {
-        out[d] = STATE.raw[d];
+        filtered[d] = STATE.raw[d];
       }
     }
 
-    draw(out);
+    draw(filtered);
   };
 
-  const draw = (data) => {
-
+  // =========================
+  // CORE DATA ENGINE
+  // =========================
+  const buildMetrics = (data) => {
     let pt = {};
     let dt = {};
     let total = 0;
@@ -98,6 +133,7 @@ const App = (() => {
 
     for (const d of dates) {
       dt[d] = 0;
+
       for (const p in data[d]) {
         const v = Number(data[d][p] || 0);
         pt[p] = (pt[p] || 0) + v;
@@ -109,12 +145,22 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a, b) => pt[b] - pt[a]);
     const top5 = sorted.slice(0, 5);
 
-    // ================= HOME KPI =================
-    if ($("sales")) $("sales").textContent = fmt(total);
-    if ($("products")) $("products").textContent = sorted.length;
-    if ($("top")) $("top").textContent = top5[0] || "-";
+    return { pt, dt, total, dates, sorted, top5 };
+  };
 
-    // ================= HOME TOP PRODUCTS =================
+  // =========================
+  // RENDER
+  // =========================
+  const draw = (data) => {
+
+    const { pt, dt, total, dates, sorted, top5 } = buildMetrics(data);
+
+    // ================= HOME KPI =================
+    safeSet("sales", fmt(total));
+    safeSet("products", sorted.length);
+    safeSet("top", top5[0] || "-");
+
+    // ================= TOP PRODUCTS =================
     const homeTop = $("homeTopList");
     if (homeTop) {
       homeTop.innerHTML = top5.length
@@ -124,7 +170,7 @@ const App = (() => {
         : "<div>No data</div>";
     }
 
-    // ================= PRODUCTS TABLE =================
+    // ================= TABLE =================
     const table = $("productTable");
     if (table) {
       table.innerHTML = sorted.length
@@ -134,9 +180,10 @@ const App = (() => {
         : "<tr><td colspan='2'>No data</td></tr>";
     }
 
-    // ================= BAR CHART =================
+    // ================= STACKED BAR (HOME) =================
     const barCanvas = $("barChart");
     if (barCanvas) {
+
       if (STATE.barChart) STATE.barChart.destroy();
 
       STATE.barChart = new Chart(barCanvas, {
@@ -165,6 +212,7 @@ const App = (() => {
     // ================= SALES CHART =================
     const salesCanvas = $("salesChart");
     if (salesCanvas) {
+
       if (STATE.salesChart) STATE.salesChart.destroy();
 
       STATE.salesChart = new Chart(salesCanvas, {
@@ -196,8 +244,10 @@ const App = (() => {
     }
   };
 
+  // =========================
+  // NAV
+  // =========================
   const switchTab = (i, el) => {
-    STATE.tab = i;
 
     const tabs = $("tabs");
     if (tabs) tabs.style.transform = `translateX(-${i * 100}%)`;
@@ -208,6 +258,9 @@ const App = (() => {
     if (el) el.classList.add("active");
   };
 
+  // =========================
+  // PUBLIC API
+  // =========================
   return {
     login,
     load,
