@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pro</title>
+<title>Dashboard Pro Stable</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -26,12 +26,12 @@ body{
   gap:10px;
 }
 
+/* INPUTS */
 input,button{
   padding:12px;
   border-radius:10px;
   border:none;
 }
-
 input{background:#0b1220;color:white;}
 button{background:#38bdf8;font-weight:bold;cursor:pointer;}
 
@@ -39,18 +39,7 @@ button{background:#38bdf8;font-weight:bold;cursor:pointer;}
 #app{
   display:none;
   height:100vh;
-  position:relative;
-}
-
-/* LOADER */
-#loading{
-  position:fixed;
-  inset:0;
-  background:#0f172a;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+  overflow:hidden;
 }
 
 /* TABS */
@@ -58,9 +47,9 @@ button{background:#38bdf8;font-weight:bold;cursor:pointer;}
   display:flex;
   width:100%;
   height:calc(100vh - 60px);
-  transition:transform .3s ease;
+  transition:transform .35s ease;
+  will-change:transform;
 }
-
 .tab{
   min-width:100%;
   padding:10px;
@@ -77,17 +66,14 @@ button{background:#38bdf8;font-weight:bold;cursor:pointer;}
   display:flex;
   background:#0b1220;
 }
-
 .nav div{
   flex:1;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
 }
-
-.nav .active{
-  color:#38bdf8;
-}
+.nav .active{color:#38bdf8;}
 
 /* UI */
 .grid{
@@ -95,7 +81,6 @@ button{background:#38bdf8;font-weight:bold;cursor:pointer;}
   grid-template-columns:repeat(3,1fr);
   gap:10px;
 }
-
 .card{
   background:#1e293b;
   padding:10px;
@@ -107,7 +92,6 @@ button{background:#38bdf8;font-weight:bold;cursor:pointer;}
   gap:8px;
   margin-top:10px;
 }
-
 .dates input{flex:1;}
 
 canvas{
@@ -118,20 +102,37 @@ canvas{
 
 table{
   width:100%;
+  border-collapse:collapse;
 }
-
 td{
   padding:8px;
   border-bottom:1px solid #334155;
 }
 
-/* TOP BOX */
-.box{
-  margin-top:10px;
+/* LOADER */
+#loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#0f172a;
+  z-index:999;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
   background:#1e293b;
   padding:10px;
-  border-radius:12px;
+  border-radius:10px;
+  opacity:0;
+  transition:.2s;
 }
+#toast.show{opacity:1;}
 </style>
 </head>
 
@@ -170,9 +171,9 @@ td{
         <button onclick="App.setRange('30')">30D</button>
       </div>
 
-      <div class="box">
+      <div style="margin-top:10px;background:#1e293b;padding:10px;border-radius:12px;">
         <b>Top Products</b>
-        <div id="homeTopList">-</div>
+        <div id="homeTopList" style="margin-top:6px;">-</div>
       </div>
 
       <canvas id="barChart"></canvas>
@@ -198,6 +199,8 @@ td{
   <div onclick="App.switchTab(2,this)">Products</div>
 </div>
 
+<div id="toast"></div>
+
 <script>
 
 const App = (() => {
@@ -215,8 +218,15 @@ const App = (() => {
 
   const $ = id => document.getElementById(id);
 
+  const toast = (m) => {
+    const t = $("toast");
+    t.textContent = m;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1500);
+  };
+
   const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) return;
+    if ($("pass").value !== CONFIG.PASSWORD) return toast("Wrong password");
 
     $("login").style.display = "none";
     $("app").style.display = "block";
@@ -226,15 +236,33 @@ const App = (() => {
   };
 
   const load = async () => {
-    $("loading").style.display = "flex";
+    try {
+      $("loading").style.display = "flex";
 
-    const res = await fetch(CONFIG.URL);
-    const data = await res.json();
+      const res = await fetch(CONFIG.URL, { cache: "no-store" });
+      const data = await res.json();
 
-    STATE.raw = data;
-    draw(data);
+      STATE.raw = data;
+      draw(data);
+
+    } catch (e) {
+      toast("Load failed");
+    }
 
     $("loading").style.display = "none";
+  };
+
+  const parseDate = (d) => {
+    if (!d) return 0;
+
+    // ISO safe
+    if (d.includes("-")) return new Date(d).getTime();
+
+    // UK format fallback
+    const p = d.split("/");
+    if (p.length === 3) return new Date(p[2], p[1]-1, p[0]).getTime();
+
+    return new Date(d).getTime();
   };
 
   const setRange = (type) => {
@@ -252,12 +280,13 @@ const App = (() => {
   };
 
   const applyRange = () => {
-    const s = new Date($("startDate").value).getTime();
-    const e = new Date($("endDate").value).getTime();
+    const s = new Date($("startDate").value + "T00:00:00").getTime();
+    const e = new Date($("endDate").value + "T23:59:59").getTime();
 
     const out = {};
+
     for (const d in STATE.raw) {
-      const t = new Date(d).getTime();
+      const t = parseDate(d);
       if (t >= s && t <= e) out[d] = STATE.raw[d];
     }
 
@@ -267,12 +296,12 @@ const App = (() => {
   const draw = (data) => {
 
     let pt = {}, dt = {}, total = 0;
-
     const dates = Object.keys(data || {}).sort();
 
     for (const d of dates) {
       dt[d] = 0;
-      for (const p in data[d]) {
+
+      for (const p in (data[d] || {})) {
         const v = Number(data[d][p] || 0);
         pt[p] = (pt[p] || 0) + v;
         dt[d] += v;
@@ -295,6 +324,7 @@ const App = (() => {
     $("productTable").innerHTML =
       sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
+    // STACKED BAR (FIXED)
     if (STATE.barChart) STATE.barChart.destroy();
 
     STATE.barChart = new Chart($("barChart"), {
@@ -304,21 +334,23 @@ const App = (() => {
         datasets: top5.map(p => ({
           label: p,
           data: dates.map(d => data[d]?.[p] || 0),
-          stack: "stack1"
+          stack: "s"
         }))
       },
       options: {
-        responsive: true,
         scales: {
           x: { stacked: true },
           y: {
             stacked: true,
-            ticks: { callback: v => "£" + v }
+            ticks: {
+              callback: v => "£" + v
+            }
           }
         }
       }
     });
 
+    // SALES CHART
     if (STATE.salesChart) STATE.salesChart.destroy();
 
     STATE.salesChart = new Chart($("salesChart"), {
@@ -326,7 +358,7 @@ const App = (() => {
       data: {
         labels: dates,
         datasets: [{
-          label: "Sales (£)",
+          label: "Sales",
           data: dates.map(d => dt[d] || 0)
         }]
       },
@@ -349,7 +381,7 @@ const App = (() => {
     el.classList.add("active");
   };
 
-  return {login,setRange,applyRange,switchTab};
+  return { login, load, setRange, applyRange, switchTab };
 
 })();
 
