@@ -214,6 +214,22 @@ td{
 ========================= -->
 <div id="app">
 
+  <!-- LOADING OVERLAY (ADD HERE) -->
+  <div id="loading" style="
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0f172a;
+    z-index:10;
+  ">
+    <div style="text-align:center">
+      <div class="spinner"></div>
+      <div style="margin-top:10px; opacity:.7;">Loading data...</div>
+    </div>
+  </div>
+
   <!-- 📱 TABS -->
   <div class="tabs" id="tabs">
 
