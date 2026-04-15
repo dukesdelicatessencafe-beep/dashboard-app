@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Stable Final</title>
+<title>SaaS Dashboard Level 12 Final</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -59,11 +59,15 @@ body{
   display:flex;
   height:calc(100vh - 120px);
   transition:transform .35s ease;
+  width:100%;
+  overflow-x:hidden;
 }
 
 .view{
   min-width:100%;
+  width:100%;
   padding:14px;
+  box-sizing:border-box;
   overflow:auto;
 }
 
@@ -71,13 +75,14 @@ body{
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
+  gap:12px;
 }
 
 .card{
   background:#1e293b;
-  padding:14px;
-  border-radius:14px;
+  padding:16px;
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.25);
 }
 
 .kpi{
@@ -108,6 +113,15 @@ button{background:#38bdf8;font-weight:600;cursor:pointer;}
   padding:12px;
   border-radius:14px;
   margin-top:12px;
+}
+
+/* DRILL PANEL */
+.drill{
+  margin-top:10px;
+  padding:12px;
+  border-radius:14px;
+  background:#0b1220;
+  border:1px solid #1e293b;
 }
 
 /* NAV */
@@ -191,9 +205,11 @@ canvas{
 </div>
 
 <div class="panel">
-<b>Top Products</b>
+<b>Top Products (Click to Drill Down)</b>
 <div id="homeTopList"></div>
 </div>
+
+<div id="drill" class="drill">Select a product to view details</div>
 
 <canvas id="barChart"></canvas>
 
@@ -231,7 +247,8 @@ PASSWORD: "1234"
 const STATE = {
 raw: {},
 bar: null,
-sales: null
+sales: null,
+selectedProduct: null
 };
 
 const $ = id => document.getElementById(id);
@@ -277,6 +294,27 @@ if (t >= s && t <= e) out[d] = STATE.raw[d];
 draw(out);
 };
 
+/* DRILL DOWN */
+const drill = (product, data) => {
+
+STATE.selectedProduct = product;
+
+let total = 0;
+let days = [];
+
+for (const d in data) {
+const v = data[d]?.[product] || 0;
+if (v > 0) {
+total += v;
+days.push(`${d}: £${v.toFixed(2)}`);
+}
+}
+
+$("drill").innerHTML =
+`<b>${product}</b><br>Total: £${total.toFixed(2)}<br><br>` +
+days.join("<br>");
+};
+
 /* DRAW */
 const draw = (data) => {
 
@@ -301,9 +339,11 @@ $("sales").textContent = "£" + total.toFixed(2);
 $("products").textContent = sorted.length;
 $("topCard").textContent = top5[0] || "-";
 
-/* LIST */
+/* TOP LIST (CLICKABLE) */
 $("homeTopList").innerHTML =
-top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
+top5.map(p =>
+`<div onclick="App.selectProduct('${p}')">• ${p} (£${pt[p].toFixed(2)})</div>`
+).join("<br>");
 
 /* TABLE */
 $("productTable").innerHTML =
@@ -311,20 +351,35 @@ sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("")
 
 /* BAR */
 if (STATE.bar) STATE.bar.destroy();
+
 STATE.bar = new Chart($("barChart"), {
 type: "bar",
 data: {
 labels: dates,
 datasets: top5.map((p,i)=>({
 label: p,
-data: dates.map(d=>data[d]?.[p] || 0),
+data: dates.map(d => data[d]?.[p] || 0),
+stack: "stack1",
 backgroundColor: ["#38bdf8","#6366f1","#22c55e","#f59e0b","#ef4444"][i]
 }))
+},
+options: {
+responsive: true,
+scales: {
+x: { stacked: true },
+y: {
+stacked: true,
+ticks: {
+callback: v => "£" + v
+}
+}
+}
 }
 });
 
 /* SALES */
 if (STATE.sales) STATE.sales.destroy();
+
 STATE.sales = new Chart($("salesChart"), {
 type: "bar",
 data: {
@@ -338,13 +393,27 @@ data: dates.map(d => dt[d] || 0)
 
 };
 
+/* PRODUCT SELECT */
+const selectProduct = (p) => {
+STATE.selectedProduct = p;
+drill(p, STATE.raw);
+};
+
+/* TAB */
 const switchTab = (i, el) => {
 $("views").style.transform = `translateX(-${i*100}%)`;
 document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
 el.classList.add("active");
 };
 
-return { login, load, setRange, applyRange, switchTab };
+return {
+login,
+load,
+setRange,
+applyRange,
+switchTab,
+selectProduct
+};
 
 })();
 
