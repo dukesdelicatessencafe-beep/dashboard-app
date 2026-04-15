@@ -33,26 +33,24 @@ const App = (() => {
 
     load();
   };
-const load = async () => {
-  try {
-    // ✅ SHOW loader BEFORE fetch
-    $("loading").style.display = "flex";
 
-    const res = await fetch(CONFIG.URL, { cache: "no-store" });
-    const data = await res.json();
+  const load = async () => {
+    try {
+      $("loading").style.display = "flex";
 
-    STATE.raw = data;
-    draw(data);
+      const res = await fetch(CONFIG.URL, { cache: "no-store" });
+      const data = await res.json();
 
-    // ✅ HIDE loader AFTER everything is drawn
-    $("loading").style.display = "none";
+      STATE.raw = data;
+      draw(data);
 
-  } catch (e) {
-    $("loading").style.display = "none";
-    toast("Load failed");
-  }
-};
+      $("loading").style.display = "none";
 
+    } catch (e) {
+      $("loading").style.display = "none";
+      toast("Load failed");
+    }
+  };
 
   const setRange = (type) => {
     const now = new Date();
@@ -69,8 +67,8 @@ const load = async () => {
   };
 
   const applyRange = () => {
-    const s = new Date($("startDate").value).getTime();
-    const e = new Date($("endDate").value).getTime();
+    const s = new Date($("startDate").value + "T00:00:00").getTime();
+    const e = new Date($("endDate").value + "T23:59:59").getTime();
 
     const out = {};
 
@@ -110,32 +108,34 @@ const load = async () => {
     $("sales").textContent = "£" + total.toFixed(2);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
-// =========================
-// HOME TOP PRODUCTS (CLEAN FIX)
-// =========================
-const homeTop = document.getElementById("homeTopList");
 
-if (homeTop) {
-  homeTop.innerHTML =
-    top5.length
-      ? top5.map((p, i) =>
-          `<div>${i + 1}. ${p} — £${pt[p].toFixed(2)}</div>`
-        ).join("")
-      : "-";
-}
-  
+    // =========================
+    // TOP PRODUCTS (HOME)
+    // =========================
+    const homeTop = $("homeTopList");
+    if (homeTop) {
+      homeTop.innerHTML = top5.length
+        ? top5.map((p, i) =>
+            `<div>${i + 1}. ${p} — £${(pt[p] || 0).toFixed(2)}</div>`
+          ).join("")
+        : "-";
+    }
+
     // =========================
     // PRODUCTS TABLE
     // =========================
-    $("productTable").innerHTML =
-      sorted.map(p =>
-        `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`
-      ).join("");
+    const table = $("productTable");
+    if (table) {
+      table.innerHTML =
+        sorted.map(p =>
+          `<tr><td>${p}</td><td>£${(pt[p] || 0).toFixed(2)}</td></tr>`
+        ).join("");
+    }
 
     const money = v => "£" + v.toFixed(2);
 
     // =========================
-    // BAR CHART (HOME)
+    // BAR CHART (STACKED)
     // =========================
     if (STATE.barChart) STATE.barChart.destroy();
 
@@ -146,19 +146,25 @@ if (homeTop) {
         datasets: top5.map(p => ({
           label: p,
           data: dates.map(d => data[d]?.[p] || 0),
-          stack: "s"
+          stack: "stack1"
         }))
       },
       options: {
+        responsive: true,
         scales: {
-          y: { ticks: { callback: money } },
-          x: { stacked: true }
+          x: { stacked: true },
+          y: {
+            stacked: true,
+            ticks: {
+              callback: v => "£" + v
+            }
+          }
         }
       }
     });
 
     // =========================
-    // SALES CHART (STATS TAB)
+    // SALES CHART (STATS)
     // =========================
     if (STATE.salesChart) STATE.salesChart.destroy();
 
@@ -173,7 +179,11 @@ if (homeTop) {
       },
       options: {
         scales: {
-          y: { ticks: { callback: money } }
+          y: {
+            ticks: {
+              callback: v => "£" + v
+            }
+          }
         }
       }
     });
@@ -184,7 +194,7 @@ if (homeTop) {
 
     $("tabs").style.transform = `translateX(-${i * 100}%)`;
 
-    document.querySelectorAll(".nav div")
+    document.querySelectorAll("#nav div")
       .forEach(b => b.classList.remove("active"));
 
     el.classList.add("active");
