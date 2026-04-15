@@ -3,15 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pro - Stable Build</title>
+<title>Dashboard Pro Stable</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-/* =========================
-   🟦 START: GLOBAL LAYOUT
-========================= */
 body{
   margin:0;
   font-family:system-ui;
@@ -19,14 +15,7 @@ body{
   color:white;
   overflow:hidden;
 }
-/* =========================
-   🟦 END: GLOBAL LAYOUT
-========================= */
 
-
-/* =========================
-   🔐 START: LOGIN SCREEN
-========================= */
 #login{
   height:100vh;
   display:flex;
@@ -44,54 +33,26 @@ input,button{
 
 input{background:#0b1220;color:white;}
 button{background:#38bdf8;font-weight:bold;}
-/* =========================
-   🔐 END: LOGIN SCREEN
-========================= */
 
-
-/* =========================
-   📦 START: APP CONTAINER
-========================= */
 #app{
   display:none;
   height:100vh;
-  position:relative;
   overflow:hidden;
 }
-/* =========================
-   📦 END: APP CONTAINER
-========================= */
 
-
-/* =========================
-   📱 START: TABS SYSTEM (FIXED)
-========================= */
 .tabs{
   display:flex;
   width:100%;
   height:calc(100vh - 60px);
   transition:transform .35s ease;
-  will-change:transform;
-  transform:translateX(0);
 }
 
 .tab{
   min-width:100%;
-  flex:0 0 100%;
-  height:100%;
-  overflow:auto;
-  box-sizing:border-box;
-  overflow-x:hidden;
   padding:10px;
+  overflow:auto;
 }
-/* =========================
-   📱 END: TABS SYSTEM
-========================= */
 
-
-/* =========================
-   🧭 START: NAVIGATION BAR
-========================= */
 .nav{
   position:fixed;
   bottom:0;
@@ -106,34 +67,11 @@ button{background:#38bdf8;font-weight:bold;}
   flex:1;
   display:flex;
   flex-direction:column;
-  justify-content:center;
   align-items:center;
-  gap:2px;
-  font-size:14px;
+  justify-content:center;
 }
 
-.nav small{
-  font-size:10px;
-  opacity:0.75;
-}
-
-.nav .active{
-  color:#38bdf8;
-}
-/* =========================
-   🧭 END: NAVIGATION BAR
-========================= */
-
-
-/* =========================
-   📊 START: DASHBOARD UI
-========================= */
-.header{
-  position:sticky;
-  top:0;
-  background:#0f172a;
-  padding-bottom:10px;
-}
+.nav .active{color:#38bdf8;}
 
 .grid{
   display:grid;
@@ -170,14 +108,7 @@ td{
   padding:8px;
   border-bottom:1px solid #334155;
 }
-/* =========================
-   📊 END: DASHBOARD UI
-========================= */
 
-
-/* =========================
-   💬 START: TOAST
-========================= */
 #toast{
   position:fixed;
   bottom:80px;
@@ -187,101 +118,72 @@ td{
   padding:10px;
   border-radius:10px;
   opacity:0;
-  transition:.2s;
 }
 #toast.show{opacity:1;}
-/* =========================
-   💬 END: TOAST
-========================= */
 
+#loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#0f172a;
+  z-index:999;
+}
 </style>
 </head>
 
 <body>
 
-<!-- =========================
-     🔐 LOGIN BLOCK
-========================= -->
+<!-- LOADER -->
+<div id="loading">Loading...</div>
+
+<!-- LOGIN -->
 <div id="login">
   <h2>Login</h2>
   <input id="pass" type="password">
   <button onclick="App.login()">Enter</button>
 </div>
 
-
-<!-- =========================
-     📦 APP BLOCK
-========================= -->
+<!-- APP -->
 <div id="app">
 
-  <!-- LOADING OVERLAY (ADD HERE) -->
-  <div id="loading" style="
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#0f172a;
-    z-index:10;
-  ">
-    <div style="text-align:center">
-      <div class="spinner"></div>
-      <div style="margin-top:10px; opacity:.7;">Loading data...</div>
-    </div>
-  </div>
-
-  <!-- 📱 TABS -->
   <div class="tabs" id="tabs">
 
-    <!-- =========================
-         🏠 TAB 1: HOME
-    ========================= -->
-<div class="tab">
-
-  <div class="header">
-
-    <div class="grid">
-      <div class="card">Sales<br><b id="sales">£0</b></div>
-      <div class="card">Products<br><b id="products">0</b></div>
-      <div class="card">Top<br><b id="top">-</b></div>
-    </div>
-
-    <div class="dates">
-      <input id="startDate" type="date">
-      <input id="endDate" type="date">
-      <button onclick="App.applyRange()">Apply</button>
-      <button onclick="App.setRange('today')">Today</button>
-      <button onclick="App.setRange('7')">7D</button>
-      <button onclick="App.setRange('30')">30D</button>
-    </div>
-
-  </div>
-
-  <!-- TOP PRODUCTS -->
-  <div id="homeTopProducts" style="margin-top:10px; background:#1e293b; padding:10px; border-radius:12px;">
-    <b>Top Products</b>
-    <div id="homeTopList" style="margin-top:6px; font-size:14px; line-height:1.6;">
-      -
-    </div>
-  </div>
-
-  <!-- CHART -->
-  <canvas id="barChart"></canvas>
-
-</div>
-
-
-    <!-- =========================
-         📈 TAB 2: STATS
-    ========================= -->
+    <!-- HOME -->
     <div class="tab">
-  <canvas id="salesChart"></canvas>
-  <div id="insights"></div>
-</div>
-     
-    <!-- =========================
-         📦 TAB 3: PRODUCTS
-    ========================= -->
+
+      <div class="grid">
+        <div class="card">Sales<br><b id="sales">£0</b></div>
+        <div class="card">Products<br><b id="products">0</b></div>
+        <div class="card">Top<br><b id="top">-</b></div>
+      </div>
+
+      <div class="dates">
+        <input id="startDate" type="date">
+        <input id="endDate" type="date">
+        <button onclick="App.applyRange()">Apply</button>
+        <button onclick="App.setRange('today')">Today</button>
+        <button onclick="App.setRange('7')">7D</button>
+        <button onclick="App.setRange('30')">30D</button>
+      </div>
+
+      <!-- HOME TOP PRODUCTS -->
+      <div style="margin-top:10px;background:#1e293b;padding:10px;border-radius:12px;">
+        <b>Top Products</b>
+        <div id="homeTopList" style="margin-top:6px;">-</div>
+      </div>
+
+      <canvas id="barChart"></canvas>
+    </div>
+
+    <!-- STATS -->
+    <div class="tab">
+      <canvas id="salesChart"></canvas>
+      <div id="insights"></div>
+    </div>
+
+    <!-- PRODUCTS -->
     <div class="tab">
       <table id="productTable"></table>
     </div>
@@ -289,37 +191,17 @@ td{
   </div>
 </div>
 
-
-<!-- =========================
-     🧭 NAV BAR
-========================= -->
+<!-- NAV -->
 <div class="nav" id="nav">
-
-  <div onclick="App.switchTab(0,this)" class="active">
-    <div>🏠</div>
-    <small>Home</small>
-  </div>
-
-  <div onclick="App.switchTab(1,this)">
-    <div>📈</div>
-    <small>Stats</small>
-  </div>
-
-  <div onclick="App.switchTab(2,this)">
-    <div>📦</div>
-    <small>Products</small>
-  </div>
-
+  <div onclick="App.switchTab(0,this)" class="active">Home</div>
+  <div onclick="App.switchTab(1,this)">Stats</div>
+  <div onclick="App.switchTab(2,this)">Products</div>
 </div>
-
 
 <div id="toast"></div>
 
 <script>
 
-/* =========================
-   🧠 START: CORE ENGINE (LOCKED)
-========================= */
 const App = (() => {
 
   const CONFIG = {
@@ -329,51 +211,41 @@ const App = (() => {
 
   const STATE = {
     raw: {},
-    tab: 0,
     barChart: null,
     salesChart: null
   };
 
-  const $ = (id) => document.getElementById(id);
-
-  const toast = (msg) => {
-    const t = $("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),1500);
-  };
+  const $ = id => document.getElementById(id);
 
   const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) {
-      toast("Wrong password");
-      return;
-    }
+    if ($("pass").value !== CONFIG.PASSWORD) return;
 
-    $("login").style.display="none";
-    $("app").style.display="block";
-    $("nav").style.display="flex";
+    $("login").style.display = "none";
+    $("app").style.display = "block";
+    $("nav").style.display = "flex";
 
     load();
   };
 
   const load = async () => {
-    try {
-      const res = await fetch(CONFIG.URL,{cache:"no-store"});
-      const data = await res.json();
-      STATE.raw = data;
-      draw(data);
-    } catch(e){
-      toast("Load failed");
-    }
+    $("loading").style.display = "flex";
+
+    const res = await fetch(CONFIG.URL);
+    const data = await res.json();
+
+    STATE.raw = data;
+    draw(data);
+
+    $("loading").style.display = "none";
   };
 
   const setRange = (type) => {
     const now = new Date();
     let start = new Date();
 
-    if(type==="today") start.setHours(0,0,0,0);
-    if(type==="7") start.setDate(now.getDate()-7);
-    if(type==="30") start.setDate(now.getDate()-30);
+    if (type === "today") start.setHours(0,0,0,0);
+    if (type === "7") start.setDate(now.getDate()-7);
+    if (type === "30") start.setDate(now.getDate()-30);
 
     $("startDate").value = start.toISOString().split("T")[0];
     $("endDate").value = now.toISOString().split("T")[0];
@@ -387,9 +259,9 @@ const App = (() => {
 
     const out = {};
 
-    for(const d in STATE.raw){
+    for (const d in STATE.raw) {
       const t = new Date(d).getTime();
-      if(t>=s && t<=e) out[d]=STATE.raw[d];
+      if (t >= s && t <= e) out[d] = STATE.raw[d];
     }
 
     draw(out);
@@ -397,76 +269,69 @@ const App = (() => {
 
   const draw = (data) => {
 
-    let pt={}, dt={}, total=0;
-    const dates = Object.keys(data||{}).sort();
+    let pt = {}, dt = {}, total = 0;
 
-    for(const d of dates){
-      dt[d]=0;
-      for(const p in data[d]){
-        const v=Number(data[d][p]||0);
-        pt[p]=(pt[p]||0)+v;
-        dt[d]+=v;
-        total+=v;
+    const dates = Object.keys(data || {}).sort();
+
+    for (const d of dates) {
+      dt[d] = 0;
+      for (const p in data[d]) {
+        const v = Number(data[d][p] || 0);
+        pt[p] = (pt[p] || 0) + v;
+        dt[d] += v;
+        total += v;
       }
     }
 
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    $("sales").textContent="£"+total.toFixed(2);
-    $("products").textContent=sorted.length;
-    $("top").textContent=top5[0]||"-";
+    $("sales").textContent = "£"+total.toFixed(2);
+    $("products").textContent = sorted.length;
+    $("top").textContent = top5[0] || "-";
+
+    $("homeTopList").innerHTML =
+      top5.length
+        ? top5.map((p,i)=>`${i+1}. ${p} — £${pt[p].toFixed(2)}`).join("<br>")
+        : "-";
 
     $("productTable").innerHTML =
       sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
 
-    const money=v=>"£"+v.toFixed(2);
-
-    if(STATE.barChart) STATE.barChart.destroy();
-    STATE.barChart=new Chart($("barChart"),{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:top5.map(p=>({
-          label:p,
-          data:dates.map(d=>data[d]?.[p]||0),
-          stack:"s"
+    if (STATE.barChart) STATE.barChart.destroy();
+    STATE.barChart = new Chart($("barChart"), {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: top5.map(p => ({
+          label: p,
+          data: dates.map(d => data[d]?.[p] || 0)
         }))
       }
     });
 
-    if(STATE.salesChart) STATE.salesChart.destroy();
-    STATE.salesChart=new Chart($("salesChart"),{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d]||0)}]
+    if (STATE.salesChart) STATE.salesChart.destroy();
+    STATE.salesChart = new Chart($("salesChart"), {
+      type: "bar",
+      data: {
+        labels: dates,
+        datasets: [{
+          label: "Sales",
+          data: dates.map(d => dt[d] || 0)
+        }]
       }
     });
-
-    $("insights").innerHTML =
-      "<b>Top Products</b><br>" +
-      top5.map(p=>`• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
   };
 
   const switchTab = (i,el) => {
-    STATE.tab=i;
-    $("tabs").style.transform=`translateX(-${i*100}%)`;
-
-    document.querySelectorAll(".nav div")
-      .forEach(b=>b.classList.remove("active"));
-
-    el.classList.add("active");
+    $("tabs").style.transform = `translateX(-${i*100}%)`;
   };
 
-  return {login,load,setRange,applyRange,switchTab};
+  return {login,setRange,applyRange,switchTab};
 
 })();
 
-window.App=App;
-/* =========================
-   🧠 END: CORE ENGINE
-========================= */
+window.App = App;
 
 </script>
 
