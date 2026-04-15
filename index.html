@@ -3,25 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Pro</title>
+<title>Dashboard SaaS Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:white;
+}
+.light{
+  --bg:#f1f5f9;
+  --card:white;
+  --text:#0f172a;
+}
 
-/* =========================
-   BASE
-========================= */
 body{
   margin:0;
   font-family:system-ui;
-  background:#0f172a;
-  color:white;
+  background:var(--bg);
+  color:var(--text);
 }
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -31,50 +36,31 @@ body{
   gap:12px;
 }
 
+/* INPUTS */
 input,button{
   padding:12px;
   border-radius:10px;
   border:none;
 }
-
+button{background:#38bdf8;font-weight:bold;cursor:pointer;}
 input{background:#0b1220;color:white;}
-button{background:#38bdf8;font-weight:bold;}
 
-/* =========================
-   APP LAYOUT (FIXED)
-========================= */
-#app{
-  display:none;
-  height:100vh;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
+/* APP */
+#app{display:none;height:100vh;overflow:hidden;}
 
-/* =========================
-   TABS ENGINE (FIXED)
-========================= */
 .tabs{
   display:flex;
   width:100%;
-  height:100%;
-  transition:transform .35s ease;
+  height:calc(100vh - 70px);
+  transition:.35s;
 }
-
 .tab{
   min-width:100%;
-  flex:0 0 100%;
-  height:100%;
-  overflow-y:auto;
-  overflow-x:hidden;
-  box-sizing:border-box;
   padding:12px;
-  padding-bottom:80px;
+  overflow-y:auto;
 }
 
-/* =========================
-   NAV
-========================= */
+/* NAV */
 .nav{
   position:fixed;
   bottom:0;
@@ -83,126 +69,57 @@ button{background:#38bdf8;font-weight:bold;}
   height:70px;
   display:flex;
   background:#0b1220;
-  border-top:1px solid #1e293b;
 }
-
 .nav div{
   flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  text-align:center;
   font-size:12px;
+  padding-top:8px;
 }
-
 .nav .active{color:#38bdf8;}
 
-/* =========================
-   HEADER
-========================= */
-.header{
-  position:sticky;
-  top:0;
-  background:#0f172a;
-  z-index:5;
-  padding-bottom:10px;
-}
-
-/* =========================
-   KPI
-========================= */
+/* CARDS */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;
 }
-
 .card{
-  background:#1e293b;
+  background:var(--card);
   padding:12px;
   border-radius:12px;
+  text-align:center;
 }
 
-/* =========================
-   DATES
-========================= */
+/* DATE */
 .dates{
   display:flex;
-  gap:8px;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.dates input{flex:1;min-width:120px;}
+
+/* CHART */
+.chartWrap{
+  height:280px;
   margin-top:10px;
 }
 
-.dates input{flex:1;}
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+td{padding:8px;border-bottom:1px solid #334155;}
 
-/* =========================
-   PANELS
-========================= */
-.panel{
-  margin-top:10px;
-  background:#1e293b;
-  padding:10px;
-  border-radius:12px;
-}
-
-/* =========================
-   CHART FIX
-========================= */
-canvas{
-  background:#1e293b;
-  border-radius:12px;
-  margin-top:10px;
-  width:100% !important;
-  max-height:260px;
-}
-
-/* =========================
-   TABLE
-========================= */
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid #334155;
-}
-
-/* =========================
-   LOADER
-========================= */
+/* LOADER */
 #loading{
   position:fixed;
   inset:0;
   display:none;
   justify-content:center;
   align-items:center;
-  background:#0f172a;
+  background:#0008;
   z-index:999;
 }
-
-/* =========================
-   TOAST
-========================= */
-#toast{
-  position:fixed;
-  bottom:90px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#1e293b;
-  padding:10px;
-  border-radius:10px;
-  opacity:0;
-}
-#toast.show{opacity:1;}
-
-/* =========================
-   MOBILE
-========================= */
-@media(max-width:768px){
-  .grid{grid-template-columns:1fr;}
-}
-
 </style>
 </head>
 
@@ -222,144 +139,193 @@ td{
 
 <div class="tabs" id="tabs">
 
-<!-- ================= HOME ================= -->
+<!-- HOME -->
 <div class="tab">
 
-<div class="header">
-
 <div class="grid">
-<div class="card">Sales<br><b id="sales">£0</b></div>
-<div class="card">Products<br><b id="products">0</b></div>
-<div class="card">Top<br><b id="top">-</b></div>
+  <div class="card">Sales<br><b id="sales">£0</b></div>
+  <div class="card">Products<br><b id="products">0</b></div>
+  <div class="card">Top<br><b id="top">-</b></div>
 </div>
 
 <div class="dates">
-<input id="startDate" type="date">
-<input id="endDate" type="date">
-<button onclick="App.applyRange()">Apply</button>
-<button onclick="App.setRange('today')">Today</button>
-<button onclick="App.setRange('7')">7D</button>
-<button onclick="App.setRange('30')">30D</button>
+  <input id="startDate" type="date">
+  <input id="endDate" type="date">
+  <button onclick="App.applyRange()">Apply</button>
+  <button onclick="App.setRange('today')">Today</button>
+  <button onclick="App.setRange('7')">7D</button>
+  <button onclick="App.setRange('30')">30D</button>
+  <button onclick="App.savePreset()">💾</button>
+  <button onclick="App.loadPreset()">📂</button>
+</div>
+
+<div class="card">
+  <b>Top Products</b>
+  <div id="homeTopList"></div>
+</div>
+
+<div class="chartWrap">
+  <canvas id="barChart"></canvas>
 </div>
 
 </div>
 
-<div class="panel">
-<b>Top Products</b>
-<div id="homeTopList">-</div>
-</div>
-
-<canvas id="barChart"></canvas>
-
-</div>
-
-<!-- ================= STATS ================= -->
+<!-- STATS -->
 <div class="tab">
-<canvas id="salesChart"></canvas>
+
+<button onclick="App.toggleGroup()">Toggle Day/Week</button>
+
+<div class="chartWrap">
+  <canvas id="salesChart"></canvas>
+</div>
+
+<div class="chartWrap">
+  <canvas id="trendChart"></canvas>
+</div>
+
 <div id="insights"></div>
+
 </div>
 
-<!-- ================= PRODUCTS ================= -->
+<!-- PRODUCTS -->
 <div class="tab">
+
+<input id="search" placeholder="Search..." style="width:100%;padding:10px;margin-bottom:8px;">
+<button onclick="App.exportCSV()">Export CSV</button>
+
 <table id="productTable"></table>
+
 </div>
 
 </div>
 </div>
 
 <!-- NAV -->
-<div class="nav" id="nav">
-<div onclick="App.switchTab(0,this)" class="active">🏠<small>Home</small></div>
-<div onclick="App.switchTab(1,this)">📈<small>Stats</small></div>
-<div onclick="App.switchTab(2,this)">📦<small>Products</small></div>
+<div class="nav">
+<div onclick="App.switchTab(0,this)" class="active">🏠<br>Home</div>
+<div onclick="App.switchTab(1,this)">📈<br>Stats</div>
+<div onclick="App.switchTab(2,this)">📦<br>Products</div>
+<div onclick="App.toggleTheme()">🌗<br>Theme</div>
 </div>
-
-<div id="toast"></div>
 
 <script>
 
-/* =========================
-   APP ENGINE (SAFE)
-========================= */
 const App = (() => {
 
-const CONFIG = {
+const CONFIG={
 URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
 PASSWORD:"1234"
 };
 
-const STATE = {
+const STATE={
 raw:{},
-barChart:null,
-salesChart:null
+group:"day",
+bar:null,
+sales:null,
+trend:null
 };
 
-const $ = id => document.getElementById(id);
-const fmt = v => "£"+Number(v||0).toFixed(2);
+const $=id=>document.getElementById(id);
+const fmt=v=>"£"+Number(v||0).toFixed(2);
 
-/* KPI animation */
-const animate = (el,val)=>{
+/* KPI ANIMATION */
+const animate=(el,val)=>{
 let start=0;
-const step=val/25;
+const step=val/20;
 const i=setInterval(()=>{
 start+=step;
-if(start>=val){start=val;clearInterval(i);}
-el.textContent=fmt(start);
+if(start>=val){el.textContent=fmt(val);clearInterval(i);}
+else el.textContent=fmt(start);
 },20);
 };
 
-const toast = msg=>{
-const t=$("toast");
-t.textContent=msg;
-t.classList.add("show");
-setTimeout(()=>t.classList.remove("show"),1500);
-};
+/* CACHE */
+const cacheSave=d=>localStorage.setItem("cache",JSON.stringify(d));
+const cacheLoad=()=>JSON.parse(localStorage.getItem("cache")||"null");
 
-const login = ()=>{
-if($("pass").value!==CONFIG.PASSWORD) return toast("Wrong password");
+/* LOGIN */
+const login=()=>{
+if($("pass").value!==CONFIG.PASSWORD) return;
 $("login").style.display="none";
-$("app").style.display="flex";
+$("app").style.display="block";
 load();
 };
 
-const load = async ()=>{
+/* LOAD */
+const load=async()=>{
 $("loading").style.display="flex";
-try{
+
+let data=cacheLoad();
+if(!data){
 const res=await fetch(CONFIG.URL);
-STATE.raw=await res.json();
-draw(STATE.raw);
-}catch{
-toast("Load failed");
+data=await res.json();
+cacheSave(data);
 }
+
+STATE.raw=data;
+draw(data);
+
 $("loading").style.display="none";
 };
 
-const setRange = type=>{
+/* RANGE */
+const setRange=(t)=>{
 const now=new Date();
-let start=new Date();
-if(type==="today") start.setHours(0,0,0,0);
-if(type==="7") start.setDate(now.getDate()-7);
-if(type==="30") start.setDate(now.getDate()-30);
-$("startDate").value=start.toISOString().split("T")[0];
+let s=new Date();
+if(t==="today") s.setHours(0,0,0,0);
+if(t==="7") s.setDate(now.getDate()-7);
+if(t==="30") s.setDate(now.getDate()-30);
+
+$("startDate").value=s.toISOString().split("T")[0];
 $("endDate").value=now.toISOString().split("T")[0];
+
 applyRange();
 };
 
-const applyRange = ()=>{
-const s=new Date($("startDate").value+"T00:00:00").getTime();
-const e=new Date($("endDate").value+"T23:59:59").getTime();
+const applyRange=()=>{
+const s=new Date($("startDate").value+"T00:00").getTime();
+const e=new Date($("endDate").value+"T23:59").getTime();
 const out={};
+
 for(const d in STATE.raw){
 const t=new Date(d).getTime();
 if(t>=s&&t<=e) out[d]=STATE.raw[d];
 }
+
 draw(out);
 };
 
-const draw = data=>{
+/* GROUP */
+const groupData=(data)=>{
+if(STATE.group==="day") return data;
+
+const out={};
+
+for(const d in data){
+const wk=new Date(d);
+const key=wk.getFullYear()+"-W"+Math.ceil(wk.getDate()/7);
+
+if(!out[key]) out[key]={};
+
+for(const p in data[d]){
+out[key][p]=(out[key][p]||0)+data[d][p];
+}
+}
+return out;
+};
+
+const toggleGroup=()=>{
+STATE.group=STATE.group==="day"?"week":"day";
+draw(STATE.raw);
+};
+
+/* DRAW */
+const draw=(data)=>{
+
+data=groupData(data);
 
 let pt={},dt={},total=0;
-const dates=Object.keys(data||{}).sort();
+const dates=Object.keys(data).sort();
 
 for(const d of dates){
 dt[d]=0;
@@ -374,54 +340,111 @@ total+=v;
 const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
 const top5=sorted.slice(0,5);
 
+/* KPI */
 animate($("sales"),total);
 $("products").textContent=sorted.length;
 $("top").textContent=top5[0]||"-";
 
-$("homeTopList").innerHTML=
-top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>");
+/* TOP */
+$("homeTopList").innerHTML=top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>");
 
-$("productTable").innerHTML=
-sorted.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
+/* TABLE */
+const q=$("search")?.value?.toLowerCase()||"";
+$("productTable").innerHTML=sorted.filter(p=>p.toLowerCase().includes(q))
+.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
 
-if(STATE.barChart) STATE.barChart.destroy();
-STATE.barChart=new Chart($("barChart"),{
+/* GRADIENT */
+const ctx=$("barChart").getContext("2d");
+const grad=ctx.createLinearGradient(0,0,0,300);
+grad.addColorStop(0,"#38bdf8");
+grad.addColorStop(1,"#6366f1");
+
+/* BAR */
+if(STATE.bar) STATE.bar.destroy();
+STATE.bar=new Chart(ctx,{
 type:"bar",
 data:{
 labels:dates,
 datasets:top5.map(p=>({
 label:p,
 data:dates.map(d=>data[d]?.[p]||0),
+backgroundColor:grad,
 stack:"s"
 }))
 },
 options:{
 responsive:true,
-scales:{
-x:{stacked:true},
-y:{stacked:true,ticks:{callback:v=>"£"+v}}
-}
+maintainAspectRatio:false,
+scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>"£"+v}}}
 }
 });
 
-if(STATE.salesChart) STATE.salesChart.destroy();
-STATE.salesChart=new Chart($("salesChart"),{
+/* SALES */
+if(STATE.sales) STATE.sales.destroy();
+STATE.sales=new Chart($("salesChart"),{
 type:"bar",
+data:{labels:dates,datasets:[{data:dates.map(d=>dt[d]),backgroundColor:"#22c55e"}]},
+options:{maintainAspectRatio:false}
+});
+
+/* TREND */
+if(STATE.trend) STATE.trend.destroy();
+STATE.trend=new Chart($("trendChart"),{
+type:"line",
 data:{
 labels:dates,
-datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d]||0)}]
-}
+datasets:[{
+label:top5[0]||"",
+data:dates.map(d=>data[d]?.[top5[0]]||0),
+borderColor:"#38bdf8"
+}]
+},
+options:{maintainAspectRatio:false}
 });
+
+/* INSIGHTS */
+$("insights").innerHTML=`Top product: ${top5[0]||"-"}<br>Total: ${fmt(total)}`;
 
 };
 
-const switchTab = (i,el)=>{
+/* PRESETS */
+const savePreset=()=>{
+localStorage.setItem("preset",JSON.stringify({
+s:$("startDate").value,
+e:$("endDate").value
+}));
+};
+
+const loadPreset=()=>{
+const p=JSON.parse(localStorage.getItem("preset")||"{}");
+$("startDate").value=p.s;
+$("endDate").value=p.e;
+applyRange();
+};
+
+/* CSV */
+const exportCSV=()=>{
+let csv="Product,Value\n";
+document.querySelectorAll("#productTable tr").forEach(r=>{
+csv+=r.innerText.replace("\t",",")+"\n";
+});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([csv]));
+a.download="data.csv";
+a.click();
+};
+
+/* NAV */
+const switchTab=(i,el)=>{
 $("tabs").style.transform=`translateX(-${i*100}%)`;
 document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
 el.classList.add("active");
 };
 
-return {login,setRange,applyRange,switchTab};
+/* THEME */
+const toggleTheme=()=>document.body.classList.toggle("light");
+
+return {login,setRange,applyRange,switchTab,exportCSV,toggleTheme,toggleGroup,savePreset,loadPreset};
 
 })();
 
