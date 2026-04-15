@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Level 2</title>
+<title>SaaS Dashboard Level 3</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -32,7 +32,6 @@ input,button{
   padding:12px;
   border-radius:10px;
   border:none;
-  font-size:14px;
 }
 
 input{
@@ -58,49 +57,59 @@ button{
   display:flex;
   width:100%;
   height:calc(100vh - 60px);
-  transition:transform .35s ease;
+  transition:transform .45s ease;
 }
 
 .tab{
   min-width:100%;
-  padding:14px;
+  padding:16px;
   overflow:auto;
 }
 
 /* =========================
-   LEVEL 2 KPI CARDS
+   LEVEL 3 SAAS CARDS
 ========================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:14px;
 }
 
 .card{
-  background:#111827;
-  padding:14px;
-  border-radius:16px;
+  background:linear-gradient(145deg,#111827,#0f172a);
+  padding:16px;
+  border-radius:18px;
   border:1px solid #1f2937;
+  transition:.25s;
   position:relative;
-  overflow:hidden;
 }
 
-/* KPI TREND */
+.card:hover{
+  transform:translateY(-3px);
+  border-color:#38bdf8;
+}
+
+/* KPI TEXT */
+.kpi{
+  font-size:22px;
+  font-weight:700;
+}
+
+/* TREND */
 .trend{
   font-size:12px;
   margin-top:6px;
-  opacity:0.8;
+  opacity:0.85;
 }
 
-/* UP / DOWN COLORS */
 .up{color:#22c55e;}
 .down{color:#ef4444;}
 
-/* FILTER BAR */
+/* FILTER */
 .dates{
   display:flex;
   gap:10px;
-  margin-top:12px;
+  margin-top:14px;
 }
 
 .dates input{
@@ -110,8 +119,8 @@ button{
 /* CHARTS */
 canvas{
   background:#111827;
-  border-radius:16px;
-  margin-top:12px;
+  border-radius:18px;
+  margin-top:14px;
 }
 
 /* TABLE */
@@ -127,14 +136,14 @@ td{
 
 /* PANEL */
 .panel{
-  margin-top:12px;
+  margin-top:14px;
   background:#111827;
-  padding:12px;
-  border-radius:16px;
+  padding:14px;
+  border-radius:18px;
   border:1px solid #1f2937;
 }
 
-/* LOADER */
+/* LOADING */
 #loading{
   position:fixed;
   inset:0;
@@ -166,10 +175,10 @@ td{
 
 <body>
 
-<div id="loading">Loading...</div>
+<div id="loading">Loading analytics...</div>
 
 <div id="login">
-  <h2>Login</h2>
+  <h2>SaaS Login</h2>
   <input id="pass" type="password">
   <button onclick="App.login()">Enter</button>
 </div>
@@ -182,20 +191,25 @@ td{
     <div class="tab">
 
       <div class="grid">
+
         <div class="card">
-          Sales<br><b id="sales">£0</b>
+          Sales
+          <div class="kpi" id="sales">£0</div>
           <div class="trend" id="salesTrend"></div>
         </div>
 
         <div class="card">
-          Products<br><b id="products">0</b>
+          Products
+          <div class="kpi" id="products">0</div>
           <div class="trend" id="productsTrend"></div>
         </div>
 
         <div class="card">
-          Top<br><b id="top">-</b>
-          <div class="trend">Top performer</div>
+          Top
+          <div class="kpi" id="top">-</div>
+          <div class="trend">leader</div>
         </div>
+
       </div>
 
       <div class="dates">
@@ -337,7 +351,7 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    // KPI DELTA (LEVEL 2 FEATURE)
+    // KPI DELTA (LEVEL 3)
     const salesDelta = total - STATE.lastTotal;
     const productDelta = sorted.length - STATE.lastProducts;
 
@@ -347,13 +361,13 @@ const App = (() => {
 
     $("salesTrend").innerHTML =
       salesDelta >= 0
-        ? `<span class="up">▲ +${fmt(salesDelta)}</span>`
-        : `<span class="down">▼ ${fmt(salesDelta)}</span>`;
+        ? `▲ ${fmt(salesDelta)} vs prev`
+        : `▼ ${fmt(salesDelta)} vs prev`;
 
     $("productsTrend").innerHTML =
       productDelta >= 0
-        ? `<span class="up">▲ +${productDelta}</span>`
-        : `<span class="down">▼ ${productDelta}</span>`;
+        ? `▲ +${productDelta}`
+        : `▼ ${productDelta}`;
 
     STATE.lastTotal = total;
     STATE.lastProducts = sorted.length;
