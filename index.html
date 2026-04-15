@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Pro</title>
+<title>SaaS Dashboard Level 2</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
-/* =========================
-   🌑 BASE THEME (SAAS STYLE)
-========================= */
 body{
   margin:0;
   font-family:system-ui;
@@ -20,9 +17,7 @@ body{
   overflow:hidden;
 }
 
-/* =========================
-   🔐 LOGIN
-========================= */
+/* LOGIN */
 #login{
   height:100vh;
   display:flex;
@@ -32,6 +27,7 @@ body{
   gap:12px;
 }
 
+/* INPUTS */
 input,button{
   padding:12px;
   border-radius:10px;
@@ -42,7 +38,6 @@ input,button{
 input{
   background:#111827;
   color:white;
-  outline:none;
 }
 
 button{
@@ -51,65 +46,29 @@ button{
   cursor:pointer;
 }
 
-/* =========================
-   📦 APP WRAPPER
-========================= */
+/* APP */
 #app{
   display:none;
   height:100vh;
   overflow:hidden;
 }
 
-/* =========================
-   🧭 SIDEBAR SAAS STYLE
-========================= */
-.nav{
-  position:fixed;
-  left:0;
-  top:0;
-  bottom:0;
-  width:80px;
-  background:#0f172a;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:20px;
-  align-items:center;
-  border-right:1px solid #1e293b;
-}
-
-.nav div{
-  width:100%;
-  text-align:center;
-  font-size:12px;
-  cursor:pointer;
-  opacity:0.6;
-}
-
-.nav .active{
-  opacity:1;
-  color:#38bdf8;
-}
-
-/* =========================
-   📊 MAIN AREA
-========================= */
+/* TABS */
 .tabs{
-  margin-left:80px;
   display:flex;
-  width:calc(100% - 80px);
-  height:100vh;
+  width:100%;
+  height:calc(100vh - 60px);
   transition:transform .35s ease;
 }
 
 .tab{
   min-width:100%;
-  padding:16px;
+  padding:14px;
   overflow:auto;
 }
 
 /* =========================
-   KPI CARDS
+   LEVEL 2 KPI CARDS
 ========================= */
 .grid{
   display:grid;
@@ -120,13 +79,24 @@ button{
 .card{
   background:#111827;
   padding:14px;
-  border-radius:14px;
-  border:1px solid #1e293b;
+  border-radius:16px;
+  border:1px solid #1f2937;
+  position:relative;
+  overflow:hidden;
 }
 
-/* =========================
-   FILTER BAR
-========================= */
+/* KPI TREND */
+.trend{
+  font-size:12px;
+  margin-top:6px;
+  opacity:0.8;
+}
+
+/* UP / DOWN COLORS */
+.up{color:#22c55e;}
+.down{color:#ef4444;}
+
+/* FILTER BAR */
 .dates{
   display:flex;
   gap:10px;
@@ -137,18 +107,14 @@ button{
   flex:1;
 }
 
-/* =========================
-   CHARTS
-========================= */
+/* CHARTS */
 canvas{
   background:#111827;
-  border-radius:14px;
+  border-radius:16px;
   margin-top:12px;
 }
 
-/* =========================
-   TABLE
-========================= */
+/* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
@@ -159,20 +125,16 @@ td{
   border-bottom:1px solid #1f2937;
 }
 
-/* =========================
-   TOP PRODUCTS PANEL
-========================= */
+/* PANEL */
 .panel{
   margin-top:12px;
   background:#111827;
   padding:12px;
-  border-radius:14px;
-  border:1px solid #1e293b;
+  border-radius:16px;
+  border:1px solid #1f2937;
 }
 
-/* =========================
-   LOADER
-========================= */
+/* LOADER */
 #loading{
   position:fixed;
   inset:0;
@@ -184,9 +146,7 @@ td{
   color:#38bdf8;
 }
 
-/* =========================
-   TOAST
-========================= */
+/* TOAST */
 #toast{
   position:fixed;
   bottom:80px;
@@ -206,25 +166,15 @@ td{
 
 <body>
 
-<!-- LOADER -->
-<div id="loading">Loading dashboard...</div>
+<div id="loading">Loading...</div>
 
-<!-- LOGIN -->
 <div id="login">
-  <h2>SaaS Dashboard Login</h2>
-  <input id="pass" type="password" placeholder="Password">
+  <h2>Login</h2>
+  <input id="pass" type="password">
   <button onclick="App.login()">Enter</button>
 </div>
 
-<!-- APP -->
 <div id="app">
-
-  <!-- SIDEBAR -->
-  <div class="nav" id="nav">
-    <div onclick="App.switchTab(0,this)" class="active">🏠</div>
-    <div onclick="App.switchTab(1,this)">📊</div>
-    <div onclick="App.switchTab(2,this)">📦</div>
-  </div>
 
   <div class="tabs" id="tabs">
 
@@ -232,9 +182,20 @@ td{
     <div class="tab">
 
       <div class="grid">
-        <div class="card">Sales<br><b id="sales">£0</b></div>
-        <div class="card">Products<br><b id="products">0</b></div>
-        <div class="card">Top<br><b id="top">-</b></div>
+        <div class="card">
+          Sales<br><b id="sales">£0</b>
+          <div class="trend" id="salesTrend"></div>
+        </div>
+
+        <div class="card">
+          Products<br><b id="products">0</b>
+          <div class="trend" id="productsTrend"></div>
+        </div>
+
+        <div class="card">
+          Top<br><b id="top">-</b>
+          <div class="trend">Top performer</div>
+        </div>
       </div>
 
       <div class="dates">
@@ -282,11 +243,12 @@ const App = (() => {
   const STATE = {
     raw: {},
     barChart: null,
-    salesChart: null
+    salesChart: null,
+    lastTotal: 0,
+    lastProducts: 0
   };
 
   const $ = id => document.getElementById(id);
-
   const fmt = v => "£" + (Number(v || 0)).toFixed(2);
 
   const toast = (msg) => {
@@ -305,7 +267,6 @@ const App = (() => {
 
     $("login").style.display = "none";
     $("app").style.display = "block";
-    $("nav").style.display = "flex";
 
     load();
   };
@@ -376,9 +337,26 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
+    // KPI DELTA (LEVEL 2 FEATURE)
+    const salesDelta = total - STATE.lastTotal;
+    const productDelta = sorted.length - STATE.lastProducts;
+
     $("sales").textContent = fmt(total);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
+
+    $("salesTrend").innerHTML =
+      salesDelta >= 0
+        ? `<span class="up">▲ +${fmt(salesDelta)}</span>`
+        : `<span class="down">▼ ${fmt(salesDelta)}</span>`;
+
+    $("productsTrend").innerHTML =
+      productDelta >= 0
+        ? `<span class="up">▲ +${productDelta}</span>`
+        : `<span class="down">▼ ${productDelta}</span>`;
+
+    STATE.lastTotal = total;
+    STATE.lastProducts = sorted.length;
 
     $("homeTopList").innerHTML =
       top5.length
@@ -429,11 +407,6 @@ const App = (() => {
 
   const switchTab = (i, el) => {
     $("tabs").style.transform = `translateX(-${i*100}%)`;
-
-    document.querySelectorAll(".nav div")
-      .forEach(b => b.classList.remove("active"));
-
-    el.classList.add("active");
   };
 
   return { login, load, setRange, applyRange, switchTab };
