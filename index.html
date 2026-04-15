@@ -8,6 +8,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+/* =========================
+   BASE
+========================= */
 body{
   margin:0;
   font-family:system-ui;
@@ -15,7 +19,9 @@ body{
   color:white;
 }
 
-/* LOGIN */
+/* =========================
+   LOGIN
+========================= */
 #login{
   height:100vh;
   display:flex;
@@ -25,7 +31,6 @@ body{
   gap:12px;
 }
 
-/* INPUTS */
 input,button{
   padding:12px;
   border-radius:10px;
@@ -35,28 +40,41 @@ input,button{
 input{background:#0b1220;color:white;}
 button{background:#38bdf8;font-weight:bold;}
 
-/* APP */
+/* =========================
+   APP LAYOUT (FIXED)
+========================= */
 #app{
   display:none;
   height:100vh;
   overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
 
-/* TABS */
+/* =========================
+   TABS ENGINE (FIXED)
+========================= */
 .tabs{
   display:flex;
   width:100%;
-  height:calc(100vh - 70px);
+  height:100%;
   transition:transform .35s ease;
 }
 
 .tab{
   min-width:100%;
+  flex:0 0 100%;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  box-sizing:border-box;
   padding:12px;
-  overflow:auto;
+  padding-bottom:80px;
 }
 
-/* NAV */
+/* =========================
+   NAV
+========================= */
 .nav{
   position:fixed;
   bottom:0;
@@ -79,7 +97,20 @@ button{background:#38bdf8;font-weight:bold;}
 
 .nav .active{color:#38bdf8;}
 
-/* KPI */
+/* =========================
+   HEADER
+========================= */
+.header{
+  position:sticky;
+  top:0;
+  background:#0f172a;
+  z-index:5;
+  padding-bottom:10px;
+}
+
+/* =========================
+   KPI
+========================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -90,10 +121,11 @@ button{background:#38bdf8;font-weight:bold;}
   background:#1e293b;
   padding:12px;
   border-radius:12px;
-  font-size:14px;
 }
 
-/* DATE */
+/* =========================
+   DATES
+========================= */
 .dates{
   display:flex;
   gap:8px;
@@ -102,15 +134,30 @@ button{background:#38bdf8;font-weight:bold;}
 
 .dates input{flex:1;}
 
-/* CHART */
+/* =========================
+   PANELS
+========================= */
+.panel{
+  margin-top:10px;
+  background:#1e293b;
+  padding:10px;
+  border-radius:12px;
+}
+
+/* =========================
+   CHART FIX
+========================= */
 canvas{
   background:#1e293b;
   border-radius:12px;
   margin-top:10px;
-  max-height:280px;
+  width:100% !important;
+  max-height:260px;
 }
 
-/* TABLE */
+/* =========================
+   TABLE
+========================= */
 table{
   width:100%;
   border-collapse:collapse;
@@ -121,7 +168,9 @@ td{
   border-bottom:1px solid #334155;
 }
 
-/* LOADER */
+/* =========================
+   LOADER
+========================= */
 #loading{
   position:fixed;
   inset:0;
@@ -132,7 +181,9 @@ td{
   z-index:999;
 }
 
-/* TOAST */
+/* =========================
+   TOAST
+========================= */
 #toast{
   position:fixed;
   bottom:90px;
@@ -144,6 +195,14 @@ td{
   opacity:0;
 }
 #toast.show{opacity:1;}
+
+/* =========================
+   MOBILE
+========================= */
+@media(max-width:768px){
+  .grid{grid-template-columns:1fr;}
+}
+
 </style>
 </head>
 
@@ -161,199 +220,213 @@ td{
 <!-- APP -->
 <div id="app">
 
-  <div class="tabs" id="tabs">
+<div class="tabs" id="tabs">
 
-    <!-- HOME -->
-    <div class="tab">
+<!-- ================= HOME ================= -->
+<div class="tab">
 
-      <div class="grid">
-        <div class="card">Sales<br><b id="sales">£0</b></div>
-        <div class="card">Products<br><b id="products">0</b></div>
-        <div class="card">Top<br><b id="top">-</b></div>
-      </div>
+<div class="header">
 
-      <div class="dates">
-        <input id="startDate" type="date">
-        <input id="endDate" type="date">
-        <button onclick="App.applyRange()">Apply</button>
-        <button onclick="App.setRange('today')">Today</button>
-        <button onclick="App.setRange('7')">7D</button>
-        <button onclick="App.setRange('30')">30D</button>
-      </div>
+<div class="grid">
+<div class="card">Sales<br><b id="sales">£0</b></div>
+<div class="card">Products<br><b id="products">0</b></div>
+<div class="card">Top<br><b id="top">-</b></div>
+</div>
 
-      <div style="margin-top:10px;background:#1e293b;padding:10px;border-radius:12px;">
-        <b>Top Products</b>
-        <div id="homeTopList">-</div>
-      </div>
+<div class="dates">
+<input id="startDate" type="date">
+<input id="endDate" type="date">
+<button onclick="App.applyRange()">Apply</button>
+<button onclick="App.setRange('today')">Today</button>
+<button onclick="App.setRange('7')">7D</button>
+<button onclick="App.setRange('30')">30D</button>
+</div>
 
-      <canvas id="barChart"></canvas>
-    </div>
+</div>
 
-    <!-- STATS -->
-    <div class="tab">
-      <canvas id="salesChart"></canvas>
-      <div id="insights"></div>
-    </div>
+<div class="panel">
+<b>Top Products</b>
+<div id="homeTopList">-</div>
+</div>
 
-    <!-- PRODUCTS -->
-    <div class="tab">
-      <table id="productTable"></table>
-    </div>
+<canvas id="barChart"></canvas>
 
-  </div>
+</div>
+
+<!-- ================= STATS ================= -->
+<div class="tab">
+<canvas id="salesChart"></canvas>
+<div id="insights"></div>
+</div>
+
+<!-- ================= PRODUCTS ================= -->
+<div class="tab">
+<table id="productTable"></table>
+</div>
+
+</div>
 </div>
 
 <!-- NAV -->
 <div class="nav" id="nav">
-  <div onclick="App.switchTab(0,this)" class="active">🏠<small>Home</small></div>
-  <div onclick="App.switchTab(1,this)">📈<small>Stats</small></div>
-  <div onclick="App.switchTab(2,this)">📦<small>Products</small></div>
+<div onclick="App.switchTab(0,this)" class="active">🏠<small>Home</small></div>
+<div onclick="App.switchTab(1,this)">📈<small>Stats</small></div>
+<div onclick="App.switchTab(2,this)">📦<small>Products</small></div>
 </div>
 
 <div id="toast"></div>
 
 <script>
+
+/* =========================
+   APP ENGINE (SAFE)
+========================= */
 const App = (() => {
 
-  const CONFIG = {
-    URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
-    PASSWORD: "1234"
-  };
+const CONFIG = {
+URL:"https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+PASSWORD:"1234"
+};
 
-  const STATE = {
-    raw: {},
-    barChart: null,
-    salesChart: null
-  };
+const STATE = {
+raw:{},
+barChart:null,
+salesChart:null
+};
 
-  const $ = id => document.getElementById(id);
-  const fmt = v => "£" + Number(v || 0).toFixed(2);
+const $ = id => document.getElementById(id);
+const fmt = v => "£"+Number(v||0).toFixed(2);
 
-  const animate = (el, val) => {
-    let start = 0;
-    const step = val / 20;
-    const i = setInterval(()=>{
-      start += step;
-      if(start >= val){ start = val; clearInterval(i); }
-      el.textContent = fmt(start);
-    },20);
-  };
+/* KPI animation */
+const animate = (el,val)=>{
+let start=0;
+const step=val/25;
+const i=setInterval(()=>{
+start+=step;
+if(start>=val){start=val;clearInterval(i);}
+el.textContent=fmt(start);
+},20);
+};
 
-  const toast = msg => {
-    const t = $("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),1500);
-  };
+const toast = msg=>{
+const t=$("toast");
+t.textContent=msg;
+t.classList.add("show");
+setTimeout(()=>t.classList.remove("show"),1500);
+};
 
-  const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) return toast("Wrong password");
-    $("login").style.display="none";
-    $("app").style.display="block";
-    load();
-  };
+const login = ()=>{
+if($("pass").value!==CONFIG.PASSWORD) return toast("Wrong password");
+$("login").style.display="none";
+$("app").style.display="flex";
+load();
+};
 
-  const load = async () => {
-    $("loading").style.display="flex";
-    try{
-      const res = await fetch(CONFIG.URL);
-      STATE.raw = await res.json();
-      draw(STATE.raw);
-    }catch{
-      toast("Load failed");
-    }
-    $("loading").style.display="none";
-  };
+const load = async ()=>{
+$("loading").style.display="flex";
+try{
+const res=await fetch(CONFIG.URL);
+STATE.raw=await res.json();
+draw(STATE.raw);
+}catch{
+toast("Load failed");
+}
+$("loading").style.display="none";
+};
 
-  const setRange = type => {
-    const now = new Date();
-    let start = new Date();
-    if(type==="today") start.setHours(0,0,0,0);
-    if(type==="7") start.setDate(now.getDate()-7);
-    if(type==="30") start.setDate(now.getDate()-30);
-    $("startDate").value = start.toISOString().split("T")[0];
-    $("endDate").value = now.toISOString().split("T")[0];
-    applyRange();
-  };
+const setRange = type=>{
+const now=new Date();
+let start=new Date();
+if(type==="today") start.setHours(0,0,0,0);
+if(type==="7") start.setDate(now.getDate()-7);
+if(type==="30") start.setDate(now.getDate()-30);
+$("startDate").value=start.toISOString().split("T")[0];
+$("endDate").value=now.toISOString().split("T")[0];
+applyRange();
+};
 
-  const applyRange = () => {
-    const s = new Date($("startDate").value+"T00:00:00").getTime();
-    const e = new Date($("endDate").value+"T23:59:59").getTime();
-    const out = {};
-    for(const d in STATE.raw){
-      const t = new Date(d).getTime();
-      if(t>=s && t<=e) out[d]=STATE.raw[d];
-    }
-    draw(out);
-  };
+const applyRange = ()=>{
+const s=new Date($("startDate").value+"T00:00:00").getTime();
+const e=new Date($("endDate").value+"T23:59:59").getTime();
+const out={};
+for(const d in STATE.raw){
+const t=new Date(d).getTime();
+if(t>=s&&t<=e) out[d]=STATE.raw[d];
+}
+draw(out);
+};
 
-  const draw = data => {
+const draw = data=>{
 
-    let pt={}, dt={}, total=0;
-    const dates = Object.keys(data||{}).sort();
+let pt={},dt={},total=0;
+const dates=Object.keys(data||{}).sort();
 
-    for(const d of dates){
-      dt[d]=0;
-      for(const p in data[d]){
-        const v=Number(data[d][p]||0);
-        pt[p]=(pt[p]||0)+v;
-        dt[d]+=v;
-        total+=v;
-      }
-    }
+for(const d of dates){
+dt[d]=0;
+for(const p in data[d]){
+const v=Number(data[d][p]||0);
+pt[p]=(pt[p]||0)+v;
+dt[d]+=v;
+total+=v;
+}
+}
 
-    const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-    const top5 = sorted.slice(0,5);
+const sorted=Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
+const top5=sorted.slice(0,5);
 
-    animate($("sales"), total);
-    $("products").textContent = sorted.length;
-    $("top").textContent = top5[0] || "-";
+animate($("sales"),total);
+$("products").textContent=sorted.length;
+$("top").textContent=top5[0]||"-";
 
-    $("homeTopList").innerHTML =
-      top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>");
+$("homeTopList").innerHTML=
+top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>");
 
-    $("productTable").innerHTML =
-      sorted.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
+$("productTable").innerHTML=
+sorted.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
 
-    if(STATE.barChart) STATE.barChart.destroy();
-    STATE.barChart = new Chart($("barChart"),{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:top5.map(p=>({
-          label:p,
-          data:dates.map(d=>data[d]?.[p]||0),
-          stack:"s"
-        }))
-      },
-      options:{
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true,ticks:{callback:v=>"£"+v}}
-        }
-      }
-    });
+if(STATE.barChart) STATE.barChart.destroy();
+STATE.barChart=new Chart($("barChart"),{
+type:"bar",
+data:{
+labels:dates,
+datasets:top5.map(p=>({
+label:p,
+data:dates.map(d=>data[d]?.[p]||0),
+stack:"s"
+}))
+},
+options:{
+responsive:true,
+scales:{
+x:{stacked:true},
+y:{stacked:true,ticks:{callback:v=>"£"+v}}
+}
+}
+});
 
-    if(STATE.salesChart) STATE.salesChart.destroy();
-    STATE.salesChart = new Chart($("salesChart"),{
-      type:"bar",
-      data:{
-        labels:dates,
-        datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d]||0)}]
-      }
-    });
-  };
+if(STATE.salesChart) STATE.salesChart.destroy();
+STATE.salesChart=new Chart($("salesChart"),{
+type:"bar",
+data:{
+labels:dates,
+datasets:[{label:"Sales (£)",data:dates.map(d=>dt[d]||0)}]
+}
+});
 
-  const switchTab = (i,el)=>{
-    $("tabs").style.transform=`translateX(-${i*100}%)`;
-    document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-    el.classList.add("active");
-  };
+};
 
-  return {login,load,setRange,applyRange,switchTab};
+const switchTab = (i,el)=>{
+$("tabs").style.transform=`translateX(-${i*100}%)`;
+document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
+el.classList.add("active");
+};
+
+return {login,setRange,applyRange,switchTab};
 
 })();
-window.App = App;
+
+window.App=App;
+
 </script>
 
 </body>
