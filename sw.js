@@ -7,7 +7,7 @@ const App = (() => {
 
   const STATE = {
     raw: {},
-    filtered: {},
+    tab: 0,
     barChart: null,
     salesChart: null
   };
@@ -24,9 +24,6 @@ const App = (() => {
     setTimeout(() => t.classList.remove("show"), 1500);
   };
 
-  // =========================
-  // LOGIN
-  // =========================
   const login = () => {
     if ($("pass")?.value !== CONFIG.PASSWORD) {
       toast("Wrong password");
@@ -40,9 +37,6 @@ const App = (() => {
     load();
   };
 
-  // =========================
-  // LOADING (with skeleton feel)
-  // =========================
   const load = async () => {
     try {
       if ($("loading")) $("loading").style.display = "flex";
@@ -51,8 +45,6 @@ const App = (() => {
       const data = await res.json();
 
       STATE.raw = data;
-      STATE.filtered = data;
-
       draw(data);
 
     } catch (e) {
@@ -62,9 +54,6 @@ const App = (() => {
     }
   };
 
-  // =========================
-  // RANGE FILTER
-  // =========================
   const setRange = (type) => {
     const now = new Date();
     let start = new Date();
@@ -73,15 +62,19 @@ const App = (() => {
     if (type === "7") start.setDate(now.getDate() - 7);
     if (type === "30") start.setDate(now.getDate() - 30);
 
-    $("startDate").value = start.toISOString().split("T")[0];
-    $("endDate").value = now.toISOString().split("T")[0];
+    if ($("startDate")) $("startDate").value = start.toISOString().split("T")[0];
+    if ($("endDate")) $("endDate").value = now.toISOString().split("T")[0];
 
     applyRange();
   };
 
   const applyRange = () => {
-    const s = new Date($("startDate").value + "T00:00:00").getTime();
-    const e = new Date($("endDate").value + "T23:59:59").getTime();
+    const sEl = $("startDate");
+    const eEl = $("endDate");
+    if (!sEl || !eEl) return;
+
+    const s = new Date(sEl.value + "T00:00:00").getTime();
+    const e = new Date(eEl.value + "T23:59:59").getTime();
 
     const out = {};
 
@@ -92,15 +85,14 @@ const App = (() => {
       }
     }
 
-    STATE.filtered = out;
     draw(out);
   };
 
-  // =========================
-  // CORE CALCULATION
-  // =========================
-  const compute = (data) => {
-    let pt = {}, dt = {}, total = 0;
+  const draw = (data) => {
+
+    let pt = {};
+    let dt = {};
+    let total = 0;
 
     const dates = Object.keys(data || {}).sort();
 
@@ -117,184 +109,102 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a, b) => pt[b] - pt[a]);
     const top5 = sorted.slice(0, 5);
 
-    return { pt, dt, total, dates, sorted, top5 };
-  };
+    // ================= HOME KPI =================
+    if ($("sales")) $("sales").textContent = fmt(total);
+    if ($("products")) $("products").textContent = sorted.length;
+    if ($("top")) $("top").textContent = top5[0] || "-";
 
-  // =========================
-  // % CHANGE (SAAS KPI)
-  // =========================
-  const getPreviousComparison = (currentTotal) => {
-    const dates = Object.keys(STATE.raw).sort();
-    const half = Math.floor(dates.length / 2);
-
-    let prevTotal = 0;
-
-    dates.slice(0, half).forEach(d => {
-      for (const p in STATE.raw[d]) {
-        prevTotal += Number(STATE.raw[d][p] || 0);
-      }
-    });
-
-    if (!prevTotal) return { pct: 0, dir: "flat" };
-
-    const pct = ((currentTotal - prevTotal) / prevTotal) * 100;
-
-    return {
-      pct: Math.abs(pct.toFixed(1)),
-      dir: pct > 0 ? "up" : pct < 0 ? "down" : "flat"
-    };
-  };
-
-  // =========================
-  // DRAW UI
-  // =========================
-  const draw = (data) => {
-
-    const { pt, dt, total, dates, sorted, top5 } = compute(data);
-    const trend = getPreviousComparison(total);
-
-    // KPI
-    $("sales").textContent = fmt(total);
-    $("products").textContent = sorted.length;
-    $("top").textContent = top5[0] || "-";
-
-    // KPI trend enhancement
-    const salesEl = $("sales");
-    if (salesEl) {
-      salesEl.innerHTML =
-        `${fmt(total)} <small style="opacity:.7">
-        ${trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "•"}
-        ${trend.pct}%
-        </small>`;
-    }
-
-    // TOP PRODUCTS
+    // ================= HOME TOP PRODUCTS =================
     const homeTop = $("homeTopList");
     if (homeTop) {
       homeTop.innerHTML = top5.length
         ? top5.map((p, i) =>
-            `<div style="display:flex;justify-content:space-between">
-              <span>${i + 1}. ${p}</span>
-              <span>${fmt(pt[p])}</span>
-            </div>`
+            `<div>${i + 1}. ${p} — ${fmt(pt[p])}</div>`
           ).join("")
-        : "-";
+        : "<div>No data</div>";
     }
 
-    // TABLE
+    // ================= PRODUCTS TABLE =================
     const table = $("productTable");
     if (table) {
-      table.innerHTML = sorted.map(p =>
-        `<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`
-      ).join("");
+      table.innerHTML = sorted.length
+        ? sorted.map(p =>
+            `<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`
+          ).join("")
+        : "<tr><td colspan='2'>No data</td></tr>";
     }
 
-    // SEARCH FILTER (SAAS FEATURE)
-    window.filterProducts = (q) => {
-      const rows = document.querySelectorAll("#productTable tr");
-      rows.forEach(r => {
-        r.style.display =
-          r.innerText.toLowerCase().includes(q.toLowerCase())
-            ? ""
-            : "none";
-      });
-    };
+    // ================= BAR CHART =================
+    const barCanvas = $("barChart");
+    if (barCanvas) {
+      if (STATE.barChart) STATE.barChart.destroy();
 
-    // BAR CHART (STACKED FIXED)
-    if (STATE.barChart) STATE.barChart.destroy();
-
-    STATE.barChart = new Chart($("barChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: top5.map(p => ({
-          label: p,
-          data: dates.map(d => data[d]?.[p] || 0),
-          stack: "stack1"
-        }))
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => `${ctx.dataset.label}: £${ctx.raw}`
-            }
-          }
+      STATE.barChart = new Chart(barCanvas, {
+        type: "bar",
+        data: {
+          labels: dates,
+          datasets: top5.map(p => ({
+            label: p,
+            data: dates.map(d => data[d]?.[p] || 0),
+            stack: "stack1"
+          }))
         },
-        scales: {
-          x: { stacked: true },
-          y: {
-            stacked: true,
-            ticks: { callback: v => "£" + v }
-          }
-        }
-      }
-    });
-
-    // SALES CHART
-    if (STATE.salesChart) STATE.salesChart.destroy();
-
-    STATE.salesChart = new Chart($("salesChart"), {
-      type: "bar",
-      data: {
-        labels: dates,
-        datasets: [{
-          label: "Sales (£)",
-          data: dates.map(d => dt[d] || 0)
-        }]
-      },
-      options: {
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => "£" + ctx.raw
+        options: {
+          responsive: true,
+          scales: {
+            x: { stacked: true },
+            y: {
+              stacked: true,
+              ticks: { callback: v => "£" + v }
             }
           }
         }
-      }
-    });
+      });
+    }
 
-    // INSIGHTS
+    // ================= SALES CHART =================
+    const salesCanvas = $("salesChart");
+    if (salesCanvas) {
+      if (STATE.salesChart) STATE.salesChart.destroy();
+
+      STATE.salesChart = new Chart(salesCanvas, {
+        type: "bar",
+        data: {
+          labels: dates,
+          datasets: [{
+            label: "Sales (£)",
+            data: dates.map(d => dt[d] || 0)
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              ticks: { callback: v => "£" + v }
+            }
+          }
+        }
+      });
+    }
+
+    // ================= INSIGHTS =================
     const insights = $("insights");
     if (insights) {
-      insights.innerHTML =
-        "<b>Top Products</b><br>" +
-        top5.map(p => `• ${p} (${fmt(pt[p])})`).join("<br>");
+      insights.innerHTML = top5.length
+        ? `<b>Top Products</b><br>` +
+          top5.map(p => `• ${p} (${fmt(pt[p])})`).join("<br>")
+        : "";
     }
   };
 
-  // =========================
-  // EXPORT CSV (SAAS FEATURE)
-  // =========================
-  const exportCSV = () => {
-    let rows = [["Product", "Value"]];
-
-    const { pt } = compute(STATE.filtered);
-
-    Object.keys(pt).forEach(p => {
-      rows.push([p, pt[p]]);
-    });
-
-    const csv = rows.map(r => r.join(",")).join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "export.csv";
-    a.click();
-  };
-
-  // =========================
-  // NAV
-  // =========================
   const switchTab = (i, el) => {
-    $("tabs").style.transform = `translateX(-${i * 100}%)`;
+    STATE.tab = i;
+
+    const tabs = $("tabs");
+    if (tabs) tabs.style.transform = `translateX(-${i * 100}%)`;
+
     document.querySelectorAll(".nav div")
       .forEach(b => b.classList.remove("active"));
+
     if (el) el.classList.add("active");
   };
 
@@ -303,8 +213,7 @@ const App = (() => {
     load,
     setRange,
     applyRange,
-    switchTab,
-    exportCSV
+    switchTab
   };
 
 })();
