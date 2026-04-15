@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Pro Dashboard</title>
+<title>SaaS Dashboard Stable v4</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -30,7 +30,7 @@ body{
   gap:10px;
 }
 
-/* INPUTS */
+/* INPUT */
 input,button{
   padding:12px;
   border-radius:10px;
@@ -48,18 +48,36 @@ button{background:#38bdf8;font-weight:bold;}
   position:relative;
 }
 
-/* TABS */
+/* LOADER */
+#loading{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#0f172a;
+  z-index:999;
+}
+
+/* =========================
+   SAAS LAYOUT ENGINE (FIXED)
+========================= */
 .tabs{
   display:flex;
-  width:100%;
+  width:300%;
   height:calc(100vh - 60px);
-  transition:transform .4s ease;
+  transition:transform .45s cubic-bezier(0.22,1,0.36,1);
+  will-change:transform;
 }
 
 .tab{
-  min-width:100%;
+  flex:0 0 100%;
+  width:100%;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
   padding:14px;
-  overflow:auto;
+  box-sizing:border-box;
 }
 
 /* NAV */
@@ -77,41 +95,42 @@ button{background:#38bdf8;font-weight:bold;}
 .nav div{
   flex:1;
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
   cursor:pointer;
 }
 
-.nav .active{color:#38bdf8;}
+.nav .active{
+  color:#38bdf8;
+}
 
 /* KPI GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
+  gap:12px;
 }
 
 .card{
   background:#1e293b;
   padding:14px;
-  border-radius:12px;
-  transition:transform .2s ease;
+  border-radius:14px;
 }
 
-/* CHARTS */
-canvas{
-  background:#1e293b;
-  border-radius:12px;
-  margin-top:12px;
-}
-
-/* TOP PRODUCTS */
+/* TOP BOX */
 #homeTopProducts{
   margin-top:10px;
   background:#1e293b;
   padding:10px;
   border-radius:12px;
+}
+
+/* CHART */
+canvas{
+  background:#1e293b;
+  border-radius:12px;
+  margin-top:12px;
+  width:100% !important;
 }
 
 /* TOAST */
@@ -126,25 +145,12 @@ canvas{
   opacity:0;
   transition:.2s;
 }
-
 #toast.show{opacity:1;}
 
-/* LOADER */
-#loading{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:#0f172a;
-  z-index:999;
-}
-
-/* RESPONSIVE */
-@media (max-width:768px){
+/* MOBILE */
+@media(max-width:768px){
   body{overflow:auto;}
   .grid{grid-template-columns:1fr;}
-  .tab{padding-bottom:90px;}
 }
 
 </style>
@@ -208,9 +214,6 @@ canvas{
 
 <script>
 
-/* =========================
-   SAAS PRO ENGINE (MODULAR)
-========================= */
 const App = (() => {
 
   const CONFIG = {
@@ -226,44 +229,18 @@ const App = (() => {
 
   const $ = id => document.getElementById(id);
 
-  /* =========================
-     UX HELPERS (SAAS LAYER)
-  ========================= */
+  const fmt = v => "£" + (Number(v || 0)).toFixed(2);
 
   const toast = (msg) => {
     const t = $("toast");
     if (!t) return;
     t.textContent = msg;
     t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1500);
+    setTimeout(()=>t.classList.remove("show"),1500);
   };
-
-  const animateValue = (el, end) => {
-    if (!el) return;
-    let start = 0;
-    const duration = 600;
-    const step = Math.max(1, Math.floor(end / 30));
-
-    const interval = setInterval(() => {
-      start += step;
-      if (start >= end) {
-        el.textContent = "£" + end.toFixed(2);
-        clearInterval(interval);
-      } else {
-        el.textContent = "£" + start.toFixed(2);
-      }
-    }, 16);
-  };
-
-  /* =========================
-     AUTH
-  ========================= */
 
   const login = () => {
-    if ($("pass").value !== CONFIG.PASSWORD) {
-      toast("Wrong password");
-      return;
-    }
+    if ($("pass").value !== CONFIG.PASSWORD) return toast("Wrong password");
 
     $("login").style.display = "none";
     $("app").style.display = "block";
@@ -272,27 +249,17 @@ const App = (() => {
     load();
   };
 
-  /* =========================
-     DATA LAYER
-  ========================= */
-
   const load = async () => {
     $("loading").style.display = "flex";
-
     try {
-      const res = await fetch(CONFIG.URL, { cache: "no-store" });
+      const res = await fetch(CONFIG.URL);
       STATE.raw = await res.json();
       draw(STATE.raw);
-    } catch (e) {
+    } catch {
       toast("Load failed");
-    } finally {
-      $("loading").style.display = "none";
     }
+    $("loading").style.display = "none";
   };
-
-  /* =========================
-     CORE LOGIC
-  ========================= */
 
   const draw = (data) => {
 
@@ -313,22 +280,18 @@ const App = (() => {
     const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
     const top5 = sorted.slice(0,5);
 
-    /* ================= KPI ANIMATION ================= */
-    animateValue($("sales"), total);
+    $("sales").textContent = fmt(total);
     $("products").textContent = sorted.length;
     $("top").textContent = top5[0] || "-";
 
-    /* TOP LIST */
     $("homeTopList").innerHTML =
       top5.length
-        ? top5.map((p,i)=>`${i+1}. ${p} — £${pt[p].toFixed(2)}`).join("<br>")
+        ? top5.map((p,i)=>`${i+1}. ${p} — ${fmt(pt[p])}`).join("<br>")
         : "-";
 
-    /* TABLE */
     $("productTable").innerHTML =
-      sorted.map(p=>`<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
+      sorted.map(p=>`<tr><td>${p}</td><td>${fmt(pt[p])}</td></tr>`).join("");
 
-    /* CHARTS */
     if (STATE.barChart) STATE.barChart.destroy();
     STATE.barChart = new Chart($("barChart"), {
       type:"bar",
@@ -340,13 +303,7 @@ const App = (() => {
           stack:"s"
         }))
       },
-      options:{
-        responsive:true,
-        scales:{
-          x:{stacked:true},
-          y:{stacked:true}
-        }
-      }
+      options:{responsive:true,scales:{x:{stacked:true},y:{stacked:true}}}
     });
 
     if (STATE.salesChart) STATE.salesChart.destroy();
@@ -361,10 +318,6 @@ const App = (() => {
       }
     });
   };
-
-  /* =========================
-     NAV
-  ========================= */
 
   const switchTab = (i, el) => {
     $("tabs").style.transform = `translateX(-${i*100}%)`;
