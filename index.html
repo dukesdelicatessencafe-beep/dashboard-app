@@ -302,6 +302,18 @@
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
       const str = String(dateStr).trim();
+      
+      // Explicitly handle UK format (DD/MM/YYYY or DD-MM-YYYY)
+      const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (ukMatch) {
+        const day = parseInt(ukMatch[1], 10);
+        const month = parseInt(ukMatch[2], 10) - 1; // JS months are 0-indexed
+        const year = parseInt(ukMatch[3], 10);
+        const d = new Date(year, month, day);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      // Fallback for standard ISO or other recognizable strings
       const parsed = new Date(str);
       return isNaN(parsed.getTime()) ? null : parsed;
     };
