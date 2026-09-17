@@ -12,7 +12,7 @@ function renderDashboard(rows) {
     const cashVal = row[2];
     const cardVal = row[3];
 
-    // 1. Skip headers and explicit summary/total rows
+    // 1. Skip rows without valid date strings, headers, or explicit summary rows
     if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
       return;
     }
@@ -22,7 +22,7 @@ function renderDashboard(rows) {
     const cash = cleanNum(cashVal);
     const card = cleanNum(cardVal);
 
-    // 3. Skip weekly subtotal rows (which have cash/card totals but no valid day name or standard date string)
+    // 3. Skip weekly subtotal rows (lack day name and don't contain standard ISO/Date indicators)
     const isStandardDate = rawDate.includes("T") || rawDate.includes("/") || rawDate.includes("-");
     if (!dayName && (cash > 0 || card > 0) && !isStandardDate) {
       return;
@@ -39,7 +39,7 @@ function renderDashboard(rows) {
 
     const dailyTotal = cash + card;
 
-    // Skip blank non-trading days
+    // Skip empty non-trading days
     if (dailyTotal === 0 && !dayName) {
       return;
     }
@@ -47,7 +47,7 @@ function renderDashboard(rows) {
     totalCash += cash;
     totalCard += card;
 
-    // 5. Safely read categories (Columns E, F, G)
+    // 5. Safely read category columns (Columns E, F, G)
     const drink = cleanNum(row[4]);
     const food = cleanNum(row[5]);
     const deli = cleanNum(row[6]);
