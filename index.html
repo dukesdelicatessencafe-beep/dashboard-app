@@ -299,21 +299,38 @@
 
     const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
+    // ROBUST UNIVERSAL DATE PARSER
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
+
+      // 1. Handle Google Sheets / Excel Serial Numbers
+      if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
+        const serial = parseFloat(dateStr);
+        const utcDays = Math.floor(serial - 25569);
+        const utcValue = utcDays * 86400 * 1000;
+        const d = new Date(utcValue);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
       const str = String(dateStr).trim();
-      
-      // Explicitly handle UK format (DD/MM/YYYY or DD-MM-YYYY)
+
+      // 2. Handle ISO strings (e.g. 2023-04-01T07:00:00.000Z)
+      if (str.includes("T") || str.includes("Z")) {
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      // 3. Handle UK format (DD/MM/YYYY or DD-MM-YYYY)
       const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
       if (ukMatch) {
         const day = parseInt(ukMatch[1], 10);
-        const month = parseInt(ukMatch[2], 10) - 1; // JS months are 0-indexed
+        const month = parseInt(ukMatch[2], 10) - 1;
         const year = parseInt(ukMatch[3], 10);
         const d = new Date(year, month, day);
         return isNaN(d.getTime()) ? null : d;
       }
 
-      // Fallback for standard ISO or other recognizable strings
+      // 4. Final fallback
       const parsed = new Date(str);
       return isNaN(parsed.getTime()) ? null : parsed;
     };
@@ -345,11 +362,11 @@
         if (!row || !Array.isArray(row)) return;
 
         const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1] ? String(row[1]).trim() : "";
+        const rawDate = row[1];
         const cashVal = row[2];
         const cardVal = row[3];
 
-        if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
+        if (!rawDate || String(dayName).toLowerCase().includes("month total") || String(rawDate).toLowerCase().includes("date")) {
           return;
         }
 
@@ -441,7 +458,7 @@
 
       if (STATE.barChart) STATE.barChart.destroy();
 
-      const labels = records.slice(-7).map(r => r.dayName || r.rawDate);
+      const labels = records.slice(-7).map(r => r.dayName || String(r.rawDate));
       const data = records.slice(-7).map(r => r.dailyTotal);
 
       STATE.barChart = new Chart(canvas, {
@@ -464,7 +481,7 @@
 
       if (STATE.salesChart) STATE.salesChart.destroy();
 
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate);
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
       const data = records.map(r => r.dailyTotal);
 
       STATE.salesChart = new Chart(canvas, {
@@ -493,7 +510,6 @@
 
         let allRecords = [];
 
-        // Multi-tab handling: loops through all sheets returned by the backend
         if (json && json.tabs) {
           Object.values(json.tabs).forEach(tabRows => {
             const processed = processRows(tabRows);
