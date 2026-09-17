@@ -7,35 +7,45 @@ function renderDashboard(rows) {
   let totalCard = 0;
 
   rows.forEach(row => {
-    // Col A = Day Name (row[0]), Col B = Date (row[1]), Col C = Cash (row[2]), Col D = Card (row[3])
     const dayName = row[0] ? row[0].toString().trim() : "";
-    const dateStr = row[1] ? row[1].toString().trim() : "";
+    let rawDate = row[1] ? row[1].toString().trim() : "";
+    const cashVal = row[2];
+    const cardVal = row[3];
 
-    // Skip empty rows, header rows, or summary/monthly total rows
-    if (!dateStr || dateStr.toLowerCase().includes("month total") || dateStr.toLowerCase().includes("date") || dateStr.toLowerCase().includes("catorgory")) {
-      return; 
+    // 1. Skip rows without valid sales numbers or rows explicitly marked as totals
+    if ((cashVal === "" && cardVal === "") || !rawDate || dayName.toLowerCase().includes("month total")) {
+      return;
     }
 
-    // Strips out £ symbols, spaces, and commas
-    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+    // 2. Format ISO timestamps (e.g., 2023-04-11T07:00:00.000Z) into readable dates (11/04/2023)
+    let displayDate = rawDate;
+    if (rawDate.includes("T")) {
+      const parsedDate = new Date(rawDate);
+      if (!isNaN(parsedDate.getTime())) {
+        displayDate = parsedDate.toLocaleDateString("en-GB"); // DD/MM/YYYY
+      }
+    }
 
-    const cash = cleanNum(row[2]);
-    const card = cleanNum(row[3]);
+    // 3. Clean numbers and calculate daily total
+    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+    const cash = cleanNum(cashVal);
+    const card = cleanNum(cardVal);
     const dailyTotal = cash + card;
 
     totalCash += cash;
     totalCard += card;
 
-    // Safely reads categories (DRINK, FOOD, DELI, etc.)
+    // 4. Extract Category values (Columns E, F, G)
     const drink = cleanNum(row[4]);
     const food = cleanNum(row[5]);
     const deli = cleanNum(row[6]);
 
+    // 5. Build and render the card UI
     const cardElement = document.createElement("div");
     cardElement.className = "daily-card";
     cardElement.innerHTML = `
       <div class="card-header">
-        <span><strong>${dayName}</strong> ${dateStr}</span>
+        <span><strong>${dayName}</strong> ${displayDate}</span>
         <span class="total-badge">£${dailyTotal.toFixed(2)}</span>
       </div>
       <div class="card-body">
