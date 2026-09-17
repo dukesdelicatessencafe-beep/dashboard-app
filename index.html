@@ -479,19 +479,23 @@
         const res = await fetch(CONFIG.URL, { cache: "no-store" });
         const json = await res.json();
 
-        let rawData = [];
-        if (json && json.rows && Array.isArray(json.rows)) {
-          rawData = json.rows;
+        let allRecords = [];
+
+        // Multi-tab handling: loops through all sheets returned by the backend
+        if (json && json.tabs) {
+          Object.values(json.tabs).forEach(tabRows => {
+            const processed = processRows(tabRows);
+            allRecords = allRecords.concat(processed);
+          });
+        } else if (json && json.rows && Array.isArray(json.rows)) {
+          allRecords = processRows(json.rows);
         } else if (Array.isArray(json)) {
-          rawData = json;
-        } else if (json && json.error) {
-          toast("Error: " + json.error);
-          return;
+          allRecords = processRows(json);
         }
 
-        STATE.raw = processRows(rawData);
+        STATE.raw = allRecords;
         renderDashboard(STATE.raw);
-        toast("Data loaded successfully");
+        toast("All tabs loaded successfully");
       } catch (e) {
         console.error("Fetch error:", e);
         toast("Failed to load spreadsheet data");
