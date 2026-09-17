@@ -299,7 +299,7 @@
 
     const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
-    // ROBUST UNIVERSAL DATE PARSER
+    // NATIVE TIMEZONE-AWARE UNIVERSAL DATE PARSER
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
 
@@ -309,12 +309,12 @@
         const utcDays = Math.floor(serial - 25569);
         const utcValue = utcDays * 86400 * 1000;
         const d = new Date(utcValue);
-        return isNaN(d.getTime()) ? null : d;
+        return isNaN(d.getTime()) ? null : new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
       }
 
       const str = String(dateStr).trim();
 
-      // 2. Handle ISO strings (e.g. 2023-04-01T07:00:00.000Z)
+      // 2. Handle ISO strings natively so JS correctly shifts UTC timestamps to local calendar dates
       if (str.includes("T") || str.includes("Z")) {
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
@@ -326,8 +326,7 @@
         const day = parseInt(ukMatch[1], 10);
         const month = parseInt(ukMatch[2], 10) - 1;
         const year = parseInt(ukMatch[3], 10);
-        const d = new Date(year, month, day);
-        return isNaN(d.getTime()) ? null : d;
+        return new Date(year, month, day);
       }
 
       // 4. Final fallback
@@ -428,7 +427,7 @@
         if (container) {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${rec.dayName} ${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : rec.rawDate}</td>
+            <td>${rec.dayName} ${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate)}</td>
             <td>${fmt(rec.dailyTotal)}</td>
           `;
           container.appendChild(tr);
