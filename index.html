@@ -299,7 +299,7 @@
 
     const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
-    // NATIVE TIMEZONE-AWARE UNIVERSAL DATE PARSER
+    // FORCEFUL STUFFED CALENDAR DAY PARSER (STRICT UTC-TO-LOCAL BYPASS)
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
 
@@ -314,24 +314,21 @@
 
       const str = String(dateStr).trim();
 
-      // 2. Handle ISO strings natively so JS correctly shifts UTC timestamps to local calendar dates
-      if (str.includes("T") || str.includes("Z")) {
-        const d = new Date(str);
-        return isNaN(d.getTime()) ? null : d;
+      // 2. Handle ISO / JSON Date strings directly by string slicing the exact YYYY-MM-DD
+      const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) {
+        return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
       }
 
       // 3. Handle UK format (DD/MM/YYYY or DD-MM-YYYY)
       const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
       if (ukMatch) {
-        const day = parseInt(ukMatch[1], 10);
-        const month = parseInt(ukMatch[2], 10) - 1;
-        const year = parseInt(ukMatch[3], 10);
-        return new Date(year, month, day);
+        return new Date(parseInt(ukMatch[3], 10), parseInt(ukMatch[2], 10) - 1, parseInt(ukMatch[1], 10));
       }
 
       // 4. Final fallback
       const parsed = new Date(str);
-      return isNaN(parsed.getTime()) ? null : parsed;
+      return isNaN(parsed.getTime()) ? null : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
     };
 
     function processRows(rows) {
@@ -345,7 +342,6 @@
         );
       };
 
-      // Dynamic header mapping across date shifts (2023, 2024, 2026)
       const idxIceCream = getColIndex("ice cream") !== -1 ? getColIndex("ice cream") : 4;
       const idxCounter  = getColIndex("counter") !== -1 ? getColIndex("counter") : 5;
       const idxKitchen  = getColIndex("kitchen") !== -1 
