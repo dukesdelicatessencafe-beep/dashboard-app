@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sales & Analytics Dashboard</title>
   
-  <!-- 1. CHART.JS LIBRARY (REQUIRED) -->
+  <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
@@ -198,8 +198,8 @@
 
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
-    <button onclick="App.switchTab(0, this)">Overview</button>
-    <button onclick="App.switchTab(1, this)">Analytics</button>
+    <button onclick="App.switchTab(0)">Overview</button>
+    <button onclick="App.switchTab(1)">Analytics</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -477,15 +477,19 @@
         if (loader) loader.classList.remove("hidden");
 
         const res = await fetch(CONFIG.URL, { cache: "no-store" });
-        const data = await res.json();
+        const json = await res.json();
 
-        if (Array.isArray(data)) {
-          STATE.raw = processRows(data);
-        } else if (typeof data === "object" && data !== null) {
-          const converted = Object.keys(data).map(k => [ "", k, data[k].cash, data[k].card, data[k].drink, data[k].food, data[k].deli ]);
-          STATE.raw = processRows(converted);
+        let rawData = [];
+        if (json && json.rows && Array.isArray(json.rows)) {
+          rawData = json.rows;
+        } else if (Array.isArray(json)) {
+          rawData = json;
+        } else if (json && json.error) {
+          toast("Error: " + json.error);
+          return;
         }
 
+        STATE.raw = processRows(rawData);
         renderDashboard(STATE.raw);
         toast("Data loaded successfully");
       } catch (e) {
