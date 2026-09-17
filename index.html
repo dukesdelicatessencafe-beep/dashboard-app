@@ -362,23 +362,26 @@
     function processRows(rows) {
       if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
 
-      const headerRow = rows.find(r => r && r[1] && String(r[1]).toLowerCase().includes("date")) || rows[0] || [];
+      const headerRow = rows.find(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date"))) || rows[0] || [];
 
-      const getColIndex = (name) => {
-        return headerRow.findIndex(cell => 
-          cell && String(cell).toLowerCase().trim().includes(name.toLowerCase())
-        );
+      const getColIndex = (keywords) => {
+        if (!Array.isArray(keywords)) keywords = [keywords];
+        for (let kw of keywords) {
+          const idx = headerRow.findIndex(cell => 
+            cell && String(cell).toLowerCase().trim().includes(kw.toLowerCase())
+          );
+          if (idx !== -1) return idx;
+        }
+        return -1;
       };
 
-      const idxTotal   = getColIndex("total") !== -1 ? getColIndex("total") : -1;
-      const idxIceCream = getColIndex("ice cream") !== -1 ? getColIndex("ice cream") : 4;
-      const idxCounter  = getColIndex("counter") !== -1 ? getColIndex("counter") : 5;
-      const idxKitchen  = getColIndex("kitchen") !== -1 
-        ? getColIndex("kitchen") 
-        : (getColIndex("food") !== -1 ? getColIndex("food") : 6);
-      const idxDrink    = getColIndex("drink") !== -1 ? getColIndex("drink") : 7;
-      const idxDeli     = getColIndex("deli") !== -1 ? getColIndex("deli") : 8;
-      const idxAlcohol  = getColIndex("alcohol") !== -1 ? getColIndex("alcohol") : 9;
+      const idxTotal   = getColIndex(["total", "daily total"]);
+      const idxIceCream = getColIndex(["ice cream", "ice-cream"]);
+      const idxCounter  = getColIndex(["counter"]);
+      const idxKitchen  = getColIndex(["kitchen", "food"]);
+      const idxDrink    = getColIndex(["drink", "drinks"]);
+      const idxDeli     = getColIndex(["deli"]);
+      const idxAlcohol  = getColIndex(["alcohol", "bar"]);
 
       const parsedRecords = [];
 
@@ -390,7 +393,11 @@
         const cashVal = row[2];
         const cardVal = row[3];
 
-        if (!rawDate || String(dayName).toLowerCase().includes("month total") || String(rawDate).toLowerCase().includes("date")) {
+        const lowerDay = String(dayName).toLowerCase();
+        const lowerDate = String(rawDate).toLowerCase();
+
+        // Reject summary rows (weekly totals, monthly totals, header echoes)
+        if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
           return;
         }
 
@@ -414,12 +421,12 @@
           cardCents,
           dailyTotalCents,
           categories: {
-            "ICE CREAM": cleanCents(row[idxIceCream]),
-            "COUNTER": cleanCents(row[idxCounter]),
-            "Kitchen": cleanCents(row[idxKitchen]),
-            "DRINK": cleanCents(row[idxDrink]),
-            "DELI": cleanCents(row[idxDeli]),
-            "ALCOHOL": cleanCents(row[idxAlcohol])
+            "ICE CREAM": idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : 0,
+            "COUNTER": idxCounter !== -1 ? cleanCents(row[idxCounter]) : 0,
+            "Kitchen": idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : 0,
+            "DRINK": idxDrink !== -1 ? cleanCents(row[idxDrink]) : 0,
+            "DELI": idxDeli !== -1 ? cleanCents(row[idxDeli]) : 0,
+            "ALCOHOL": idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : 0
           }
         });
       });
@@ -485,7 +492,6 @@
 
       if (STATE.barChart) STATE.barChart.destroy();
 
-      // Force up to 31 records slice here
       const recentRecords = records.slice(-31);
       const labels = recentRecords.map(r => r.dayName || (r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate)));
       const data = recentRecords.map(r => r.dailyTotalCents / 100);
