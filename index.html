@@ -287,7 +287,6 @@
       if (el) el.innerText = text;
     };
 
-    // Format strictly using integer rounding to prevent floating-point drift
     const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
 
     const toast = (msg) => {
@@ -298,10 +297,24 @@
       setTimeout(() => { t.style.display = "none"; }, 3000);
     };
 
-    // Parse currency strings safely into integer cents (e.g., £10.50 -> 1050)
+    // STRICT STRING-BASED CURRENCY PARSER (Eliminates floating-point drift)
     const cleanCents = (val) => {
-      const num = parseFloat(String(val || 0).replace(/[^0-9.-]+/g, ""));
-      return isNaN(num) ? 0 : Math.round(num * 100);
+      if (val === null || val === undefined || val === "") return 0;
+      const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
+      if (!cleanStr) return 0;
+      
+      const parts = cleanStr.split('.');
+      let cents = 0;
+      
+      if (parts[0]) {
+        cents += parseInt(parts[0], 10) * 100;
+      }
+      if (parts[1]) {
+        let dec = parts[1].padEnd(2, '0').slice(0, 2);
+        cents += parseInt(dec, 10);
+      }
+      
+      return isNaN(cents) ? 0 : cents;
     };
 
     const parseDateString = (dateStr) => {
