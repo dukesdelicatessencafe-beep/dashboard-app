@@ -297,7 +297,6 @@
       setTimeout(() => { t.style.display = "none"; }, 3000);
     };
 
-    // STRICT STRING-BASED CURRENCY PARSER (Eliminates floating-point drift)
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
@@ -371,6 +370,7 @@
         );
       };
 
+      const idxTotal   = getColIndex("total") !== -1 ? getColIndex("total") : -1;
       const idxIceCream = getColIndex("ice cream") !== -1 ? getColIndex("ice cream") : 4;
       const idxCounter  = getColIndex("counter") !== -1 ? getColIndex("counter") : 5;
       const idxKitchen  = getColIndex("kitchen") !== -1 
@@ -396,7 +396,10 @@
 
         const cashCents = cleanCents(cashVal);
         const cardCents = cleanCents(cardVal);
-        const dailyTotalCents = cashCents + cardCents;
+        
+        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
+          ? cleanCents(row[idxTotal]) 
+          : (cashCents + cardCents);
 
         const parsedDateInfo = parseDateString(rawDate);
         if (!parsedDateInfo && !dayName && dailyTotalCents === 0) return;
@@ -482,8 +485,9 @@
 
       if (STATE.barChart) STATE.barChart.destroy();
 
-      const labels = records.slice(-7).map(r => r.dayName || String(r.rawDate));
-      const data = records.slice(-7).map(r => r.dailyTotalCents / 100);
+      // Updated from slice(-7) to slice(-31) to show up to a full month of daily data
+      const labels = records.slice(-31).map(r => r.dayName || String(r.rawDate));
+      const data = records.slice(-31).map(r => r.dailyTotalCents / 100);
 
       STATE.barChart = new Chart(canvas, {
         type: "bar",
