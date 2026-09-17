@@ -12,21 +12,21 @@ function renderDashboard(rows) {
     const cashVal = row[2];
     const cardVal = row[3];
 
-    // 1. Skip rows without valid sales numbers or rows explicitly marked as totals
+    // 1. Skip rows without sales data, header rows, or summary rows
     if ((cashVal === "" && cardVal === "") || !rawDate || dayName.toLowerCase().includes("month total")) {
       return;
     }
 
-    // 2. Format ISO timestamps (e.g., 2023-04-11T07:00:00.000Z) into readable dates (11/04/2023)
+    // 2. Format ISO timestamps into clean DD/MM/YYYY dates
     let displayDate = rawDate;
     if (rawDate.includes("T")) {
       const parsedDate = new Date(rawDate);
       if (!isNaN(parsedDate.getTime())) {
-        displayDate = parsedDate.toLocaleDateString("en-GB"); // DD/MM/YYYY
+        displayDate = parsedDate.toLocaleDateString("en-GB");
       }
     }
 
-    // 3. Clean numbers and calculate daily total
+    // 3. Clean numeric values
     const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
     const cash = cleanNum(cashVal);
     const card = cleanNum(cardVal);
@@ -35,12 +35,12 @@ function renderDashboard(rows) {
     totalCash += cash;
     totalCard += card;
 
-    // 4. Extract Category values (Columns E, F, G)
+    // 4. Safely read categories
     const drink = cleanNum(row[4]);
     const food = cleanNum(row[5]);
     const deli = cleanNum(row[6]);
 
-    // 5. Build and render the card UI
+    // 5. Build card element
     const cardElement = document.createElement("div");
     cardElement.className = "daily-card";
     cardElement.innerHTML = `
