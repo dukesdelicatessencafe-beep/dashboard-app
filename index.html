@@ -3,7 +3,7 @@ function renderDashboard(rows) {
   const container = document.getElementById("dailyDataContainer");
   if (!container) return;
   container.innerHTML = "";
-
+  
   let totalCash = 0;
   let totalCard = 0;
 
@@ -13,7 +13,7 @@ function renderDashboard(rows) {
     const cashVal = row[2];
     const cardVal = row[3];
 
-    // 1. Skip headers and explicit summary/total rows
+    // 1. Skip rows without valid date strings, headers, or explicit summary rows
     if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
       return;
     }
@@ -40,7 +40,7 @@ function renderDashboard(rows) {
 
     const dailyTotal = cash + card;
 
-    // Skip blank non-trading days
+    // Skip empty non-trading days
     if (dailyTotal === 0 && !dayName) {
       return;
     }
@@ -48,12 +48,12 @@ function renderDashboard(rows) {
     totalCash += cash;
     totalCard += card;
 
-    // 5. Safely read categories (Columns E, F, G)
+    // 5. Safely read category columns (Columns E, F, G)
     const drink = cleanNum(row[4]);
     const food = cleanNum(row[5]);
     const deli = cleanNum(row[6]);
 
-    // 6. Build card element with full HTML structure
+    // 6. Build card element with visual layout structure
     const cardElement = document.createElement("div");
     cardElement.className = "daily-card";
     cardElement.innerHTML = `
