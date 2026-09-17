@@ -135,7 +135,7 @@
     /* Tables & Charts */
     .chart-container {
       position: relative;
-      height: 350px;
+      height: 380px;
       width: 100%;
       background: var(--card-bg);
       padding: 15px;
@@ -228,7 +228,7 @@
       <button onclick="App.applyRange()">Apply Range</button>
       <button onclick="App.setRange('today')">Today</button>
       <button onclick="App.setRange('7')">7 Days</button>
-      <button onclick="App.setRange('30')">30 Days</button>
+      <button onclick="App.setRange('31')">31 Days</button>
     </div>
 
     <!-- TABS SLIDER CONTAINER -->
@@ -485,21 +485,30 @@
 
       if (STATE.barChart) STATE.barChart.destroy();
 
-      // Updated from slice(-7) to slice(-31) to show up to a full month of daily data
-      const labels = records.slice(-31).map(r => r.dayName || String(r.rawDate));
-      const data = records.slice(-31).map(r => r.dailyTotalCents / 100);
+      // Force up to 31 records slice here
+      const recentRecords = records.slice(-31);
+      const labels = recentRecords.map(r => r.dayName || (r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate)));
+      const data = recentRecords.map(r => r.dailyTotalCents / 100);
 
       STATE.barChart = new Chart(canvas, {
         type: "bar",
         data: {
           labels,
           datasets: [{
-            label: "Revenue (£)",
+            label: "Daily Revenue (£)",
             data,
             backgroundColor: "#D4AF37"
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
       });
     }
 
@@ -509,22 +518,31 @@
 
       if (STATE.salesChart) STATE.salesChart.destroy();
 
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
+      const recentRecords = records.slice(-31);
+      const labels = recentRecords.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = recentRecords.map(r => r.dailyTotalCents / 100);
 
       STATE.salesChart = new Chart(canvas, {
         type: "line",
         data: {
           labels,
           datasets: [{
-            label: "Sales Trend",
+            label: "Sales Trend (31 Days)",
             data,
             borderColor: "#D4AF37",
             backgroundColor: "rgba(212, 175, 55, 0.1)",
             fill: true
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
       });
     }
 
@@ -592,8 +610,8 @@
         start = now;
       } else if (type === "7") {
         start.setDate(now.getDate() - 7);
-      } else if (type === "30") {
-        start.setDate(now.getDate() - 30);
+      } else if (type === "31") {
+        start.setDate(now.getDate() - 31);
       }
 
       if ($("startDate")) $("startDate").value = start.toISOString().split("T")[0];
