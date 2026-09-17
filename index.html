@@ -2,36 +2,227 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales & Analytics Dashboard</title>
+  
   <!-- 1. CHART.JS LIBRARY (REQUIRED) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
-    .hidden { display: none; }
-    #nav { display: flex; gap: 10px; margin-bottom: 20px; }
-    #tabsWrapper { overflow: hidden; }
-    #tabs { display: flex; transition: transform 0.3s ease; }
-    .tab-content { min-width: 100%; box-sizing: border-box; }
+    :root {
+      --primary-gold: #D4AF37;
+      --accent-gold: #F9E3B4;
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --text-light: #ffffff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Login Form */
+    #login {
+      max-width: 320px;
+      margin: 100px auto;
+      padding: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--primary-gold);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    #login input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    button {
+      background: var(--primary-gold);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: var(--accent-gold);
+    }
+
+    /* Navigation */
+    #nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* KPI Cards Header */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border-left: 4px solid var(--primary-gold);
+      padding: 15px;
+      border-radius: 4px;
+    }
+
+    .kpi-card h3 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+      color: var(--accent-gold);
+    }
+
+    .kpi-card .val {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .controls input[type="date"] {
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    /* Tabs Slider */
+    #tabsWrapper {
+      overflow: hidden;
+      width: 100%;
+    }
+
+    #tabs {
+      display: flex;
+      transition: transform 0.3s ease;
+      width: 200%;
+    }
+
+    .tab-content {
+      width: 50%;
+      box-sizing: border-box;
+      padding-right: 20px;
+    }
+
+    /* Tables & Charts */
+    .chart-container {
+      position: relative;
+      height: 350px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    table th {
+      color: var(--accent-gold);
+    }
+
+    /* Notification & Loader */
+    #loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      color: var(--accent-gold);
+      z-index: 1000;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: var(--primary-gold);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: none;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
 
   <!-- LOGIN SCREEN -->
   <div id="login">
+    <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
     <input type="password" id="pass" placeholder="Enter Password">
     <button onclick="App.login()">Login</button>
   </div>
 
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
-    <button onclick="App.switchTab(0, this)">Home</button>
+    <button onclick="App.switchTab(0, this)">Overview</button>
     <button onclick="App.switchTab(1, this)">Analytics</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
     
-    <!-- DATE RANGE SELECTOR -->
-    <div>
+    <!-- KPI SUMMARY HEADER -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <h3>TOTAL SALES</h3>
+        <div class="val" id="sales">£0.00</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ACTIVE DAYS / RECORDS</h3>
+        <div class="val" id="products">0</div>
+      </div>
+      <div class="kpi-card">
+        <h3>TOP CATEGORY</h3>
+        <div class="val" id="top">-</div>
+      </div>
+    </div>
+
+    <!-- DATE RANGE SELECTOR CONTROLS -->
+    <div class="controls">
       <input type="date" id="startDate">
       <input type="date" id="endDate">
       <button onclick="App.applyRange()">Apply Range</button>
@@ -44,24 +235,27 @@
     <div id="tabsWrapper">
       <div id="tabs">
         
-        <!-- TAB 0: HOME -->
+        <!-- TAB 0: OVERVIEW -->
         <div class="tab-content">
-          <div>Sales: <span id="sales">£0.00</span></div>
-          <div>Products: <span id="products">0</span></div>
-          <div>Top Item: <span id="top">-</span></div>
-
-          <div id="homeTopList"></div>
-          <canvas id="barChart"></canvas>
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
         </div>
 
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content">
-          <table border="1">
-            <thead><tr><th>Product</th><th>Revenue</th></tr></thead>
+          <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Entry</th>
+                <th>Daily Revenue</th>
+              </tr>
+            </thead>
             <tbody id="productTable"></tbody>
           </table>
-          <canvas id="salesChart"></canvas>
-          <div id="insights"></div>
         </div>
 
       </div>
@@ -69,11 +263,303 @@
 
   </div>
 
-  <!-- NOTIFICATION & LOADER -->
-  <div id="loading" class="hidden">Loading data...</div>
+  <!-- LOADER & TOAST -->
+  <div id="loading" class="hidden">Loading dashboard data...</div>
   <div id="toast"></div>
 
-  <!-- YOUR JS CODE HERE -->
-  <script src="app.js"></script>
+  <!-- APP LOGIC ENGINE -->
+  <script>
+    const CONFIG = {
+      URL: "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
+      PASSWORD: "1234"
+    };
+
+    const STATE = {
+      raw: [],
+      barChart: null,
+      salesChart: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    const safeSet = (id, text) => {
+      const el = $(id);
+      if (el) el.innerText = text;
+    };
+
+    const fmt = (num) => "£" + (parseFloat(num) || 0).toFixed(2);
+
+    const toast = (msg) => {
+      const t = $("toast");
+      if (!t) return;
+      t.innerText = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    };
+
+    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+
+    const parseDateString = (dateStr) => {
+      if (!dateStr) return null;
+      const str = String(dateStr).trim();
+      const parsed = new Date(str);
+      return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    function processRows(rows) {
+      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
+
+      const headerRow = rows.find(r => r && r[1] && String(r[1]).toLowerCase().includes("date")) || rows[0] || [];
+
+      const getColIndex = (name) => {
+        return headerRow.findIndex(cell => 
+          cell && String(cell).toLowerCase().trim().includes(name.toLowerCase())
+        );
+      };
+
+      // Dynamic header mapping across date shifts (2023, 2024, 2026)
+      const idxIceCream = getColIndex("ice cream") !== -1 ? getColIndex("ice cream") : 4;
+      const idxCounter  = getColIndex("counter") !== -1 ? getColIndex("counter") : 5;
+      const idxKitchen  = getColIndex("kitchen") !== -1 
+        ? getColIndex("kitchen") 
+        : (getColIndex("food") !== -1 ? getColIndex("food") : 6);
+      const idxDrink    = getColIndex("drink") !== -1 ? getColIndex("drink") : 7;
+      const idxDeli     = getColIndex("deli") !== -1 ? getColIndex("deli") : 8;
+      const idxAlcohol  = getColIndex("alcohol") !== -1 ? getColIndex("alcohol") : 9;
+
+      const parsedRecords = [];
+
+      rows.forEach(row => {
+        if (!row || !Array.isArray(row)) return;
+
+        const dayName = row[0] ? String(row[0]).trim() : "";
+        const rawDate = row[1] ? String(row[1]).trim() : "";
+        const cashVal = row[2];
+        const cardVal = row[3];
+
+        if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
+          return;
+        }
+
+        const cash = cleanNum(cashVal);
+        const card = cleanNum(cardVal);
+
+        const parsedDate = parseDateString(rawDate);
+        if (!parsedDate && !dayName && (cash > 0 || card > 0)) return;
+
+        const dailyTotal = cash + card;
+        if (dailyTotal === 0 && !dayName) return;
+
+        parsedRecords.push({
+          dayName,
+          rawDate,
+          parsedDate,
+          cash,
+          card,
+          dailyTotal,
+          categories: {
+            "ICE CREAM": cleanNum(row[idxIceCream]),
+            "COUNTER": cleanNum(row[idxCounter]),
+            "Kitchen": cleanNum(row[idxKitchen]),
+            "DRINK": cleanNum(row[idxDrink]),
+            "DELI": cleanNum(row[idxDeli]),
+            "ALCOHOL": cleanNum(row[idxAlcohol])
+          }
+        });
+      });
+
+      return parsedRecords;
+    }
+
+    function renderDashboard(records) {
+      const container = $("productTable");
+      let totalRev = 0;
+      let totalCash = 0;
+      let totalCard = 0;
+      const categoryTotals = {
+        "ICE CREAM": 0,
+        "COUNTER": 0,
+        "Kitchen": 0,
+        "DRINK": 0,
+        "DELI": 0,
+        "ALCOHOL": 0
+      };
+
+      if (container) container.innerHTML = "";
+
+      records.forEach(rec => {
+        totalRev += rec.dailyTotal;
+        totalCash += rec.cash;
+        totalCard += rec.card;
+
+        Object.keys(rec.categories).forEach(cat => {
+          categoryTotals[cat] += rec.categories[cat];
+        });
+
+        if (container) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${rec.dayName} ${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : rec.rawDate}</td>
+            <td>${fmt(rec.dailyTotal)}</td>
+          `;
+          container.appendChild(tr);
+        }
+      });
+
+      safeSet("sales", fmt(totalRev));
+      safeSet("products", records.length);
+
+      let topCat = "-";
+      let maxRev = -1;
+      Object.entries(categoryTotals).forEach(([cat, val]) => {
+        if (val > maxRev && val > 0) {
+          maxRev = val;
+          topCat = `${cat} (${fmt(val)})`;
+        }
+      });
+      safeSet("top", topCat);
+
+      renderBarChart(records);
+      renderSalesChart(records);
+    }
+
+    function renderBarChart(records) {
+      const canvas = $("barChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.barChart) STATE.barChart.destroy();
+
+      const labels = records.slice(-7).map(r => r.dayName || r.rawDate);
+      const data = records.slice(-7).map(r => r.dailyTotal);
+
+      STATE.barChart = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Revenue (£)",
+            data,
+            backgroundColor: "#D4AF37"
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function renderSalesChart(records) {
+      const canvas = $("salesChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.salesChart) STATE.salesChart.destroy();
+
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate);
+      const data = records.map(r => r.dailyTotal);
+
+      STATE.salesChart = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Sales Trend",
+            data,
+            borderColor: "#D4AF37",
+            backgroundColor: "rgba(212, 175, 55, 0.1)",
+            fill: true
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    const load = async () => {
+      try {
+        const loader = $("loading");
+        if (loader) loader.classList.remove("hidden");
+
+        const res = await fetch(CONFIG.URL, { cache: "no-store" });
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          STATE.raw = processRows(data);
+        } else if (typeof data === "object" && data !== null) {
+          const converted = Object.keys(data).map(k => [ "", k, data[k].cash, data[k].card, data[k].drink, data[k].food, data[k].deli ]);
+          STATE.raw = processRows(converted);
+        }
+
+        renderDashboard(STATE.raw);
+        toast("Data loaded successfully");
+      } catch (e) {
+        console.error("Fetch error:", e);
+        toast("Failed to load spreadsheet data");
+      } finally {
+        const loader = $("loading");
+        if (loader) loader.classList.add("hidden");
+      }
+    };
+
+    const applyRange = () => {
+      const startVal = $("startDate")?.value;
+      const endVal = $("endDate")?.value;
+
+      if (!startVal || !endVal) {
+        renderDashboard(STATE.raw);
+        return;
+      }
+
+      const start = new Date(startVal).getTime();
+      const end = new Date(endVal).getTime();
+
+      const filtered = STATE.raw.filter(r => {
+        if (!r.parsedDate) return true;
+        const t = r.parsedDate.getTime();
+        return t >= start && t <= end;
+      });
+
+      renderDashboard(filtered);
+    };
+
+    const setRange = (type) => {
+      const now = new Date();
+      let start = new Date();
+
+      if (type === "today") {
+        start = now;
+      } else if (type === "7") {
+        start.setDate(now.getDate() - 7);
+      } else if (type === "30") {
+        start.setDate(now.getDate() - 30);
+      }
+
+      if ($("startDate")) $("startDate").value = start.toISOString().split("T")[0];
+      if ($("endDate")) $("endDate").value = now.toISOString().split("T")[0];
+
+      applyRange();
+    };
+
+    const login = () => {
+      const pwd = $("pass")?.value;
+      if (pwd === CONFIG.PASSWORD) {
+        $("login")?.classList.add("hidden");
+        $("app")?.classList.remove("hidden");
+        $("nav")?.classList.remove("hidden");
+        load();
+      } else {
+        toast("Invalid password");
+      }
+    };
+
+    const switchTab = (idx) => {
+      const tabs = $("tabs");
+      if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
+    };
+
+    window.App = {
+      login,
+      load,
+      setRange,
+      applyRange,
+      switchTab
+    };
+  </script>
 </body>
 </html>
