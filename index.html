@@ -1,85 +1,141 @@
-<script>
-function renderDashboard(rows) {
-  const container = document.getElementById("dailyDataContainer");
-  if (!container) return;
-  container.innerHTML = "";
-  
-  let totalCash = 0;
-  let totalCard = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Dashboard</title>
+  <style>
+    .daily-card {
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .category-grid {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
 
-  rows.forEach(row => {
-    const dayName = row[0] ? row[0].toString().trim() : "";
-    let rawDate = row[1] ? row[1].toString().trim() : "";
-    const cashVal = row[2];
-    const cardVal = row[3];
+  <!-- Totals Summary -->
+  <div>
+    Total Rev: <span id="totalRev">£0.00</span> |
+    Cash: <span id="totalCash">£0.00</span> |
+    Card: <span id="totalCard">£0.00</span>
+  </div>
 
-    // 1. Skip rows without valid date strings, headers, or explicit summary rows
-    if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
+  <hr>
+
+  <!-- Container for rendered daily cards -->
+  <div id="dailyDataContainer"></div>
+
+  <script>
+  function renderDashboard(rows) {
+    const container = document.getElementById("dailyDataContainer");
+    if (!container) {
+      console.error("Target container #dailyDataContainer not found in HTML.");
+      return;
+    }
+    container.innerHTML = "";
+
+    if (!Array.isArray(rows)) {
+      console.error("renderDashboard expected an array for 'rows'. Received:", rows);
       return;
     }
 
-    // 2. Clean numeric values
-    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
-    const cash = cleanNum(cashVal);
-    const card = cleanNum(cardVal);
+    let totalCash = 0;
+    let totalCard = 0;
 
-    // 3. Skip weekly subtotal rows
-    const isStandardDate = rawDate.includes("T") || rawDate.includes("/") || rawDate.includes("-");
-    if (!dayName && (cash > 0 || card > 0) && !isStandardDate) {
-      return;
-    }
+    rows.forEach(row => {
+      if (!row || !Array.isArray(row)) return;
 
-    // 4. Format ISO timestamps into clean DD/MM/YYYY dates
-    let displayDate = rawDate;
-    if (rawDate.includes("T")) {
-      const parsedDate = new Date(rawDate);
-      if (!isNaN(parsedDate.getTime())) {
-        displayDate = parsedDate.toLocaleDateString("en-GB");
+      const dayName = row[0] ? row[0].toString().trim() : "";
+      let rawDate = row[1] ? row[1].toString().trim() : "";
+      const cashVal = row[2];
+      const cardVal = row[3];
+
+      // 1. Skip empty rows, headers, and explicit summary rows
+      if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
+        return;
       }
-    }
 
-    const dailyTotal = cash + card;
+      // 2. Clean numeric values
+      const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+      const cash = cleanNum(cashVal);
+      const card = cleanNum(cardVal);
 
-    // Skip empty non-trading days
-    if (dailyTotal === 0 && !dayName) {
-      return;
-    }
+      // 3. Filter weekly subtotal rows
+      const isStandardDate = rawDate.includes("T") || rawDate.includes("/") || rawDate.includes("-");
+      if (!dayName && (cash > 0 || card > 0) && !isStandardDate) {
+        return;
+      }
 
-    totalCash += cash;
-    totalCard += card;
+      // 4. Format ISO timestamps into clean DD/MM/YYYY dates
+      let displayDate = rawDate;
+      if (rawDate.includes("T")) {
+        const parsedDate = new Date(rawDate);
+        if (!isNaN(parsedDate.getTime())) {
+          displayDate = parsedDate.toLocaleDateString("en-GB");
+        }
+      }
 
-    // 5. Safely read category columns (Columns E, F, G)
-    const drink = cleanNum(row[4]);
-    const food = cleanNum(row[5]);
-    const deli = cleanNum(row[6]);
+      const dailyTotal = cash + card;
 
-    // 6. Build card element with visual layout structure
-    const cardElement = document.createElement("div");
-    cardElement.className = "daily-card";
-    cardElement.innerHTML = `
-      <div class="card-header">
-        <span><strong>${dayName}</strong> ${displayDate}</span>
-        <span class="total-badge">£${dailyTotal.toFixed(2)}</span>
-      </div>
-      <div class="card-body">
-        <p style="margin: 5px 0;"><strong>Cash:</strong> £${cash.toFixed(2)} | <strong>Card:</strong> £${card.toFixed(2)}</p>
-        <div class="category-grid">
-          <div class="cat-pill"><span>DRINK:</span> <strong>£${drink.toFixed(2)}</strong></div>
-          <div class="cat-pill"><span>FOOD:</span> <strong>£${food.toFixed(2)}</strong></div>
-          <div class="cat-pill"><span>DELI:</span> <strong>£${deli.toFixed(2)}</strong></div>
+      // Skip empty non-trading days
+      if (dailyTotal === 0 && !dayName) {
+        return;
+      }
+
+      totalCash += cash;
+      totalCard += card;
+
+      // 5. Read category values
+      const drink = cleanNum(row[4]);
+      const food = cleanNum(row[5]);
+      const deli = cleanNum(row[6]);
+
+      // 6. Build card element
+      const cardElement = document.createElement("div");
+      cardElement.className = "daily-card";
+      cardElement.innerHTML = `
+        <div class="card-header">
+          <span><strong>${dayName}</strong> ${displayDate}</span>
+          <span>£${dailyTotal.toFixed(2)}</span>
         </div>
-      </div>
-    `;
+        <div class="card-body">
+          <p style="margin: 4px 0;"><strong>Cash:</strong> £${cash.toFixed(2)} | <strong>Card:</strong> £${card.toFixed(2)}</p>
+          <div class="category-grid">
+            <div><span>DRINK:</span> <strong>£${drink.toFixed(2)}</strong></div>
+            <div><span>FOOD:</span> <strong>£${food.toFixed(2)}</strong></div>
+            <div><span>DELI:</span> <strong>£${deli.toFixed(2)}</strong></div>
+          </div>
+        </div>
+      `;
 
-    container.appendChild(cardElement);
-  });
+      container.appendChild(cardElement);
+    });
 
-  updateTotals(totalCash, totalCard);
-}
+    updateTotals(totalCash, totalCard);
+  }
 
-function updateTotals(cash, card) {
-  if (document.getElementById("totalRev")) document.getElementById("totalRev").innerText = `£${(cash + card).toFixed(2)}`;
-  if (document.getElementById("totalCash")) document.getElementById("totalCash").innerText = `£${cash.toFixed(2)}`;
-  if (document.getElementById("totalCard")) document.getElementById("totalCard").innerText = `£${card.toFixed(2)}`;
-}
-</script>
+  function updateTotals(cash, card) {
+    const revEl = document.getElementById("totalRev");
+    const cashEl = document.getElementById("totalCash");
+    const cardEl = document.getElementById("totalCard");
+
+    if (revEl) revEl.innerText = `£${(cash + card).toFixed(2)}`;
+    if (cashEl) cashEl.innerText = `£${cash.toFixed(2)}`;
+    if (cardEl) cardEl.innerText = `£${card.toFixed(2)}`;
+  }
+  </script>
+
+</body>
+</html>
