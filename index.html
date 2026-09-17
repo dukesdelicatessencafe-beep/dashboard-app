@@ -12,22 +12,12 @@ function renderDashboard(rows) {
     const cashVal = row[2];
     const cardVal = row[3];
 
-    // 1. Skip rows that lack a date OR are weekly/monthly summary rows
+    // 1. Skip rows without valid date strings, headers, or explicit summary rows
     if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
       return;
     }
 
-    // 2. Clean numeric values
-    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
-    const cash = cleanNum(cashVal);
-    const card = cleanNum(cardVal);
-    
-    // Skip subtotal rows that have no day name AND no date (e.g. weekly totals)
-    if (!dayName && (cash > 0 || card > 0) && !rawDate.includes("202")) {
-      return;
-    }
-
-    // 3. Format ISO timestamps into clean DD/MM/YYYY dates
+    // 2. Format ISO timestamps (2023-04-11T07:00:00.000Z) into clean UK dates (11/04/2023)
     let displayDate = rawDate;
     if (rawDate.includes("T")) {
       const parsedDate = new Date(rawDate);
@@ -36,9 +26,19 @@ function renderDashboard(rows) {
       }
     }
 
+    // 3. Clean numeric values
+    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+    const cash = cleanNum(cashVal);
+    const card = cleanNum(cardVal);
+
+    // Filter out weekly subtotal rows (which lack a day name and have valid date timestamps)
+    if (!dayName && (cash > 0 || card > 0) && !rawDate.includes("202")) {
+      return;
+    }
+
     const dailyTotal = cash + card;
 
-    // Skip non-trading days where total is zero and day name is blank
+    // Skip empty non-trading days
     if (dailyTotal === 0 && !dayName) {
       return;
     }
@@ -46,12 +46,12 @@ function renderDashboard(rows) {
     totalCash += cash;
     totalCard += card;
 
-    // 4. Safely read categories (Columns E, F, G)
+    // 4. Safely read category columns (Columns E, F, G)
     const drink = cleanNum(row[4]);
     const food = cleanNum(row[5]);
     const deli = cleanNum(row[6]);
 
-    // 5. Build card element with visual structure
+    // 5. Build card element with visual layout structure
     const cardElement = document.createElement("div");
     cardElement.className = "daily-card";
     cardElement.innerHTML = `
