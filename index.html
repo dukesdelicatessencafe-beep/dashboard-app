@@ -287,7 +287,8 @@
       if (el) el.innerText = text;
     };
 
-    const fmt = (num) => "£" + (parseFloat(num) || 0).toFixed(2);
+    // Format strictly using integer rounding to prevent floating-point drift
+    const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
 
     const toast = (msg) => {
       const t = $("toast");
@@ -297,15 +298,17 @@
       setTimeout(() => { t.style.display = "none"; }, 3000);
     };
 
-    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+    // Parse currency strings safely into integer cents (e.g., £10.50 -> 1050)
+    const cleanCents = (val) => {
+      const num = parseFloat(String(val || 0).replace(/[^0-9.-]+/g, ""));
+      return isNaN(num) ? 0 : Math.round(num * 100);
+    };
 
-    // PURE CALENDAR DATE PARSER RETURNING { year, month, day, dateInt, dateObj }
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
 
       let y, m, d;
 
-      // 1. Handle Google Sheets / Excel Serial Numbers
       if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
         const serial = parseFloat(dateStr);
         const utcDays = Math.floor(serial - 25569);
@@ -317,22 +320,18 @@
         d = tempD.getUTCDate();
       } else {
         const str = String(dateStr).trim();
-
-        // 2. Handle ISO strings / JSON timestamps (YYYY-MM-DD...)
         const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (isoMatch) {
           y = parseInt(isoMatch[1], 10);
           m = parseInt(isoMatch[2], 10);
           d = parseInt(isoMatch[3], 10);
         } else {
-          // 3. Handle UK format (DD/MM/YYYY or DD-MM-YYYY)
           const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
           if (ukMatch) {
             d = parseInt(ukMatch[1], 10);
             m = parseInt(ukMatch[2], 10);
             y = parseInt(ukMatch[3], 10);
           } else {
-            // 4. Fallback parser
             const tempD = new Date(str);
             if (isNaN(tempD.getTime())) return null;
             y = tempD.getFullYear();
@@ -382,30 +381,29 @@
           return;
         }
 
-        const cash = cleanNum(cashVal);
-        const card = cleanNum(cardVal);
+        const cashCents = cleanCents(cashVal);
+        const cardCents = cleanCents(cardVal);
+        const dailyTotalCents = cashCents + cardCents;
 
         const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo && !dayName && (cash > 0 || card > 0)) return;
-
-        const dailyTotal = cash + card;
-        if (dailyTotal === 0 && !dayName) return;
+        if (!parsedDateInfo && !dayName && dailyTotalCents === 0) return;
+        if (dailyTotalCents === 0 && !dayName) return;
 
         parsedRecords.push({
           dayName,
           rawDate,
           parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
           dateInt: parsedDateInfo ? parsedDateInfo.dateInt : 0,
-          cash,
-          card,
-          dailyTotal,
+          cashCents,
+          cardCents,
+          dailyTotalCents,
           categories: {
-            "ICE CREAM": cleanNum(row[idxIceCream]),
-            "COUNTER": cleanNum(row[idxCounter]),
-            "Kitchen": cleanNum(row[idxKitchen]),
-            "DRINK": cleanNum(row[idxDrink]),
-            "DELI": cleanNum(row[idxDeli]),
-            "ALCOHOL": cleanNum(row[idxAlcohol])
+            "ICE CREAM": cleanCents(row[idxIceCream]),
+            "COUNTER": cleanCents(row[idxCounter]),
+            "Kitchen": cleanCents(row[idxKitchen]),
+            "DRINK": cleanCents(row[idxDrink]),
+            "DELI": cleanCents(row[idxDeli]),
+            "ALCOHOL": cleanCents(row[idxAlcohol])
           }
         });
       });
@@ -415,10 +413,10 @@
 
     function renderDashboard(records) {
       const container = $("productTable");
-      let totalRev = 0;
-      let totalCash = 0;
-      let totalCard = 0;
-      const categoryTotals = {
+      let totalRevCents = 0;
+      let totalCashCents = 0;
+      let totalCardCents = 0;
+      const categoryTotalsCents = {
         "ICE CREAM": 0,
         "COUNTER": 0,
         "Kitchen": 0,
@@ -430,32 +428,32 @@
       if (container) container.innerHTML = "";
 
       records.forEach(rec => {
-        totalRev += rec.dailyTotal;
-        totalCash += rec.cash;
-        totalCard += rec.card;
+        totalRevCents += rec.dailyTotalCents;
+        totalCashCents += rec.cashCents;
+        totalCardCents += rec.cardCents;
 
         Object.keys(rec.categories).forEach(cat => {
-          categoryTotals[cat] += rec.categories[cat];
+          categoryTotalsCents[cat] += rec.categories[cat];
         });
 
         if (container) {
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${rec.dayName} ${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate)}</td>
-            <td>${fmt(rec.dailyTotal)}</td>
+            <td>${fmt(rec.dailyTotalCents)}</td>
           `;
           container.appendChild(tr);
         }
       });
 
-      safeSet("sales", fmt(totalRev));
+      safeSet("sales", fmt(totalRevCents));
       safeSet("products", records.length);
 
       let topCat = "-";
-      let maxRev = -1;
-      Object.entries(categoryTotals).forEach(([cat, val]) => {
-        if (val > maxRev && val > 0) {
-          maxRev = val;
+      let maxRevCents = -1;
+      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+        if (val > maxRevCents && val > 0) {
+          maxRevCents = val;
           topCat = `${cat} (${fmt(val)})`;
         }
       });
@@ -472,7 +470,7 @@
       if (STATE.barChart) STATE.barChart.destroy();
 
       const labels = records.slice(-7).map(r => r.dayName || String(r.rawDate));
-      const data = records.slice(-7).map(r => r.dailyTotal);
+      const data = records.slice(-7).map(r => r.dailyTotalCents / 100);
 
       STATE.barChart = new Chart(canvas, {
         type: "bar",
@@ -495,7 +493,7 @@
       if (STATE.salesChart) STATE.salesChart.destroy();
 
       const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotal);
+      const data = records.map(r => r.dailyTotalCents / 100);
 
       STATE.salesChart = new Chart(canvas, {
         type: "line",
@@ -555,7 +553,6 @@
         return;
       }
 
-      // STRICT INTEGER DATE COMPARISON (YYYYMMDD) TO PREVENT ANY TIME ZONE SHIFT
       const [sY, sM, sD] = startVal.split("-").map(Number);
       const [eY, eM, eD] = endVal.split("-").map(Number);
 
