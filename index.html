@@ -299,7 +299,7 @@
 
     const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
-    // FORCEFUL STUFFED CALENDAR DAY PARSER (STRICT UTC-TO-LOCAL BYPASS)
+    // BULLETPROOF LOCAL DATE NORMALIZER (AVOIDS UTC MIDNIGHT TIMEZONE SHIFT)
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
 
@@ -314,7 +314,8 @@
 
       const str = String(dateStr).trim();
 
-      // 2. Handle ISO / JSON Date strings directly by string slicing the exact YYYY-MM-DD
+      // 2. Handle ISO strings / Apps Script JSON timestamps (e.g. YYYY-MM-DDTHH:mm:ss.sssZ)
+      // Extract exact year, month, and day components and construct a local date to completely skip timezone adjustment.
       const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
       if (isoMatch) {
         return new Date(parseInt(isoMatch[1], 10), parseInt(isoMatch[2], 10) - 1, parseInt(isoMatch[3], 10));
@@ -537,8 +538,12 @@
         return;
       }
 
-      const start = new Date(startVal).getTime();
-      const end = new Date(endVal).getTime();
+      // FIXED: Convert local date picker values safely to exact timestamp range boundaries
+      const [sYear, sMonth, sDay] = startVal.split("-").map(Number);
+      const [eYear, eMonth, eDay] = endVal.split("-").map(Number);
+      
+      const start = new Date(sYear, sMonth - 1, sDay, 0, 0, 0).getTime();
+      const end = new Date(eYear, eMonth - 1, eDay, 23, 59, 59).getTime();
 
       const filtered = STATE.raw.filter(r => {
         if (!r.parsedDate) return true;
