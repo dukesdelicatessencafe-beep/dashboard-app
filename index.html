@@ -1,393 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SaaS Dashboard Stable Final</title>
+function renderDashboard(rows) {
+  const container = document.getElementById("dailyDataContainer");
+  if (!container) return;
+  container.innerHTML = "";
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  let totalCash = 0;
+  let totalCard = 0;
 
-<style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#0f172a;
-  color:white;
-  overflow:hidden;
+  rows.forEach(row => {
+    // Col A = Day Name (row[0]), Col B = Date (row[1]), Col C = Cash (row[2]), Col D = Card (row[3])
+    const dayName = row[0] ? row[0].toString().trim() : "";
+    const dateStr = row[1] ? row[1].toString().trim() : "";
+
+    // Skip empty rows, header rows, or summary/monthly total rows
+    if (!dateStr || dateStr.toLowerCase().includes("month total") || dateStr.toLowerCase().includes("date") || dateStr.toLowerCase().includes("catorgory")) {
+      return; 
+    }
+
+    // Strips out £ symbols, spaces, and commas
+    const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+
+    const cash = cleanNum(row[2]);
+    const card = cleanNum(row[3]);
+    const dailyTotal = cash + card;
+
+    totalCash += cash;
+    totalCard += card;
+
+    // Safely reads categories (DRINK, FOOD, DELI, etc.)
+    const drink = cleanNum(row[4]);
+    const food = cleanNum(row[5]);
+    const deli = cleanNum(row[6]);
+
+    const cardElement = document.createElement("div");
+    cardElement.className = "daily-card";
+    cardElement.innerHTML = `
+      <div class="card-header">
+        <span><strong>${dayName}</strong> ${dateStr}</span>
+        <span class="total-badge">£${dailyTotal.toFixed(2)}</span>
+      </div>
+      <div class="card-body">
+        <p style="margin: 5px 0;"><strong>Cash:</strong> £${cash.toFixed(2)} | <strong>Card:</strong> £${card.toFixed(2)}</p>
+        <div class="category-grid">
+          <div class="cat-pill"><span>DRINK:</span> <strong>£${drink.toFixed(2)}</strong></div>
+          <div class="cat-pill"><span>FOOD:</span> <strong>£${food.toFixed(2)}</strong></div>
+          <div class="cat-pill"><span>DELI:</span> <strong>£${deli.toFixed(2)}</strong></div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(cardElement);
+  });
+
+  updateTotals(totalCash, totalCard);
 }
 
-/* LOGIN */
-#login{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
+function updateTotals(cash, card) {
+  if (document.getElementById("totalRev")) document.getElementById("totalRev").innerText = `£${(cash + card).toFixed(2)}`;
+  if (document.getElementById("totalCash")) document.getElementById("totalCash").innerText = `£${cash.toFixed(2)}`;
+  if (document.getElementById("totalCard")) document.getElementById("totalCard").innerText = `£${card.toFixed(2)}`;
 }
-
-/* APP */
-#app{
-  display:none;
-  height:100vh;
-}
-
-/* LOADER */
-#loading{
-  position:fixed;
-  inset:0;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  background:#0f172a;
-  z-index:999;
-}
-
-/* HEADER */
-.header{
-  height:60px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:0 15px;
-  background:#0b1220;
-  border-bottom:1px solid #1e293b;
-}
-
-/* SAFE GRID LAYOUT */
-.container{
-  display:grid;
-  grid-template-columns:1fr;
-  height:calc(100vh - 120px);
-  overflow:hidden;
-}
-
-/* PANELS */
-.panel{
-  display:none;
-  padding:14px;
-  overflow:auto;
-}
-
-.panel.active{
-  display:block;
-}
-
-/* KPI GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-}
-
-.card{
-  background:#1e293b;
-  padding:16px;
-  border-radius:16px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.25);
-}
-
-.kpi{
-  font-size:26px;
-  font-weight:800;
-}
-
-/* FILTERS */
-.filters{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:10px;
-}
-
-input,button{
-  padding:10px;
-  border-radius:10px;
-  border:none;
-}
-
-input{background:#0b1220;color:white;}
-button{background:#38bdf8;font-weight:600;cursor:pointer;}
-
-/* BOX */
-.box{
-  background:#1e293b;
-  padding:12px;
-  border-radius:14px;
-  margin-top:12px;
-}
-
-/* NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:60px;
-  display:flex;
-  background:#0b1220;
-  border-top:1px solid #1e293b;
-}
-
-.nav div{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  cursor:pointer;
-}
-
-.nav .icon{font-size:18px;}
-.nav .active{color:#38bdf8}
-
-/* TABLE */
-table{width:100%;border-collapse:collapse;}
-td{padding:8px;border-bottom:1px solid #334155;}
-
-/* CHART */
-canvas{
-  background:#1e293b;
-  border-radius:14px;
-  margin-top:10px;
-}
-
-/* MOBILE */
-@media(max-width:768px){
-.grid{grid-template-columns:1fr;}
-}
-</style>
-</head>
-
-<body>
-
-<div id="loading">Loading...</div>
-
-<!-- LOGIN -->
-<div id="login">
-<h2>Login</h2>
-<input id="pass" type="password">
-<button onclick="App.login()">Enter</button>
-</div>
-
-<!-- APP -->
-<div id="app">
-
-<div class="header">
-<div>SaaS Dashboard</div>
-<div id="top">-</div>
-</div>
-
-<div class="container">
-
-<!-- HOME -->
-<div class="panel active" id="home">
-
-<div class="grid">
-<div class="card">Sales<div id="sales" class="kpi">£0.00</div></div>
-<div class="card">Products<div id="products" class="kpi">0</div></div>
-<div class="card">Top<div id="topCard" class="kpi">-</div></div>
-</div>
-
-<div class="filters">
-<input id="startDate" type="date">
-<input id="endDate" type="date">
-<button onclick="App.applyRange()">Apply</button>
-<button onclick="App.setRange(7)">7D</button>
-<button onclick="App.setRange(30)">30D</button>
-</div>
-
-<div class="box">
-<b>Top Products</b>
-<div id="homeTopList"></div>
-</div>
-
-<canvas id="barChart"></canvas>
-
-</div>
-
-<!-- STATS -->
-<div class="panel" id="stats">
-<canvas id="salesChart"></canvas>
-</div>
-
-<!-- PRODUCTS -->
-<div class="panel" id="productsPanel">
-<table id="productTable"></table>
-</div>
-
-</div>
-</div>
-
-<!-- NAV -->
-<div class="nav">
-<div onclick="App.switchTab(0,this)" class="active"><div class="icon">🏠</div>Home</div>
-<div onclick="App.switchTab(1,this)"><div class="icon">📊</div>Stats</div>
-<div onclick="App.switchTab(2,this)"><div class="icon">📦</div>Products</div>
-</div>
-
-<script>
-
-const App = (() => {
-
-const CONFIG = {
-URL: "https://script.google.com/macros/s/AKfycbwnCqt1dwhjcQNSrDRygzUprIT18kGY34KpauYXuW7MA-lrB4mNUcy6C1WoQ6i-dkq4cQ/exec",
-PASSWORD: "1234"
-};
-
-const STATE = {
-raw: {},
-bar: null,
-sales: null
-};
-
-const $ = id => document.getElementById(id);
-
-/* LOGIN */
-const login = () => {
-if ($("pass").value !== CONFIG.PASSWORD) return;
-$("login").style.display = "none";
-$("app").style.display = "block";
-load();
-};
-
-/* LOAD */
-const load = async () => {
-$("loading").style.display = "flex";
-const res = await fetch(CONFIG.URL);
-STATE.raw = await res.json();
-draw(STATE.raw);
-$("loading").style.display = "none";
-};
-
-/* RANGE */
-const setRange = (d) => {
-const now = new Date();
-const s = new Date();
-s.setDate(now.getDate() - d);
-
-$("startDate").value = s.toISOString().split("T")[0];
-$("endDate").value = now.toISOString().split("T")[0];
-applyRange();
-};
-
-const applyRange = () => {
-const s = new Date($("startDate").value).getTime();
-const e = new Date($("endDate").value).getTime();
-
-let out = {};
-for (const d in STATE.raw) {
-const t = new Date(d).getTime();
-if (t >= s && t <= e) out[d] = STATE.raw[d];
-}
-
-draw(out);
-};
-
-/* DRAW */
-const draw = (data) => {
-
-let pt = {}, dt = {}, total = 0;
-const dates = Object.keys(data || {}).sort();
-
-for (const d of dates) {
-dt[d] = 0;
-for (const p in data[d]) {
-const v = +data[d][p] || 0;
-pt[p] = (pt[p] || 0) + v;
-dt[d] += v;
-total += v;
-}
-}
-
-const sorted = Object.keys(pt).sort((a,b)=>pt[b]-pt[a]);
-const top5 = sorted.slice(0,5);
-
-/* KPI */
-$("sales").textContent = "£" + total.toFixed(2);
-$("products").textContent = sorted.length;
-$("topCard").textContent = top5[0] || "-";
-
-/* LIST */
-$("homeTopList").innerHTML =
-top5.map(p => `• ${p} (£${pt[p].toFixed(2)})`).join("<br>");
-
-/* TABLE */
-$("productTable").innerHTML =
-sorted.map(p => `<tr><td>${p}</td><td>£${pt[p].toFixed(2)}</td></tr>`).join("");
-
-/* STACKED BAR + £ FIX */
-if (STATE.bar) STATE.bar.destroy();
-
-STATE.bar = new Chart($("barChart"), {
-type: "bar",
-data: {
-labels: dates,
-datasets: top5.map((p,i)=>({
-label: p,
-data: dates.map(d => data[d]?.[p] || 0),
-stack: "stack1",
-backgroundColor: ["#38bdf8","#6366f1","#22c55e","#f59e0b","#ef4444"][i]
-}))
-},
-options: {
-responsive: true,
-plugins: {
-tooltip: {
-callbacks: {
-label: ctx => "£" + ctx.raw.toFixed(2)
-}
-}
-},
-scales: {
-x: { stacked: true },
-y: {
-stacked: true,
-ticks: {
-callback: v => "£" + v
-}
-}
-}
-}
-});
-
-/* SALES */
-if (STATE.sales) STATE.sales.destroy();
-
-STATE.sales = new Chart($("salesChart"), {
-type: "bar",
-data: {
-labels: dates,
-datasets: [{
-label: "Sales",
-data: dates.map(d => dt[d] || 0)
-}]
-}
-});
-
-};
-
-/* NAV */
-const switchTab = (i, el) => {
-
-document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-
-if (i === 0) $("home").classList.add("active");
-if (i === 1) $("stats").classList.add("active");
-if (i === 2) $("productsPanel").classList.add("active");
-
-document.querySelectorAll(".nav div").forEach(b=>b.classList.remove("active"));
-el.classList.add("active");
-
-};
-
-return { login, load, setRange, applyRange, switchTab };
-
-})();
-
-window.App = App;
-
-</script>
-
-</body>
-</html>
