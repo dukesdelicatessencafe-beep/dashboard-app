@@ -2,140 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Daily Dashboard</title>
+  <title>Dashboard App</title>
+  <!-- 1. CHART.JS LIBRARY (REQUIRED) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .daily-card {
-      border: 1px solid #ccc;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-    .category-grid {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-    }
+    .hidden { display: none; }
+    #nav { display: flex; gap: 10px; margin-bottom: 20px; }
+    #tabsWrapper { overflow: hidden; }
+    #tabs { display: flex; transition: transform 0.3s ease; }
+    .tab-content { min-width: 100%; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-  <!-- Totals Summary -->
-  <div>
-    Total Rev: <span id="totalRev">£0.00</span> |
-    Cash: <span id="totalCash">£0.00</span> |
-    Card: <span id="totalCard">£0.00</span>
+  <!-- LOGIN SCREEN -->
+  <div id="login">
+    <input type="password" id="pass" placeholder="Enter Password">
+    <button onclick="App.login()">Login</button>
   </div>
 
-  <hr>
+  <!-- NAVIGATION -->
+  <div id="nav" class="hidden">
+    <button onclick="App.switchTab(0, this)">Home</button>
+    <button onclick="App.switchTab(1, this)">Analytics</button>
+  </div>
 
-  <!-- Container for rendered daily cards -->
-  <div id="dailyDataContainer"></div>
+  <!-- MAIN APP WRAPPER -->
+  <div id="app" class="hidden">
+    
+    <!-- DATE RANGE SELECTOR -->
+    <div>
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <button onclick="App.applyRange()">Apply Range</button>
+      <button onclick="App.setRange('today')">Today</button>
+      <button onclick="App.setRange('7')">7 Days</button>
+      <button onclick="App.setRange('30')">30 Days</button>
+    </div>
 
-  <script>
-  function renderDashboard(rows) {
-    const container = document.getElementById("dailyDataContainer");
-    if (!container) {
-      console.error("Target container #dailyDataContainer not found in HTML.");
-      return;
-    }
-    container.innerHTML = "";
+    <!-- TABS SLIDER CONTAINER -->
+    <div id="tabsWrapper">
+      <div id="tabs">
+        
+        <!-- TAB 0: HOME -->
+        <div class="tab-content">
+          <div>Sales: <span id="sales">£0.00</span></div>
+          <div>Products: <span id="products">0</span></div>
+          <div>Top Item: <span id="top">-</span></div>
 
-    if (!Array.isArray(rows)) {
-      console.error("renderDashboard expected an array for 'rows'. Received:", rows);
-      return;
-    }
-
-    let totalCash = 0;
-    let totalCard = 0;
-
-    rows.forEach(row => {
-      if (!row || !Array.isArray(row)) return;
-
-      const dayName = row[0] ? row[0].toString().trim() : "";
-      let rawDate = row[1] ? row[1].toString().trim() : "";
-      const cashVal = row[2];
-      const cardVal = row[3];
-
-      // 1. Skip empty rows, headers, and explicit summary rows
-      if (!rawDate || dayName.toLowerCase().includes("month total") || rawDate.toLowerCase().includes("date")) {
-        return;
-      }
-
-      // 2. Clean numeric values
-      const cleanNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
-      const cash = cleanNum(cashVal);
-      const card = cleanNum(cardVal);
-
-      // 3. Filter weekly subtotal rows
-      const isStandardDate = rawDate.includes("T") || rawDate.includes("/") || rawDate.includes("-");
-      if (!dayName && (cash > 0 || card > 0) && !isStandardDate) {
-        return;
-      }
-
-      // 4. Format ISO timestamps into clean DD/MM/YYYY dates
-      let displayDate = rawDate;
-      if (rawDate.includes("T")) {
-        const parsedDate = new Date(rawDate);
-        if (!isNaN(parsedDate.getTime())) {
-          displayDate = parsedDate.toLocaleDateString("en-GB");
-        }
-      }
-
-      const dailyTotal = cash + card;
-
-      // Skip empty non-trading days
-      if (dailyTotal === 0 && !dayName) {
-        return;
-      }
-
-      totalCash += cash;
-      totalCard += card;
-
-      // 5. Read category values
-      const drink = cleanNum(row[4]);
-      const food = cleanNum(row[5]);
-      const deli = cleanNum(row[6]);
-
-      // 6. Build card element
-      const cardElement = document.createElement("div");
-      cardElement.className = "daily-card";
-      cardElement.innerHTML = `
-        <div class="card-header">
-          <span><strong>${dayName}</strong> ${displayDate}</span>
-          <span>£${dailyTotal.toFixed(2)}</span>
+          <div id="homeTopList"></div>
+          <canvas id="barChart"></canvas>
         </div>
-        <div class="card-body">
-          <p style="margin: 4px 0;"><strong>Cash:</strong> £${cash.toFixed(2)} | <strong>Card:</strong> £${card.toFixed(2)}</p>
-          <div class="category-grid">
-            <div><span>DRINK:</span> <strong>£${drink.toFixed(2)}</strong></div>
-            <div><span>FOOD:</span> <strong>£${food.toFixed(2)}</strong></div>
-            <div><span>DELI:</span> <strong>£${deli.toFixed(2)}</strong></div>
-          </div>
+
+        <!-- TAB 1: ANALYTICS -->
+        <div class="tab-content">
+          <table border="1">
+            <thead><tr><th>Product</th><th>Revenue</th></tr></thead>
+            <tbody id="productTable"></tbody>
+          </table>
+          <canvas id="salesChart"></canvas>
+          <div id="insights"></div>
         </div>
-      `;
 
-      container.appendChild(cardElement);
-    });
+      </div>
+    </div>
 
-    updateTotals(totalCash, totalCard);
-  }
+  </div>
 
-  function updateTotals(cash, card) {
-    const revEl = document.getElementById("totalRev");
-    const cashEl = document.getElementById("totalCash");
-    const cardEl = document.getElementById("totalCard");
+  <!-- NOTIFICATION & LOADER -->
+  <div id="loading" class="hidden">Loading data...</div>
+  <div id="toast"></div>
 
-    if (revEl) revEl.innerText = `£${(cash + card).toFixed(2)}`;
-    if (cashEl) cashEl.innerText = `£${cash.toFixed(2)}`;
-    if (cardEl) cardEl.innerText = `£${card.toFixed(2)}`;
-  }
-  </script>
-
+  <!-- YOUR JS CODE HERE -->
+  <script src="app.js"></script>
 </body>
 </html>
