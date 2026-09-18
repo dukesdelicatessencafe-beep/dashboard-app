@@ -219,8 +219,8 @@
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
-        <div class="val" id="rollingTotal">£0.00</div>
-        <div class="subtext" id="vatStatus">Checking threshold...</div>
+        <div class="val" id="rollingTotal">Syncing...</div>
+        <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
@@ -283,12 +283,13 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbw6dzbBBnW6Z86aP95AyBmZooLNU5UM6oOJ3wLBUquxjh4U1A_fFnD1-hNp5BG7nWOGaA/exec",
+      URL: "https://script.google.com/macros/s/AKfycbwqutO2srkoonraaL5Cw8bBkQiqwSwvd3axL5WSJZCYKJgEoyDhonZCp7qLgZQM44Ej/exec",
       PASSWORD: "1234"
     };
 
     const STATE = {
       raw: [],
+      isFullLoaded: false,
       barChart: null,
       salesChart: null
     };
@@ -515,20 +516,28 @@
       safeSet("products", records.length);
 
       const rollingCents = calculateRolling12Month(STATE.raw);
-      safeSet("rollingTotal", fmt(rollingCents));
-
-      const vatThresholdCents = 90000 * 100;
       const vatStatusEl = $("vatStatus");
-      if (vatStatusEl) {
-        if (rollingCents >= vatThresholdCents) {
-          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
-          vatStatusEl.style.color = "#ff4d4d";
-        } else if (rollingCents >= vatThresholdCents * 0.85) {
-          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
-          vatStatusEl.style.color = "#ffcc00";
-        } else {
-          vatStatusEl.innerText = "Safe (Below £90,000)";
-          vatStatusEl.style.color = "#4cd137";
+
+      if (!STATE.isFullLoaded) {
+        safeSet("rollingTotal", "Syncing...");
+        if (vatStatusEl) {
+          vatStatusEl.innerText = "Loading history...";
+          vatStatusEl.style.color = "#aaa";
+        }
+      } else {
+        safeSet("rollingTotal", fmt(rollingCents));
+        const vatThresholdCents = 90000 * 100;
+        if (vatStatusEl) {
+          if (rollingCents >= vatThresholdCents) {
+            vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+            vatStatusEl.style.color = "#ff4d4d";
+          } else if (rollingCents >= vatThresholdCents * 0.85) {
+            vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
+            vatStatusEl.style.color = "#ffcc00";
+          } else {
+            vatStatusEl.innerText = "Safe (Below £90,000)";
+            vatStatusEl.style.color = "#4cd137";
+          }
         }
       }
 
@@ -615,23 +624,22 @@
         const loader = $("loading");
         if (loader) loader.classList.remove("hidden");
 
-        const res = await fetch(CONFIG.URL, { cache: "no-store" });
-        const json = await res.json();
+        STATE.isFullLoaded = false;
+
+        // STEP 1: Fast initial load for the current year only
+        const currentYear = new Date().getFullYear();
+        const fastRes = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
+        const fastJson = await fastRes.json();
 
         let allRecords = [];
 
-        if (json && json.tabs) {
-          Object.keys(json.tabs).forEach(tabName => {
-            const tabRows = json.tabs[tabName];
+        if (fastJson && fastJson.tabs) {
+          Object.keys(fastJson.tabs).forEach(tabName => {
+            const tabRows = fastJson.tabs[tabName];
             if (Array.isArray(tabRows) && tabRows.length > 0) {
-              const processed = processRows(tabRows);
-              allRecords = allRecords.concat(processed);
+              allRecords = allRecords.concat(processRows(tabRows));
             }
           });
-        } else if (json && json.rows && Array.isArray(json.rows)) {
-          allRecords = processRows(json.rows);
-        } else if (Array.isArray(json)) {
-          allRecords = processRows(json);
         }
 
         allRecords.sort((a, b) => a.dateInt - b.dateInt);
@@ -657,11 +665,45 @@
         }
 
         renderDashboard(STATE.raw);
-        toast("All tabs loaded successfully");
+        
+        if (loader) loader.classList.add("hidden");
+        toast("Current year loaded instantly");
+
+        // STEP 2: Background fetch for historical data
+        setTimeout(async () => {
+          try {
+            const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
+            const fullJson = await fullRes.json();
+
+            let fullRecords = [];
+            if (fullJson && fullJson.tabs) {
+              Object.keys(fullJson.tabs).forEach(tabName => {
+                const tabRows = fullJson.tabs[tabName];
+                if (Array.isArray(tabRows) && tabRows.length > 0) {
+                  fullRecords = fullRecords.concat(processRows(tabRows));
+                }
+              });
+            }
+
+            if (fullRecords.length > 0) {
+              fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+              STATE.raw = fullRecords;
+            }
+
+            STATE.isFullLoaded = true;
+            renderDashboard(STATE.raw);
+            toast("Historical data synced in background");
+
+          } catch (bgErr) {
+            console.warn("Background history sync failed:", bgErr);
+            STATE.isFullLoaded = true;
+            renderDashboard(STATE.raw);
+          }
+        }, 500);
+
       } catch (e) {
         console.error("Fetch error:", e);
         toast("Failed to load spreadsheet data");
-      } finally {
         const loader = $("loading");
         if (loader) loader.classList.add("hidden");
       }
