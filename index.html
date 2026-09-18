@@ -451,20 +451,18 @@
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
-      // Find the latest record date to anchor our 12-month lookback
-      const latestRec = allRecords[allRecords.length - 1];
-      if (!latestRec.parsedDate) return 0;
+      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
+      if (validRecords.length === 0) return 0;
 
+      const latestRec = validRecords[validRecords.length - 1];
       const anchorDate = new Date(latestRec.parsedDate);
+      
       const startLookback = new Date(anchorDate);
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
-      const sInt = startLookback.getFullYear() * 10000 + (startLookback.getMonth() + 1) * 100 + startLookback.getDate();
-      const eInt = latestRec.dateInt;
-
       let rollingSumCents = 0;
-      allRecords.forEach(r => {
-        if (r.dateInt >= sInt && r.dateInt <= eInt) {
+      validRecords.forEach(r => {
+        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
           rollingSumCents += r.dailyTotalCents;
         }
       });
@@ -507,7 +505,7 @@
       safeSet("sales", fmt(totalRevCents));
       safeSet("products", records.length);
 
-      // Compute and display Rolling 12-Month Total across ALL raw records
+      // Compute Rolling 12-Month Total safely using Date objects
       const rollingCents = calculateRolling12Month(STATE.raw);
       safeSet("rollingTotal", fmt(rollingCents));
 
@@ -628,12 +626,9 @@
           allRecords = processRows(json);
         }
 
-        // Sort all records chronologically
         allRecords.sort((a, b) => a.dateInt - b.dateInt);
-
         STATE.raw = allRecords;
 
-        // Set date pickers to cover the full dataset range automatically
         if (STATE.raw.length > 0) {
           const earliest = STATE.raw[0];
           const latest = STATE.raw[STATE.raw.length - 1];
@@ -718,7 +713,7 @@
         const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
         const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
         
-        const fyStartInt = fyYear * 10000 + 201; // Feb 1st
+        const fyStartInt = fyYear * 10000 + 201;
         const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= latestRec.dateInt);
         renderDashboard(filtered);
         toast("Showing Financial Year-to-Date (Feb 1st start)");
