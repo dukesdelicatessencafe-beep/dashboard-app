@@ -325,21 +325,28 @@
 
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
-      const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
-      if (!cleanStr) return 0;
+      let str = String(val).trim();
       
-      const parts = cleanStr.split('.');
-      let cents = 0;
-      
-      if (parts[0]) {
-        cents += parseInt(parts[0], 10) * 100;
+      // Treat unlogged placeholders as 0
+      if (str === "-" || str === "£ -" || str === "-£" || str === "£-" || str === "- £") {
+        return 0;
       }
-      if (parts[1]) {
-        let dec = parts[1].padEnd(2, '0').slice(0, 2);
-        cents += parseInt(dec, 10);
+
+      let isNegative = false;
+      if (str.startsWith("-") || (str.includes("-") && str.indexOf("-") < str.search(/\d/))) {
+        isNegative = true;
       }
+
+      const cleanStr = str.replace(/[^0-9.-]+/g, "");
+      if (!cleanStr || cleanStr === "-") return 0;
+
+      const num = parseFloat(cleanStr);
+      if (isNaN(num)) return 0;
+
+      // Use Math.round with float parsing to fix truncation/penny-short issues
+      const cents = Math.round(num * 100);
       
-      return isNaN(cents) ? 0 : cents;
+      return isNegative ? -cents : cents;
     };
 
     const parseDateString = (dateStr) => {
@@ -420,8 +427,6 @@
 
         const dayName = row[0] ? String(row[0]).trim() : "";
         const rawDate = row[1];
-        const cashVal = row[2];
-        const cardVal = row[3];
 
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
@@ -430,32 +435,37 @@
           return;
         }
 
-        const cashCents = cleanCents(cashVal);
-        const cardCents = cleanCents(cardVal);
-        
-        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
-          ? cleanCents(row[idxTotal]) 
-          : (cashCents + cardCents);
-
         const parsedDateInfo = parseDateString(rawDate);
         if (!parsedDateInfo) return;
-        if (dailyTotalCents === 0 && !dayName) return;
+
+        const catIceCream = idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : cleanCents(row[2]);
+        const catCounter  = idxCounter !== -1 ? cleanCents(row[idxCounter]) : cleanCents(row[3]);
+        const catKitchen  = idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : cleanCents(row[4]);
+        const catDrink    = idxDrink !== -1 ? cleanCents(row[idxDrink]) : cleanCents(row[5]);
+        const catDeli     = idxDeli !== -1 ? cleanCents(row[idxDeli]) : cleanCents(row[6]);
+        const catAlcohol  = idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : cleanCents(row[7]);
+
+        const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
+
+        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
+          ? cleanCents(row[idxTotal]) 
+          : sumCategoriesCents;
+
+        if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) return;
 
         parsedRecords.push({
           dayName,
           rawDate,
           parsedDate: parsedDateInfo.dateObj,
           dateInt: parsedDateInfo.dateInt,
-          cashCents,
-          cardCents,
-          dailyTotalCents,
+          dailyTotalCents: dailyTotalCents !== 0 ? dailyTotalCents : sumCategoriesCents,
           categories: {
-            "ICE CREAM": idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : 0,
-            "COUNTER": idxCounter !== -1 ? cleanCents(row[idxCounter]) : 0,
-            "Kitchen": idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : 0,
-            "DRINK": idxDrink !== -1 ? cleanCents(row[idxDrink]) : 0,
-            "DELI": idxDeli !== -1 ? cleanCents(row[idxDeli]) : 0,
-            "ALCOHOL": idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : 0
+            "ICE CREAM": catIceCream,
+            "COUNTER": catCounter,
+            "Kitchen": catKitchen,
+            "DRINK": catDrink,
+            "DELI": catDeli,
+            "ALCOHOL": catAlcohol
           }
         });
       });
