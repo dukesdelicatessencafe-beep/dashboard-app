@@ -327,7 +327,6 @@
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
       
-      // Treat unlogged placeholders as 0
       if (str === "-" || str === "£ -" || str === "-£" || str === "£-" || str === "- £") {
         return 0;
       }
@@ -343,8 +342,8 @@
       const num = parseFloat(cleanStr);
       if (isNaN(num)) return 0;
 
-      // Use Math.round with float parsing to fix truncation/penny-short issues
-      const cents = Math.round(num * 100);
+      // Keep exact floating-point conversion for accurate summation
+      const cents = num * 100;
       
       return isNegative ? -cents : cents;
     };
