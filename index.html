@@ -232,12 +232,13 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS -->
+    <!-- FULL RANGE CONTROLS WITH EXPLICIT BUTTON -->
     <div class="controls">
       <label style="font-size:13px; color:var(--accent-gold);">From:</label>
-      <input type="date" id="startDate" onchange="App.applyRange()">
+      <input type="date" id="startDate">
       <label style="font-size:13px; color:var(--accent-gold);">To:</label>
-      <input type="date" id="endDate" onchange="App.applyRange()">
+      <input type="date" id="endDate">
+      <button onclick="App.applyRange()">Run Selected Dates</button>
       <button onclick="App.setRange('7')">Last 7 Days</button>
       <button onclick="App.setRange('31')">Last 31 Days</button>
       <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
@@ -505,7 +506,6 @@
       safeSet("sales", fmt(totalRevCents));
       safeSet("products", records.length);
 
-      // Compute Rolling 12-Month Total safely using Date objects
       const rollingCents = calculateRolling12Month(STATE.raw);
       safeSet("rollingTotal", fmt(rollingCents));
 
@@ -681,6 +681,7 @@
       });
 
       renderDashboard(filtered);
+      toast("Date range applied");
     };
 
     const setRange = (type) => {
