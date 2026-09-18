@@ -229,7 +229,11 @@
       <div class="kpi-card">
         <h3>TOP CATEGORY</h3>
         <div class="val" id="top">Syncing...</div>
-        <div class="subtext" id="dateRangeStatus">Filter: Full Dataset</div>
+      </div>
+      <div class="kpi-card">
+        <h3>DATE RANGE TOTAL VALUE</h3>
+        <div class="val" id="rangeTotalVal">Syncing...</div>
+        <div class="subtext" id="rangeSpanSub">Syncing...</div>
       </div>
     </div>
 
@@ -481,14 +485,28 @@
       return rollingSumCents;
     }
 
-    function updateDateRangeStatusText() {
+    function updateRangeTotalMetric(records) {
       const startVal = $("startDate")?.value;
       const endVal = $("endDate")?.value;
-      const statusEl = $("dateRangeStatus");
-      if (!statusEl) return;
+      const rangeTotalEl = $("rangeTotalVal");
+      const rangeSpanEl = $("rangeSpanSub");
+      if (!rangeTotalEl || !rangeSpanEl) return;
+
+      if (!STATE.isFullLoaded) {
+        rangeTotalEl.innerText = "Syncing...";
+        rangeSpanEl.innerText = "Syncing...";
+        return;
+      }
+
+      let periodSumCents = 0;
+      records.forEach(r => {
+        periodSumCents += r.dailyTotalCents;
+      });
+
+      rangeTotalEl.innerText = fmt(periodSumCents);
 
       if (!startVal || !endVal) {
-        statusEl.innerText = "Filter: Full Dataset";
+        rangeSpanEl.innerText = "Span: Full Dataset";
         return;
       }
 
@@ -496,7 +514,7 @@
       const eDate = new Date(endVal);
       const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
       
-      statusEl.innerText = `Filter: ${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
+      rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
     function renderDashboard(records) {
@@ -538,6 +556,8 @@
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
+        safeSet("rangeTotalVal", "Syncing...");
+        safeSet("rangeSpanSub", "Syncing...");
         if (vatStatusEl) {
           vatStatusEl.innerText = "Loading history...";
           vatStatusEl.style.color = "#aaa";
@@ -572,9 +592,9 @@
             vatStatusEl.style.color = "#4cd137";
           }
         }
+        updateRangeTotalMetric(records);
       }
 
-      updateDateRangeStatusText();
       renderBarChart(records);
       renderSalesChart(records);
     }
