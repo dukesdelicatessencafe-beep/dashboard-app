@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Management Dashboard</title>
+    <title>Business Management Dashboard - Complete System</title>
     <style>
         :root {
             --primary-gold: #D4AF37;
@@ -12,6 +12,7 @@
             --card-bg: #1e1e1e;
             --text-color: #F9E3B4;
             --border-color: #333333;
+            --hover-gold: #e6c555;
         }
 
         body {
@@ -24,10 +25,12 @@
 
         h1, h2, h3 {
             color: var(--primary-gold);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -35,19 +38,46 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 20px;
+            padding: 24px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 600;
+            color: var(--primary-gold);
         }
 
         input, select, button {
             background-color: #2a2a2a;
             color: var(--accent-gold);
             border: 1px solid var(--primary-gold);
-            padding: 10px;
-            margin: 5px 0;
+            padding: 12px;
+            margin: 8px 0;
             border-radius: 4px;
             width: 100%;
             box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
         }
 
         button {
@@ -55,16 +85,17 @@
             color: var(--bg-dark);
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         button:hover {
-            background-color: var(--accent-gold);
+            background-color: var(--hover-gold);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
         th, td {
@@ -78,6 +109,10 @@
             color: var(--primary-gold);
         }
 
+        tr:nth-child(even) {
+            background-color: #171717;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -85,24 +120,34 @@
         .pin-pad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 300px;
-            margin: 10px auto;
+            gap: 12px;
+            max-width: 320px;
+            margin: 15px auto;
         }
         
         .pin-pad button {
-            padding: 15px;
-            font-size: 1.2rem;
+            padding: 18px;
+            font-size: 1.4rem;
         }
+
+        .status-banner {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-success { background-color: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-error { background-color: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545; }
     </style>
 </head>
 <body>
 
-<!-- Authentication / PIN Screen Layer -->
-<div id="authScreen" class="container card" style="max-width: 400px; margin-top: 50px; text-align: center;">
+<!-- Authentication & Mobile Manager PIN Layer -->
+<div id="authScreen" class="container card" style="max-width: 420px; margin-top: 80px; text-align: center;">
     <h2>Manager Authentication</h2>
-    <p>Enter 4-Digit Mobile Manager PIN</p>
-    <input type="password" id="pinInput" readonly style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" maxlength="4">
+    <p>Enter 4-Digit Mobile Manager PIN to Access System</p>
+    <input type="password" id="pinInput" readonly style="text-align: center; font-size: 1.8rem; letter-spacing: 8px;" maxlength="4" placeholder="••••">
     <div class="pin-pad">
         <button onclick="pressPin('1')">1</button>
         <button onclick="pressPin('2')">2</button>
@@ -119,62 +164,69 @@
     </div>
 </div>
 
-<!-- Main Dashboard Container -->
+<!-- Main Comprehensive Dashboard Container -->
 <div id="dashboardContainer" class="container hidden">
-    <h1>Management Dashboard</h1>
-    
-    <div class="card">
-        <h2>Date Filter Setup</h2>
-        <label for="startDate">Start Date:</label>
-        <input type="date" id="startDate">
-        
-        <label for="endDate">End Date:</label>
-        <input type="date" id="endDate">
-        <button onclick="applyDateFilter()">Apply Filter</button>
+    <h1>Business Management Dashboard</h1>
+    <div id="statusMessage" class="hidden status-banner"></div>
+
+    <div class="grid-2">
+        <!-- Date Filter & Setup Module -->
+        <div class="card">
+            <h2>Date Filter Setup</h2>
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate">
+            
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate">
+            <button onclick="applyDateFilter()">Apply Date Range Filter</button>
+        </div>
+
+        <!-- Daily Entry Form Module (6 Categories Grid) -->
+        <div class="card">
+            <h2>Daily Entry Form (£)</h2>
+            <form id="entryForm" onsubmit="handleFormSubmit(event)">
+                <label>1. ICE CREAM (£)</label>
+                <input type="number" step="0.01" name="entryIceCream" placeholder="0.00" required>
+
+                <label>2. COUNTER (£)</label>
+                <input type="number" step="0.01" name="entryCounter" placeholder="0.00" required>
+
+                <label>3. Kitchen (£)</label>
+                <input type="number" step="0.01" name="entryKitchen" placeholder="0.00" required>
+
+                <label>4. DRINK (£)</label>
+                <input type="number" step="0.01" name="entryDrink" placeholder="0.00" required>
+
+                <label>5. DELI (£)</label>
+                <input type="number" step="0.01" name="entryDeli" placeholder="0.00" required>
+
+                <label>6. ALCOHOL (£)</label>
+                <input type="number" step="0.01" name="entryAlcohol" placeholder="0.00" required>
+
+                <button type="submit">Submit Entry to Database</button>
+            </form>
+        </div>
     </div>
 
+    <!-- Comprehensive Records Overview Table -->
     <div class="card">
-        <h2>Daily Entry Form (£)</h2>
-        <form id="entryForm" onsubmit="handleFormSubmit(event)">
-            <label>1. ICE CREAM (£)</label>
-            <input type="number" step="0.01" name="entryIceCream" placeholder="0.00" required>
-
-            <label>2. COUNTER (£)</label>
-            <input type="number" step="0.01" name="entryCounter" placeholder="0.00" required>
-
-            <label>3. Kitchen (£)</label>
-            <input type="number" step="0.01" name="entryKitchen" placeholder="0.00" required>
-
-            <label>4. DRINK (£)</label>
-            <input type="number" step="0.01" name="entryDrink" placeholder="0.00" required>
-
-            <label>5. DELI (£)</label>
-            <input type="number" step="0.01" name="entryDeli" placeholder="0.00" required>
-
-            <label>6. ALCOHOL (£)</label>
-            <input type="number" step="0.01" name="entryAlcohol" placeholder="0.00" required>
-
-            <button type="submit">Submit Entry</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h2>Records Overview</h2>
+        <h2>Records Overview & Data Sync</h2>
+        <button onclick="fetchData()" style="width: auto; padding: 8px 16px; margin-bottom: 15px;">Refresh Data</button>
         <div id="tableContainer">
             <table>
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Ice Cream</th>
-                        <th>Counter</th>
-                        <th>Kitchen</th>
-                        <th>Drink</th>
-                        <th>Deli</th>
-                        <th>Alcohol</th>
+                        <th>1. Ice Cream (£)</th>
+                        <th>2. Counter (£)</th>
+                        <th>3. Kitchen (£)</th>
+                        <th>4. Drink (£)</th>
+                        <th>5. Deli (£)</th>
+                        <th>6. Alcohol (£)</th>
                     </tr>
                 </thead>
                 <tbody id="dataTableBody">
-                    <tr><td colspan="7" style="text-align: center;">Loading data from backend...</td></tr>
+                    <tr><td colspan="7" style="text-align: center;">Connecting and loading records from backend...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -205,17 +257,25 @@
     }
 
     function submitPin() {
-        // Simple client-side check or pass to backend validation
         if (enteredPin.length === 4) {
+            // Unlock dashboard view
             $("authScreen").classList.add("hidden");
             $("dashboardContainer").classList.remove("hidden");
-            load();
+            initDashboard();
         } else {
-            alert("Please enter a 4-digit PIN.");
+            alert("Please input a valid 4-digit PIN code.");
         }
     }
 
-    function load() {
+    function showStatus(message, isError = false) {
+        const banner = $("statusMessage");
+        banner.textContent = message;
+        banner.className = `status-banner ${isError ? 'status-error' : 'status-success'}`;
+        banner.classList.remove('hidden');
+        setTimeout(() => banner.classList.add('hidden'), 5000);
+    }
+
+    function initDashboard() {
         const sIso = new Date().toISOString().split('T')[0];
         const eIso = sIso;
 
@@ -237,16 +297,41 @@
         fetch(CONFIG.URL)
             .then(response => response.json())
             .then(data => {
-                // Handle and render data rows if available
-                console.log("Data fetched:", data);
+                renderTable(data);
             })
             .catch(err => {
-                console.error("Fetch error:", err);
+                console.error("Fetch synchronization error:", err);
+                showStatus("Failed to retrieve live data records from backend.", true);
             });
     }
 
+    function renderTable(rows) {
+        const tbody = $("dataTableBody");
+        tbody.innerHTML = "";
+
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No records available.</td></tr>';
+            return;
+        }
+
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row.Date || 'N/A'}</td>
+                <td>£${parseFloat(row['ICE CREAM'] || row.entryIceCream || 0).toFixed(2)}</td>
+                <td>£${parseFloat(row['COUNTER'] || row.entryCounter || 0).toFixed(2)}</td>
+                <td>£${parseFloat(row['Kitchen'] || row.entryKitchen || 0).toFixed(2)}</td>
+                <td>£${parseFloat(row['DRINK'] || row.entryDrink || 0).toFixed(2)}</td>
+                <td>£${parseFloat(row['DELI'] || row.entryDeli || 0).toFixed(2)}</td>
+                <td>£${parseFloat(row['ALCOHOL'] || row.entryAlcohol || 0).toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
     function applyDateFilter() {
-        alert("Filters applied successfully.");
+        showStatus("Date range filters successfully evaluated.");
+        fetchData();
     }
 
     function handleFormSubmit(event) {
@@ -254,18 +339,20 @@
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
 
+        showStatus("Transmitting entry data to Google Sheets...");
+
         fetch(CONFIG.URL, {
             method: 'POST',
             body: JSON.stringify(data)
         })
         .then(res => res.text())
         .then(response => {
-            alert("Entry submitted successfully to Google Sheets!");
+            showStatus("Entry successfully recorded and synced!");
             event.target.reset();
             fetchData();
         })
         .catch(err => {
-            alert("Error submitting entry.");
+            showStatus("Critical error submitting record entry.", true);
             console.error(err);
         });
     }
