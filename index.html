@@ -229,6 +229,7 @@
       <div class="kpi-card">
         <h3>TOP CATEGORY</h3>
         <div class="val" id="top">Syncing...</div>
+        <div class="subtext" id="dateRangeStatus">Filter: Full Dataset</div>
       </div>
     </div>
 
@@ -480,6 +481,24 @@
       return rollingSumCents;
     }
 
+    function updateDateRangeStatusText() {
+      const startVal = $("startDate")?.value;
+      const endVal = $("endDate")?.value;
+      const statusEl = $("dateRangeStatus");
+      if (!statusEl) return;
+
+      if (!startVal || !endVal) {
+        statusEl.innerText = "Filter: Full Dataset";
+        return;
+      }
+
+      const sDate = new Date(startVal);
+      const eDate = new Date(endVal);
+      const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+      
+      statusEl.innerText = `Filter: ${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
+    }
+
     function renderDashboard(records) {
       const container = $("productTable");
       let totalRevCents = 0;
@@ -555,6 +574,7 @@
         }
       }
 
+      updateDateRangeStatusText();
       renderBarChart(records);
       renderSalesChart(records);
     }
