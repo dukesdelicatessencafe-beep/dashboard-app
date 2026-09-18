@@ -310,6 +310,13 @@
       setTimeout(() => { t.style.display = "none"; }, 3000);
     };
 
+    const formatDateLocal = (dateObj) => {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
@@ -366,7 +373,7 @@
         }
       }
 
-      if (y < 2000 || y > 2100) return null; // Prevent accidental 1900 fallback serials
+      if (y < 2000 || y > 2100) return null;
 
       const dateInt = y * 10000 + m * 100 + d;
       const dateObj = new Date(y, m - 1, d);
@@ -425,7 +432,7 @@
           : (cashCents + cardCents);
 
         const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo) return; // Skip invalid or unparsable dates
+        if (!parsedDateInfo) return;
         if (dailyTotalCents === 0 && !dayName) return;
 
         parsedRecords.push({
@@ -632,20 +639,19 @@
 
         if (STATE.raw.length > 0) {
           const earliest = STATE.raw[0];
-          const latest = STATE.raw[STATE.raw.length - 1];
-          if (earliest.parsedDate && latest.parsedDate) {
-            const startIso = earliest.parsedDate.toISOString().split("T")[0];
-            const endIso = latest.parsedDate.toISOString().split("T")[0];
+          if (earliest.parsedDate) {
+            const startIso = formatDateLocal(earliest.parsedDate);
+            const todayIso = formatDateLocal(new Date());
             
             if ($("startDate")) {
               $("startDate").value = startIso;
               $("startDate").min = startIso;
-              $("startDate").max = endIso;
+              $("startDate").max = todayIso;
             }
             if ($("endDate")) {
-              $("endDate").value = endIso;
+              $("endDate").value = todayIso;
               $("endDate").min = startIso;
-              $("endDate").max = endIso;
+              $("endDate").max = todayIso;
             }
           }
         }
@@ -687,35 +693,42 @@
     const setRange = (type) => {
       if (STATE.raw.length === 0) return;
       
-      const latestRec = STATE.raw[STATE.raw.length - 1];
-      const anchorDate = latestRec.parsedDate ? new Date(latestRec.parsedDate) : new Date();
+      const anchorDate = new Date();
+      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       if (type === "7") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 7);
         
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const eInt = latestRec.dateInt;
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
+        
+        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         renderDashboard(filtered);
-        toast("Showing last 7 active days");
+        toast("Showing last 7 days from today");
       } else if (type === "31") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 31);
         
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const eInt = latestRec.dateInt;
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
+        
+        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         renderDashboard(filtered);
-        toast("Showing last 31 active days");
+        toast("Showing last 31 days from today");
       } else if (type === "fytd") {
         const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
         const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
         
         const fyStartInt = fyYear * 10000 + 201;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= latestRec.dateInt);
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= todayInt);
+        
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
+
         renderDashboard(filtered);
         toast("Showing Financial Year-to-Date (Feb 1st start)");
       }
@@ -724,10 +737,9 @@
     const resetView = () => {
       if (STATE.raw.length > 0) {
         const earliest = STATE.raw[0];
-        const latest = STATE.raw[STATE.raw.length - 1];
-        if (earliest.parsedDate && latest.parsedDate) {
-          if ($("startDate")) $("startDate").value = earliest.parsedDate.toISOString().split("T")[0];
-          if ($("endDate")) $("endDate").value = latest.parsedDate.toISOString().split("T")[0];
+        if (earliest.parsedDate) {
+          if ($("startDate")) $("startDate").value = formatDateLocal(earliest.parsedDate);
+          if ($("endDate")) $("endDate").value = formatDateLocal(new Date());
         }
       }
       renderDashboard(STATE.raw);
