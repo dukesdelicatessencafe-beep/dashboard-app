@@ -552,7 +552,7 @@
       });
     }
 
-    const load = async () => {
+const load = async () => {
       try {
         const loader = $("loading");
         if (loader) loader.classList.remove("hidden");
@@ -562,16 +562,23 @@
 
         let allRecords = [];
 
+        // Explicitly loop through all sheets/tabs returned from the backend
         if (json && json.tabs) {
-          Object.values(json.tabs).forEach(tabRows => {
-            const processed = processRows(tabRows);
-            allRecords = allRecords.concat(processed);
+          Object.keys(json.tabs).forEach(tabName => {
+            const tabRows = json.tabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              const processed = processRows(tabRows);
+              allRecords = allRecords.concat(processed);
+            }
           });
         } else if (json && json.rows && Array.isArray(json.rows)) {
           allRecords = processRows(json.rows);
         } else if (Array.isArray(json)) {
           allRecords = processRows(json);
         }
+
+        // Sort records chronologically so the 31-day slice grabs the most recent month across all sheets
+        allRecords.sort((a, b) => a.dateInt - b.dateInt);
 
         STATE.raw = allRecords;
         renderDashboard(STATE.raw);
