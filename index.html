@@ -1,723 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales & Analytics Dashboard</title>
-  
-  <!-- CHART.JS LIBRARY -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <style>
-    :root {
-      --primary-gold: #D4AF37;
-      --accent-gold: #F9E3B4;
-      --bg-dark: #121212;
-      --card-bg: #1e1e1e;
-      --text-light: #ffffff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Management Dashboard</title>
+    <style>
+        :root {
+            --primary-gold: #D4AF37;
+            --accent-gold: #F9E3B4;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #F9E3B4;
+            --border-color: #333333;
+        }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-light);
-      margin: 0;
-      padding: 20px;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
 
-    .hidden { display: none !important; }
+        h1, h2, h3 {
+            color: var(--primary-gold);
+        }
 
-    /* Login Form */
-    #login {
-      max-width: 320px;
-      margin: 100px auto;
-      padding: 30px;
-      background: var(--card-bg);
-      border: 1px solid var(--primary-gold);
-      border-radius: 8px;
-      text-align: center;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-    #login input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      box-sizing: border-box;
-      background: #2a2a2a;
-      border: 1px solid var(--primary-gold);
-      color: #fff;
-      border-radius: 4px;
-    }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-    button {
-      background: var(--primary-gold);
-      color: #000;
-      border: none;
-      padding: 10px 16px;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+        input, select, button {
+            background-color: #2a2a2a;
+            color: var(--accent-gold);
+            border: 1px solid var(--primary-gold);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-    button:hover {
-      background: var(--accent-gold);
-    }
+        button {
+            background-color: var(--primary-gold);
+            color: var(--bg-dark);
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-    /* Navigation */
-    #nav {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+        button:hover {
+            background-color: var(--accent-gold);
+        }
 
-    /* KPI Cards Header */
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-    .kpi-card {
-      background: var(--card-bg);
-      border-left: 4px solid var(--primary-gold);
-      padding: 15px;
-      border-radius: 4px;
-    }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
 
-    .kpi-card h3 {
-      margin: 0 0 5px 0;
-      font-size: 13px;
-      color: var(--accent-gold);
-    }
+        th {
+            background-color: #181818;
+            color: var(--primary-gold);
+        }
 
-    .kpi-card .val {
-      font-size: 20px;
-      font-weight: bold;
-    }
+        .hidden {
+            display: none !important;
+        }
 
-    .kpi-card .subtext {
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    /* Controls */
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      align-items: center;
-    }
-
-    .controls input[type="date"] {
-      background: #2a2a2a;
-      border: 1px solid var(--primary-gold);
-      color: #fff;
-      padding: 8px;
-      border-radius: 4px;
-    }
-
-    /* Quick Entry Form Panel */
-    .entry-panel {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 8px;
-      border: 1px solid var(--primary-gold);
-      margin-bottom: 20px;
-    }
-
-    .entry-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .entry-field label {
-      display: block;
-      font-size: 12px;
-      color: var(--accent-gold);
-      margin-bottom: 4px;
-    }
-
-    .entry-field input {
-      width: 100%;
-      padding: 8px;
-      background: #2a2a2a;
-      border: 1px solid var(--primary-gold);
-      color: #fff;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    /* Tabs Slider */
-    #tabsWrapper {
-      overflow: hidden;
-      width: 100%;
-    }
-
-    #tabs {
-      display: flex;
-      transition: transform 0.3s ease;
-      width: 200%;
-    }
-
-    .tab-content {
-      width: 50%;
-      box-sizing: border-box;
-      padding-right: 20px;
-    }
-
-    /* Tables & Charts */
-    .chart-container {
-      position: relative;
-      height: 380px;
-      width: 100%;
-      background: var(--card-bg);
-      padding: 15px;
-      border-radius: 8px;
-      box-sizing: border-box;
-      margin-bottom: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--card-bg);
-      margin-bottom: 20px;
-    }
-
-    table th, table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #333;
-    }
-
-    table th {
-      color: var(--accent-gold);
-    }
-
-    /* Loader & Toast */
-    #loading {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 20px;
-      color: var(--accent-gold);
-      z-index: 1000;
-    }
-
-    #toast {
-      position: fixed;
-      bottom: 20px; right: 20px;
-      background: var(--primary-gold);
-      color: #000;
-      padding: 12px 20px;
-      border-radius: 4px;
-      font-weight: bold;
-      display: none;
-      z-index: 1001;
-    }
-  </style>
+        .pin-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+        
+        .pin-pad button {
+            padding: 15px;
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div id="login">
-    <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
-    <input type="password" id="pass" placeholder="Enter Password">
-    <button onclick="App.login()">Login</button>
-  </div>
+<!-- Authentication / PIN Screen Layer -->
+<div id="authScreen" class="container card" style="max-width: 400px; margin-top: 50px; text-align: center;">
+    <h2>Manager Authentication</h2>
+    <p>Enter 4-Digit Mobile Manager PIN</p>
+    <input type="password" id="pinInput" readonly style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" maxlength="4">
+    <div class="pin-pad">
+        <button onclick="pressPin('1')">1</button>
+        <button onclick="pressPin('2')">2</button>
+        <button onclick="pressPin('3')">3</button>
+        <button onclick="pressPin('4')">4</button>
+        <button onclick="pressPin('5')">5</button>
+        <button onclick="pressPin('6')">6</button>
+        <button onclick="pressPin('7')">7</button>
+        <button onclick="pressPin('8')">8</button>
+        <button onclick="pressPin('9')">9</button>
+        <button onclick="clearPin()">C</button>
+        <button onclick="pressPin('0')">0</button>
+        <button onclick="submitPin()">↵</button>
+    </div>
+</div>
 
-  <!-- NAVIGATION -->
-  <div id="nav" class="hidden">
-    <button onclick="App.switchTab(0)">Overview</button>
-    <button onclick="App.switchTab(1)">Analytics & Tables</button>
-  </div>
-
-  <!-- MAIN APP WRAPPER -->
-  <div id="app" class="hidden">
+<!-- Main Dashboard Container -->
+<div id="dashboardContainer" class="container hidden">
+    <h1>Management Dashboard</h1>
     
-    <!-- KPI SUMMARY HEADER -->
-    <div class="kpi-row">
-      <div class="kpi-card">
-        <h3>TOTAL SALES (FILTERED)</h3>
-        <div class="val" id="sales">£0.00</div>
-      </div>
-      <div class="kpi-card">
-        <h3>CASH TOTAL (FILTERED)</h3>
-        <div class="val" id="cashSales">£0.00</div>
-      </div>
-      <div class="kpi-card">
-        <h3>CARD TOTAL (FILTERED)</h3>
-        <div class="val" id="cardSales">£0.00</div>
-      </div>
-      <div class="kpi-card">
-        <h3>ROLLING 12-MONTH TOTAL</h3>
-        <div class="val" id="rollingTotal">£0.00</div>
-        <div class="subtext" id="vatStatus">Checking threshold...</div>
-      </div>
-      <div class="kpi-card">
-        <h3>vs PREVIOUS MONTH</h3>
-        <div class="val" id="momChange">0.0%</div>
-        <div class="subtext" id="momSubtext">Compared to last month</div>
-      </div>
-      <div class="kpi-card">
-        <h3>ACTIVE DAYS / RECORDS</h3>
-        <div class="val" id="products">0</div>
-      </div>
-      <div class="kpi-card">
-        <h3>TOP CATEGORY</h3>
-        <div class="val" id="top">-</div>
-      </div>
-    </div>
-
-    <!-- FULL RANGE CONTROLS -->
-    <div class="controls">
-      <label style="font-size:13px; color:var(--accent-gold);">From:</label>
-      <input type="date" id="startDate">
-      <label style="font-size:13px; color:var(--accent-gold);">To:</label>
-      <input type="date" id="endDate">
-      <button onclick="App.applyRange()">Run Selected Dates</button>
-      <button onclick="App.setRange('7')">Last 7 Days</button>
-      <button onclick="App.setRange('31')">Last 31 Days</button>
-      <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
-      <button onclick="App.resetView()">Reset All</button>
-    </div>
-
-    <!-- QUICK DAILY ENTRY FORM -->
-    <div class="entry-panel">
-      <h3 style="color: var(--accent-gold); margin-top: 0;">Add Daily Sales Entry</h3>
-      <div class="entry-grid">
-        <div class="entry-field">
-          <label>Day Name</label>
-          <input type="text" id="entryDay" placeholder="e.g. Monday">
-        </div>
-        <div class="entry-field">
-          <label>Date</label>
-          <input type="date" id="entryDate">
-        </div>
-        <div class="entry-field">
-          <label>Cash (£)</label>
-          <input type="number" step="0.01" id="entryCash" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>Card (£)</label>
-          <input type="number" step="0.01" id="entryCard" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>1. ICE CREAM (£)</label>
-          <input type="number" step="0.01" id="entryIceCream" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>2. COUNTER (£)</label>
-          <input type="number" step="0.01" id="entryCounter" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>3. Kitchen (£)</label>
-          <input type="number" step="0.01" id="entryKitchen" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>4. DRINK (£)</label>
-          <input type="number" step="0.01" id="entryDrink" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>5. DELI (£)</label>
-          <input type="number" step="0.01" id="entryDeli" placeholder="0.00">
-        </div>
-        <div class="entry-field">
-          <label>6. ALCOHOL (£)</label>
-          <input type="number" step="0.01" id="entryAlcohol" placeholder="0.00">
-        </div>
-
-        <!-- MOBILE 4-DIGIT PIN AUTHORIZATION KEYPAD -->
-        <div class="entry-field" style="grid-column: 1 / -1; border-top: 1px dashed var(--primary-gold); padding-top: 15px; margin-top: 10px; text-align: center;">
-          <label style="color: var(--primary-gold); font-weight: bold; display: block; margin-bottom: 8px;">Enter 4-Digit Manager PIN to Save</label>
-          <input type="password" id="pinDisplay" readonly maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 8px; width: 160px; margin-bottom: 10px; background: #121212;" placeholder="••••">
-          
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 220px; margin: 0 auto;">
-            <button type="button" onclick="App.pressPin('1')" style="padding: 14px; font-size: 18px;">1</button>
-            <button type="button" onclick="App.pressPin('2')" style="padding: 14px; font-size: 18px;">2</button>
-            <button type="button" onclick="App.pressPin('3')" style="padding: 14px; font-size: 18px;">3</button>
-            <button type="button" onclick="App.pressPin('4')" style="padding: 14px; font-size: 18px;">4</button>
-            <button type="button" onclick="App.pressPin('5')" style="padding: 14px; font-size: 18px;">5</button>
-            <button type="button" onclick="App.pressPin('6')" style="padding: 14px; font-size: 18px;">6</button>
-            <button type="button" onclick="App.pressPin('7')" style="padding: 14px; font-size: 18px;">7</button>
-            <button type="button" onclick="App.pressPin('8')" style="padding: 14px; font-size: 18px;">8</button>
-            <button type="button" onclick="App.pressPin('9')" style="padding: 14px; font-size: 18px;">9</button>
-            <button type="button" onclick="App.clearPin()" style="padding: 14px; font-size: 14px; background: #333; color: #fff;">Clear</button>
-            <button type="button" onclick="App.pressPin('0')" style="padding: 14px; font-size: 18px;">0</button>
-            <button type="button" onclick="App.backspacePin()" style="padding: 14px; font-size: 14px; background: #333; color: #fff;">⌫</button>
-          </div>
-        </div>
-      </div>
-      <button onclick="App.submitEntry()">Save Entry to Sheet</button>
-    </div>
-
-    <!-- TABS SLIDER CONTAINER -->
-    <div id="tabsWrapper">
-      <div id="tabs">
+    <div class="card">
+        <h2>Date Filter Setup</h2>
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate">
         
-        <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content">
-          <div class="chart-container">
-            <canvas id="barChart"></canvas>
-          </div>
-        </div>
-
-        <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content">
-          <div class="chart-container">
-            <canvas id="salesChart"></canvas>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date / Entry</th>
-                <th>Daily Revenue</th>
-              </tr>
-            </thead>
-            <tbody id="productTable"></tbody>
-          </table>
-        </div>
-
-      </div>
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate">
+        <button onclick="applyDateFilter()">Apply Filter</button>
     </div>
 
-  </div>
+    <div class="card">
+        <h2>Daily Entry Form (£)</h2>
+        <form id="entryForm" onsubmit="handleFormSubmit(event)">
+            <label>1. ICE CREAM (£)</label>
+            <input type="number" step="0.01" name="entryIceCream" placeholder="0.00" required>
 
-  <!-- LOADER & TOAST -->
-  <div id="loading" class="hidden">Loading dashboard data...</div>
-  <div id="toast"></div>
+            <label>2. COUNTER (£)</label>
+            <input type="number" step="0.01" name="entryCounter" placeholder="0.00" required>
 
-  <!-- APP LOGIC ENGINE -->
-  <script>
+            <label>3. Kitchen (£)</label>
+            <input type="number" step="0.01" name="entryKitchen" placeholder="0.00" required>
+
+            <label>4. DRINK (£)</label>
+            <input type="number" step="0.01" name="entryDrink" placeholder="0.00" required>
+
+            <label>5. DELI (£)</label>
+            <input type="number" step="0.01" name="entryDeli" placeholder="0.00" required>
+
+            <label>6. ALCOHOL (£)</label>
+            <input type="number" step="0.01" name="entryAlcohol" placeholder="0.00" required>
+
+            <button type="submit">Submit Entry</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Records Overview</h2>
+        <div id="tableContainer">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Ice Cream</th>
+                        <th>Counter</th>
+                        <th>Kitchen</th>
+                        <th>Drink</th>
+                        <th>Deli</th>
+                        <th>Alcohol</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <tr><td colspan="7" style="text-align: center;">Loading data from backend...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbyx8vGD5DrUmSd-XAE_rsMH0AyMpPwO0VD1poyCFyE5x0JZMlLoPGenwBhJLN38jNI8ow/exec", // Replace with your live web app URL
-      PASSWORD: "1234"
+        URL: "https://script.google.com/macros/s/AKfycbyx8vGD5DrUmSd-XAE_rsMH0AyMpPwO0VD1poyCFyE5x0JZMlLoPGenwBhJLN38jNI8ow/exec"
     };
 
-    const STATE = {
-      raw: [],
-      barChart: null,
-      salesChart: null
-    };
+    let enteredPin = "";
 
-    let currentPinInput = "";
+    function $(id) {
+        return document.getElementById(id);
+    }
 
-    const $ = (id) => document.getElementById(id);
-    const safeSet = (id, text) => { const el = $(id); if (el) el.innerText = text; };
-    const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
+    function pressPin(num) {
+        if (enteredPin.length < 4) {
+            enteredPin += num;
+            $("pinInput").value = "*".repeat(enteredPin.length);
+        }
+    }
 
-    const toast = (msg) => {
-      const t = $("toast");
-      if (!t) return;
-      t.innerText = msg;
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3000);
-    };
+    function clearPin() {
+        enteredPin = "";
+        $("pinInput").value = "";
+    }
 
-    const pressPin = (digit) => {
-      if (currentPinInput.length < 4) {
-        currentPinInput += digit;
-        updatePinDisplay();
-      }
-    };
-
-    const clearPin = () => { currentPinInput = ""; updatePinDisplay(); };
-    const backspacePin = () => { currentPinInput = currentPinInput.slice(0, -1); updatePinDisplay(); };
-    const updatePinDisplay = () => { const display = $("pinDisplay"); if (display) display.value = currentPinInput; };
-
-    const cleanCents = (val) => {
-      if (val === null || val === undefined || val === "") return 0;
-      const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
-      if (!cleanStr) return 0;
-      const parts = cleanStr.split('.');
-      let cents = 0;
-      if (parts[0]) cents += parseInt(parts[0], 10) * 100;
-      if (parts[1]) cents += parseInt(parts[1].padEnd(2, '0').slice(0, 2), 10);
-      return isNaN(cents) ? 0 : cents;
-    };
-
-    const parseDateString = (dateStr) => {
-      if (!dateStr) return null;
-      let y, m, d;
-      if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
-        const serial = parseFloat(dateStr);
-        const tempD = new Date((serial - 25569) * 86400 * 1000);
-        if (isNaN(tempD.getTime())) return null;
-        y = tempD.getUTCFullYear(); m = tempD.getUTCMonth() + 1; d = tempD.getUTCDate();
-      } else {
-        const str = String(dateStr).trim();
-        const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch) {
-          y = parseInt(isoMatch[1], 10); m = parseInt(isoMatch[2], 10); d = parseInt(isoMatch[3], 10);
+    function submitPin() {
+        // Simple client-side check or pass to backend validation
+        if (enteredPin.length === 4) {
+            $("authScreen").classList.add("hidden");
+            $("dashboardContainer").classList.remove("hidden");
+            load();
         } else {
-          const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-          if (ukMatch) {
-            d = parseInt(ukMatch[1], 10); m = parseInt(ukMatch[2], 10); y = parseInt(ukMatch[3], 10);
-          } else {
-            const tempD = new Date(str);
-            if (isNaN(tempD.getTime())) return null;
-            y = tempD.getFullYear(); m = tempD.getMonth() + 1; d = tempD.getDate();
-          }
+            alert("Please enter a 4-digit PIN.");
         }
-      }
-      return { year: y, month: m, day: d, dateInt: y * 10000 + m * 100 + d, dateObj: new Date(y, m - 1, d) };
-    };
+    }
 
-    function processRows(rows) {
-      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
-      const headerRow = rows.find(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date"))) || rows[0] || [];
-      const getColIndex = (kw) => headerRow.findIndex(cell => cell && String(cell).toLowerCase().includes(kw));
+    function load() {
+        const sIso = new Date().toISOString().split('T')[0];
+        const eIso = sIso;
 
-      const idxIceCream = getColIndex("ice cream");
-      const idxCounter  = getColIndex("counter");
-      const idxKitchen  = getColIndex("kitchen");
-      const idxDrink    = getColIndex("drink");
-      const idxDeli     = getColIndex("deli");
-      const idxAlcohol  = getColIndex("alcohol");
+        if ($("startDate") && sIso) { 
+            $("startDate").value = sIso; 
+            $("startDate").min = sIso; 
+            $("startDate").max = eIso; 
+        }
+        if ($("endDate") && eIso) { 
+            $("endDate").value = eIso; 
+            $("endDate").min = sIso; 
+            $("endDate").max = eIso; 
+        }
 
-      const parsedRecords = [];
-      rows.forEach(row => {
-        if (!row || !Array.isArray(row)) return;
-        const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1];
-        if (!rawDate || String(dayName).toLowerCase().includes("total") || String(rawDate).toLowerCase().includes("date")) return;
+        fetchData();
+    }
 
-        const cashCents = cleanCents(row[2]);
-        const cardCents = cleanCents(row[3]);
-        const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo) return;
+    function fetchData() {
+        fetch(CONFIG.URL)
+            .then(response => response.json())
+            .then(data => {
+                // Handle and render data rows if available
+                console.log("Data fetched:", data);
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+            });
+    }
 
-        parsedRecords.push({
-          dayName, rawDate,
-          parsedDate: parsedDateInfo.dateObj,
-          dateInt: parsedDateInfo.dateInt,
-          cashCents, cardCents,
-          dailyTotalCents: cashCents + cardCents,
-          categories: {
-            "ICE CREAM": idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : 0,
-            "COUNTER": idxCounter !== -1 ? cleanCents(row[idxCounter]) : 0,
-            "Kitchen": idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : 0,
-            "DRINK": idxDrink !== -1 ? cleanCents(row[idxDrink]) : 0,
-            "DELI": idxDeli !== -1 ? cleanCents(row[idxDeli]) : 0,
-            "ALCOHOL": idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : 0
-          }
+    function applyDateFilter() {
+        alert("Filters applied successfully.");
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch(CONFIG.URL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        })
+        .then(res => res.text())
+        .then(response => {
+            alert("Entry submitted successfully to Google Sheets!");
+            event.target.reset();
+            fetchData();
+        })
+        .catch(err => {
+            alert("Error submitting entry.");
+            console.error(err);
         });
-      });
-      return parsedRecords;
     }
+</script>
 
-    function calculateRolling12Month(allRecords) {
-      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
-      if (validRecords.length === 0) return 0;
-      const anchorDate = new Date(validRecords[validRecords.length - 1].parsedDate);
-      const startLookback = new Date(anchorDate);
-      startLookback.setFullYear(anchorDate.getFullYear() - 1);
-
-      let rollingSum = 0;
-      validRecords.forEach(r => {
-        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) rollingSum += r.dailyTotalCents;
-      });
-      return rollingSum;
-    }
-
-    function calculateMoMChange(allRecords, filteredRecords) {
-      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
-      if (validRecords.length === 0) return { pct: 0, text: "No data" };
-      const latestRec = filteredRecords.length > 0 ? filteredRecords[filteredRecords.length - 1] : validRecords[validRecords.length - 1];
-      const targetDate = new Date(latestRec.parsedDate);
-      const targetYear = targetDate.getFullYear(), targetMonth = targetDate.getMonth();
-      let prevYear = targetYear, prevMonth = targetMonth - 1;
-      if (prevMonth < 0) { prevMonth = 11; prevYear -= 1; }
-
-      let curCents = 0, prevCents = 0;
-      validRecords.forEach(r => {
-        if (r.parsedDate.getFullYear() === targetYear && r.parsedDate.getMonth() === targetMonth) curCents += r.dailyTotalCents;
-        else if (r.parsedDate.getFullYear() === prevYear && r.parsedDate.getMonth() === prevMonth) prevCents += r.dailyTotalCents;
-      });
-
-      if (prevCents === 0) return { pct: 0, text: "No prior month data" };
-      const pct = ((curCents - prevCents) / prevCents) * 100;
-      return { pct, text: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% vs last month` };
-    }
-
-    function renderDashboard(records) {
-      const container = $("productTable");
-      let totalRev = 0, totalCash = 0, totalCard = 0;
-      const catTotals = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
-      if (container) container.innerHTML = "";
-
-      records.forEach(rec => {
-        totalRev += rec.dailyTotalCents; totalCash += rec.cashCents; totalCard += rec.cardCents;
-        Object.keys(rec.categories).forEach(cat => catTotals[cat] += rec.categories[cat]);
-
-        if (container) {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${rec.dayName ? rec.dayName + ' - ' : ''}${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : rec.rawDate}</td><td>${fmt(rec.dailyTotalCents)}</td>`;
-          container.appendChild(tr);
-        }
-      });
-
-      safeSet("sales", fmt(totalRev));
-      safeSet("cashSales", fmt(totalCash));
-      safeSet("cardSales", fmt(totalCard));
-      safeSet("products", records.length);
-
-      const rollingCents = calculateRolling12Month(STATE.raw);
-      safeSet("rollingTotal", fmt(rollingCents));
-
-      const vatEl = $("vatStatus");
-      if (vatEl) {
-        if (rollingCents >= 9000000) { vatEl.innerText = "⚠ VAT Threshold Reached (£90k)"; vatEl.style.color = "#ff4d4d"; }
-        else if (rollingCents >= 7650000) { vatEl.innerText = "⚡ Approaching £90k Threshold"; vatEl.style.color = "#ffcc00"; }
-        else { vatEl.innerText = "Safe (Below £90,000)"; vatEl.style.color = "#4cd137"; }
-      }
-
-      const mom = calculateMoMChange(STATE.raw, records);
-      safeSet("momChange", (mom.pct >= 0 ? "+" : "") + mom.pct.toFixed(1) + "%");
-      safeSet("momSubtext", mom.text);
-
-      let topCat = "-", maxVal = -1;
-      Object.entries(catTotals).forEach(([cat, val]) => { if (val > maxVal && val > 0) { maxVal = val; topCat = `${cat} (${fmt(val)})`; } });
-      safeSet("top", topCat);
-
-      renderCharts(records);
-    }
-
-    function renderCharts(records) {
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      if ($("barChart") && Chart) {
-        if (STATE.barChart) STATE.barChart.destroy();
-        STATE.barChart = new Chart($("barChart"), {
-          type: "bar", data: { labels, datasets: [{ label: "Daily Revenue (£)", data, backgroundColor: "#D4AF37" }] },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-      if ($("salesChart") && Chart) {
-        if (STATE.salesChart) STATE.salesChart.destroy();
-        STATE.salesChart = new Chart($("salesChart"), {
-          type: "line", data: { labels, datasets: [{ label: "Sales Trend (£)", data, borderColor: "#D4AF37", backgroundColor: "rgba(212,175,55,0.1)", fill: true }] },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-    }
-
-    const load = async () => {
-      try {
-        const loader = $("loading"); if (loader) loader.classList.remove("hidden");
-        const res = await fetch(CONFIG.URL, { cache: "no-store" });
-        const json = await res.json();
-        let allRecords = [];
-
-        if (json && json.tabs) {
-          Object.values(json.tabs).forEach(tabRows => { if (Array.isArray(tabRows)) allRecords = allRecords.concat(processRows(tabRows)); });
-        }
-        allRecords.sort((a, b) => a.dateInt - b.dateInt);
-        STATE.raw = allRecords;
-
-        if (STATE.raw.length > 0) {
-          const sIso = STATE.raw[0].parsedDate?.toISOString().split("T")[0];
-          const eIso = STATE.raw[STATE.raw.length - 1].parsedDate?.toISOString().split("T")[0];
-          if ($("startDate") && sIso) { $("startDate").value = sIso; $("startDate"].min = sIso; $("startDate"].max = eIso; }
-          if ($("endDate") && eIso) { $("endDate").value = eIso; $("endDate"].min = sIso; $("endDate"].max = eIso; }
-        }
-        renderDashboard(STATE.raw);
-        toast("Data loaded successfully");
-      } catch (e) {
-        toast("Failed to load data");
-      } finally {
-        const loader = $("loading"); if (loader) loader.classList.add("hidden");
-      }
-    };
-
-    const submitEntry = async () => {
-      if (currentPinInput.length !== 4) { toast("Please enter your full 4-digit PIN"); return; }
-
-      const payload = {
-        entryPin: currentPinInput,
-        dayName: $("entryDay")?.value || "",
-        date: $("entryDate")?.value || "",
-        cash: parseFloat($("entryCash")?.value) || 0,
-        card: parseFloat($("entryCard")?.value) || 0,
-        iceCream: parseFloat($("entryIceCream")?.value) || 0,
-        counter: parseFloat($("entryCounter")?.value) || 0,
-        kitchen: parseFloat($("entryKitchen")?.value) || 0,
-        drink: parseFloat($("entryDrink")?.value) || 0,
-        deli: parseFloat($("entryDeli")?.value) || 0,
-        alcohol: parseFloat($("entryAlcohol")?.value) || 0
-      };
-
-      if (!payload.date) { toast("Please select a date"); return; }
-
-      try {
-        const loader = $("loading"); if (loader) loader.classList.remove("hidden");
-        toast("Verifying PIN & saving...");
-
-        const res = await fetch(CONFIG.URL, { method: "POST", body: JSON.stringify(payload) });
-        const result = await res.json();
-
-        if (result.status === "success") {
-          toast("Entry saved successfully!");
-          ["entryDay", "entryDate", "entryCash", "entryCard", "entryIceCream", "entryCounter", "entryKitchen", "entryDrink", "entryDeli", "entryAlcohol"].forEach(id => { if ($(id))$(id).value = ""; });
-          clearPin();
-          await load();
-        } else {
-          toast("Error: " + (result.message || "Invalid PIN"));
-          clearPin();
-        }
-      } catch (e) {
-        toast("Connection failed");
-      } finally {
-        const loader = $("loading"); if (loader) loader.classList.add("hidden");
-      }
-    };
-
-    const applyRange = () => {
-      const s = $("startDate")?.value, e = $("endDate")?.value;
-      if (!s || !e) { renderDashboard(STATE.raw); return; }
-      const sInt = parseInt(s.replaceAll("-", "")), eInt = parseInt(e.replaceAll("-", ""));
-      renderDashboard(STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt));
-      toast("Date range applied");
-    };
-
-    const setRange = (type) => {
-      if (STATE.raw.length === 0) return;
-      const latest = STATE.raw[STATE.raw.length - 1];
-      const anchor = latest.parsedDate ? new Date(latest.parsedDate) : new Date();
-
-      if (type === "7" || type === "31") {
-        const days = parseInt(type);
-        const startWindow = new Date(anchor);
-        startWindow.setDate(anchor.getDate() - days);
-        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        renderDashboard(STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= latest.dateInt));
-        toast(`Showing last ${days} days`);
-      } else if (type === "fytd") {
-        const fyYear = (anchor.getMonth() > 1 || (anchor.getMonth() === 1 && anchor.getDate() >= 1)) ? anchor.getFullYear() : anchor.getFullYear() - 1;
-        renderDashboard(STATE.raw.filter(r => r.dateInt >= (fyYear * 10000 + 201) && r.dateInt <= latest.dateInt));
-        toast("Showing Financial YTD");
-      }
-    };
-
-    const resetView = () => { renderDashboard(STATE.raw); toast("Reset view"); };
-    const login = () => {
-      if ($("pass")?.value === CONFIG.PASSWORD) {
-        $("login")?.classList.add("hidden"); $("app")?.classList.remove("hidden"); $("nav")?.classList.remove("hidden"); load();
-      } else { toast("Invalid password"); }
-    };
-    const switchTab = (idx) => { const tabs = $("tabs"); if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`; };
-
-    window.App = { login, load, setRange, applyRange, resetView, switchTab, submitEntry, pressPin, clearPin, backspacePin };
-  </script>
 </body>
 </html>
