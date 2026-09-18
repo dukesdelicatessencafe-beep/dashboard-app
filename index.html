@@ -270,7 +270,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbwnCqt1dwhjcQNSrDRygzUprIT18kGY34KpauYXuW7MA-lrB4mNUcy6C1WoQ6i-dkq4cQ/exec",
+      URL: "https://script.google.com/macros/s/AKfycbwJGEYV6WlBJfoqlnySram-ef71q32ZZT-r3vTaL6v6xn1_PqLmYcRDLVPOSPyZywhY/exec",
       PASSWORD: "1234"
     };
 
@@ -367,15 +367,17 @@
       const getColIndex = (keywords) => {
         if (!Array.isArray(keywords)) keywords = [keywords];
         for (let kw of keywords) {
-          const idx = headerRow.findIndex(cell => 
-            cell && String(cell).toLowerCase().trim().includes(kw.toLowerCase())
-          );
+          const idx = headerRow.findIndex(cell => {
+            if (!cell) return false;
+            const headerText = String(cell).toLowerCase().trim();
+            return headerText === kw.toLowerCase() || headerText.includes(kw.toLowerCase());
+          });
           if (idx !== -1) return idx;
         }
         return -1;
       };
 
-      const idxTotal   = getColIndex(["total", "daily total"]);
+      const idxTotal    = getColIndex(["total", "daily total"]);
       const idxIceCream = getColIndex(["ice cream", "ice-cream"]);
       const idxCounter  = getColIndex(["counter"]);
       const idxKitchen  = getColIndex(["kitchen", "food"]);
@@ -396,7 +398,7 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Reject summary rows (weekly totals, monthly totals, header echoes)
+        // Strict rejection filter for summary and total rows to prevent double-counting
         if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
           return;
         }
@@ -552,7 +554,7 @@
       });
     }
 
-const load = async () => {
+    const load = async () => {
       try {
         const loader = $("loading");
         if (loader) loader.classList.remove("hidden");
@@ -562,7 +564,6 @@ const load = async () => {
 
         let allRecords = [];
 
-        // Explicitly loop through all sheets/tabs returned from the backend
         if (json && json.tabs) {
           Object.keys(json.tabs).forEach(tabName => {
             const tabRows = json.tabs[tabName];
@@ -577,7 +578,7 @@ const load = async () => {
           allRecords = processRows(json);
         }
 
-        // Sort records chronologically so the 31-day slice grabs the most recent month across all sheets
+        // Sort all records chronologically so the 31-day slice captures the most recent data
         allRecords.sort((a, b) => a.dateInt - b.dateInt);
 
         STATE.raw = allRecords;
