@@ -327,8 +327,9 @@
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
       
-      // Robust safeguard for £-, £ -, -£, and general unlogged dash placeholders
-      if (str === "-" || str === "£ -" || str === "-£" || str === "£-" || str === "- £" || str === "£-") {
+      // Universal safeguard: if there are no digits in the string at all, return 0 immediately
+      // This catches £-, £ -, -, £, spaces, and any non-numeric placeholder variations.
+      if (!/\d/.test(str)) {
         return 0;
       }
 
