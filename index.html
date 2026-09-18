@@ -120,6 +120,39 @@
       border-radius: 4px;
     }
 
+    /* Quick Entry Form Panel */
+    .entry-panel {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid var(--primary-gold);
+      margin-bottom: 20px;
+    }
+
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .entry-field label {
+      display: block;
+      font-size: 12px;
+      color: var(--accent-gold);
+      margin-bottom: 4px;
+    }
+
+    .entry-field input {
+      width: 100%;
+      padding: 8px;
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
     /* Tabs Slider */
     #tabsWrapper {
       overflow: hidden;
@@ -167,7 +200,7 @@
       color: var(--accent-gold);
     }
 
-    /* Notification & Loader */
+    /* Loader & Toast */
     #loading {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -205,7 +238,7 @@
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
     <button onclick="App.switchTab(0)">Overview</button>
-    <button onclick="App.switchTab(1)">Analytics</button>
+    <button onclick="App.switchTab(1)">Analytics & Tables</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -218,9 +251,22 @@
         <div class="val" id="sales">£0.00</div>
       </div>
       <div class="kpi-card">
+        <h3>CASH TOTAL (FILTERED)</h3>
+        <div class="val" id="cashSales">£0.00</div>
+      </div>
+      <div class="kpi-card">
+        <h3>CARD TOTAL (FILTERED)</h3>
+        <div class="val" id="cardSales">£0.00</div>
+      </div>
+      <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">£0.00</div>
         <div class="subtext" id="vatStatus">Checking threshold...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>vs PREVIOUS MONTH</h3>
+        <div class="val" id="momChange">0.0%</div>
+        <div class="subtext" id="momSubtext">Compared to last month</div>
       </div>
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
@@ -232,7 +278,7 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS WITH EXPLICIT BUTTON -->
+    <!-- FULL RANGE CONTROLS -->
     <div class="controls">
       <label style="font-size:13px; color:var(--accent-gold);">From:</label>
       <input type="date" id="startDate">
@@ -243,6 +289,75 @@
       <button onclick="App.setRange('31')">Last 31 Days</button>
       <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
       <button onclick="App.resetView()">Reset All</button>
+    </div>
+
+    <!-- QUICK DAILY ENTRY FORM -->
+    <div class="entry-panel">
+      <h3 style="color: var(--accent-gold); margin-top: 0;">Add Daily Sales Entry</h3>
+      <div class="entry-grid">
+        <div class="entry-field">
+          <label>Day Name</label>
+          <input type="text" id="entryDay" placeholder="e.g. Monday">
+        </div>
+        <div class="entry-field">
+          <label>Date</label>
+          <input type="date" id="entryDate">
+        </div>
+        <div class="entry-field">
+          <label>Cash (£)</label>
+          <input type="number" step="0.01" id="entryCash" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>Card (£)</label>
+          <input type="number" step="0.01" id="entryCard" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>1. ICE CREAM (£)</label>
+          <input type="number" step="0.01" id="entryIceCream" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>2. COUNTER (£)</label>
+          <input type="number" step="0.01" id="entryCounter" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>3. Kitchen (£)</label>
+          <input type="number" step="0.01" id="entryKitchen" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>4. DRINK (£)</label>
+          <input type="number" step="0.01" id="entryDrink" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>5. DELI (£)</label>
+          <input type="number" step="0.01" id="entryDeli" placeholder="0.00">
+        </div>
+        <div class="entry-field">
+          <label>6. ALCOHOL (£)</label>
+          <input type="number" step="0.01" id="entryAlcohol" placeholder="0.00">
+        </div>
+
+        <!-- MOBILE 4-DIGIT PIN AUTHORIZATION KEYPAD -->
+        <div class="entry-field" style="grid-column: 1 / -1; border-top: 1px dashed var(--primary-gold); padding-top: 15px; margin-top: 10px; text-align: center;">
+          <label style="color: var(--primary-gold); font-weight: bold; display: block; margin-bottom: 8px;">Enter 4-Digit Manager PIN to Save</label>
+          <input type="password" id="pinDisplay" readonly maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 8px; width: 160px; margin-bottom: 10px; background: #121212;" placeholder="••••">
+          
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 220px; margin: 0 auto;">
+            <button type="button" onclick="App.pressPin('1')" style="padding: 14px; font-size: 18px;">1</button>
+            <button type="button" onclick="App.pressPin('2')" style="padding: 14px; font-size: 18px;">2</button>
+            <button type="button" onclick="App.pressPin('3')" style="padding: 14px; font-size: 18px;">3</button>
+            <button type="button" onclick="App.pressPin('4')" style="padding: 14px; font-size: 18px;">4</button>
+            <button type="button" onclick="App.pressPin('5')" style="padding: 14px; font-size: 18px;">5</button>
+            <button type="button" onclick="App.pressPin('6')" style="padding: 14px; font-size: 18px;">6</button>
+            <button type="button" onclick="App.pressPin('7')" style="padding: 14px; font-size: 18px;">7</button>
+            <button type="button" onclick="App.pressPin('8')" style="padding: 14px; font-size: 18px;">8</button>
+            <button type="button" onclick="App.pressPin('9')" style="padding: 14px; font-size: 18px;">9</button>
+            <button type="button" onclick="App.clearPin()" style="padding: 14px; font-size: 14px; background: #333; color: #fff;">Clear</button>
+            <button type="button" onclick="App.pressPin('0')" style="padding: 14px; font-size: 18px;">0</button>
+            <button type="button" onclick="App.backspacePin()" style="padding: 14px; font-size: 14px; background: #333; color: #fff;">⌫</button>
+          </div>
+        </div>
+      </div>
+      <button onclick="App.submitEntry()">Save Entry to Sheet</button>
     </div>
 
     <!-- TABS SLIDER CONTAINER -->
@@ -284,7 +399,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "YOUR_DEPLOYED_APPS_SCRIPT_URL_HERE",
+      URL: "YOUR_DEPLOYED_APPS_SCRIPT_URL_HERE", // Replace with your live web app URL
       PASSWORD: "1234"
     };
 
@@ -294,13 +409,10 @@
       salesChart: null
     };
 
+    let currentPinInput = "";
+
     const $ = (id) => document.getElementById(id);
-
-    const safeSet = (id, text) => {
-      const el = $(id);
-      if (el) el.innerText = text;
-    };
-
+    const safeSet = (id, text) => { const el = $(id); if (el) el.innerText = text; };
     const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
 
     const toast = (msg) => {
@@ -311,130 +423,85 @@
       setTimeout(() => { t.style.display = "none"; }, 3000);
     };
 
+    const pressPin = (digit) => {
+      if (currentPinInput.length < 4) {
+        currentPinInput += digit;
+        updatePinDisplay();
+      }
+    };
+
+    const clearPin = () => { currentPinInput = ""; updatePinDisplay(); };
+    const backspacePin = () => { currentPinInput = currentPinInput.slice(0, -1); updatePinDisplay(); };
+    const updatePinDisplay = () => { const display = $("pinDisplay"); if (display) display.value = currentPinInput; };
+
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
       if (!cleanStr) return 0;
-      
       const parts = cleanStr.split('.');
       let cents = 0;
-      
-      if (parts[0]) {
-        cents += parseInt(parts[0], 10) * 100;
-      }
-      if (parts[1]) {
-        let dec = parts[1].padEnd(2, '0').slice(0, 2);
-        cents += parseInt(dec, 10);
-      }
-      
+      if (parts[0]) cents += parseInt(parts[0], 10) * 100;
+      if (parts[1]) cents += parseInt(parts[1].padEnd(2, '0').slice(0, 2), 10);
       return isNaN(cents) ? 0 : cents;
     };
 
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
-
       let y, m, d;
-
       if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
         const serial = parseFloat(dateStr);
-        const utcDays = Math.floor(serial - 25569);
-        const utcValue = utcDays * 86400 * 1000;
-        const tempD = new Date(utcValue);
+        const tempD = new Date((serial - 25569) * 86400 * 1000);
         if (isNaN(tempD.getTime())) return null;
-        y = tempD.getUTCFullYear();
-        m = tempD.getUTCMonth() + 1;
-        d = tempD.getUTCDate();
+        y = tempD.getUTCFullYear(); m = tempD.getUTCMonth() + 1; d = tempD.getUTCDate();
       } else {
         const str = String(dateStr).trim();
         const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (isoMatch) {
-          y = parseInt(isoMatch[1], 10);
-          m = parseInt(isoMatch[2], 10);
-          d = parseInt(isoMatch[3], 10);
+          y = parseInt(isoMatch[1], 10); m = parseInt(isoMatch[2], 10); d = parseInt(isoMatch[3], 10);
         } else {
           const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
           if (ukMatch) {
-            d = parseInt(ukMatch[1], 10);
-            m = parseInt(ukMatch[2], 10);
-            y = parseInt(ukMatch[3], 10);
+            d = parseInt(ukMatch[1], 10); m = parseInt(ukMatch[2], 10); y = parseInt(ukMatch[3], 10);
           } else {
             const tempD = new Date(str);
             if (isNaN(tempD.getTime())) return null;
-            y = tempD.getFullYear();
-            m = tempD.getMonth() + 1;
-            d = tempD.getDate();
+            y = tempD.getFullYear(); m = tempD.getMonth() + 1; d = tempD.getDate();
           }
         }
       }
-
-      const dateInt = y * 10000 + m * 100 + d;
-      const dateObj = new Date(y, m - 1, d);
-
-      return { year: y, month: m, day: d, dateInt, dateObj };
+      return { year: y, month: m, day: d, dateInt: y * 10000 + m * 100 + d, dateObj: new Date(y, m - 1, d) };
     };
 
     function processRows(rows) {
       if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
-
       const headerRow = rows.find(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date"))) || rows[0] || [];
+      const getColIndex = (kw) => headerRow.findIndex(cell => cell && String(cell).toLowerCase().includes(kw));
 
-      const getColIndex = (keywords) => {
-        if (!Array.isArray(keywords)) keywords = [keywords];
-        for (let kw of keywords) {
-          const idx = headerRow.findIndex(cell => {
-            if (!cell) return false;
-            const headerText = String(cell).toLowerCase().trim();
-            return headerText === kw.toLowerCase() || headerText.includes(kw.toLowerCase());
-          });
-          if (idx !== -1) return idx;
-        }
-        return -1;
-      };
-
-      const idxTotal    = getColIndex(["total", "daily total"]);
-      const idxIceCream = getColIndex(["ice cream", "ice-cream"]);
-      const idxCounter  = getColIndex(["counter"]);
-      const idxKitchen  = getColIndex(["kitchen", "food"]);
-      const idxDrink    = getColIndex(["drink", "drinks"]);
-      const idxDeli     = getColIndex(["deli"]);
-      const idxAlcohol  = getColIndex(["alcohol", "bar"]);
+      const idxIceCream = getColIndex("ice cream");
+      const idxCounter  = getColIndex("counter");
+      const idxKitchen  = getColIndex("kitchen");
+      const idxDrink    = getColIndex("drink");
+      const idxDeli     = getColIndex("deli");
+      const idxAlcohol  = getColIndex("alcohol");
 
       const parsedRecords = [];
-
       rows.forEach(row => {
         if (!row || !Array.isArray(row)) return;
-
         const dayName = row[0] ? String(row[0]).trim() : "";
         const rawDate = row[1];
-        const cashVal = row[2];
-        const cardVal = row[3];
+        if (!rawDate || String(dayName).toLowerCase().includes("total") || String(rawDate).toLowerCase().includes("date")) return;
 
-        const lowerDay = String(dayName).toLowerCase();
-        const lowerDate = String(rawDate).toLowerCase();
-
-        if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
-          return;
-        }
-
-        const cashCents = cleanCents(cashVal);
-        const cardCents = cleanCents(cardVal);
-        
-        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
-          ? cleanCents(row[idxTotal]) 
-          : (cashCents + cardCents);
-
+        const cashCents = cleanCents(row[2]);
+        const cardCents = cleanCents(row[3]);
         const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo && !dayName && dailyTotalCents === 0) return;
-        if (dailyTotalCents === 0 && !dayName) return;
+        if (!parsedDateInfo) return;
 
         parsedRecords.push({
-          dayName,
-          rawDate,
-          parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
-          dateInt: parsedDateInfo ? parsedDateInfo.dateInt : 0,
-          cashCents,
-          cardCents,
-          dailyTotalCents,
+          dayName, rawDate,
+          parsedDate: parsedDateInfo.dateObj,
+          dateInt: parsedDateInfo.dateInt,
+          cashCents, cardCents,
+          dailyTotalCents: cashCents + cardCents,
           categories: {
             "ICE CREAM": idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : 0,
             "COUNTER": idxCounter !== -1 ? cleanCents(row[idxCounter]) : 0,
@@ -445,320 +512,212 @@
           }
         });
       });
-
       return parsedRecords;
     }
 
     function calculateRolling12Month(allRecords) {
-      if (!allRecords || allRecords.length === 0) return 0;
-
       const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
       if (validRecords.length === 0) return 0;
-
-      const latestRec = validRecords[validRecords.length - 1];
-      const anchorDate = new Date(latestRec.parsedDate);
-      
+      const anchorDate = new Date(validRecords[validRecords.length - 1].parsedDate);
       const startLookback = new Date(anchorDate);
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
-      let rollingSumCents = 0;
+      let rollingSum = 0;
       validRecords.forEach(r => {
-        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
-          rollingSumCents += r.dailyTotalCents;
-        }
+        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) rollingSum += r.dailyTotalCents;
+      });
+      return rollingSum;
+    }
+
+    function calculateMoMChange(allRecords, filteredRecords) {
+      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
+      if (validRecords.length === 0) return { pct: 0, text: "No data" };
+      const latestRec = filteredRecords.length > 0 ? filteredRecords[filteredRecords.length - 1] : validRecords[validRecords.length - 1];
+      const targetDate = new Date(latestRec.parsedDate);
+      const targetYear = targetDate.getFullYear(), targetMonth = targetDate.getMonth();
+      let prevYear = targetYear, prevMonth = targetMonth - 1;
+      if (prevMonth < 0) { prevMonth = 11; prevYear -= 1; }
+
+      let curCents = 0, prevCents = 0;
+      validRecords.forEach(r => {
+        if (r.parsedDate.getFullYear() === targetYear && r.parsedDate.getMonth() === targetMonth) curCents += r.dailyTotalCents;
+        else if (r.parsedDate.getFullYear() === prevYear && r.parsedDate.getMonth() === prevMonth) prevCents += r.dailyTotalCents;
       });
 
-      return rollingSumCents;
+      if (prevCents === 0) return { pct: 0, text: "No prior month data" };
+      const pct = ((curCents - prevCents) / prevCents) * 100;
+      return { pct, text: `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% vs last month` };
     }
 
     function renderDashboard(records) {
       const container = $("productTable");
-      let totalRevCents = 0;
-      const categoryTotalsCents = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
-      };
-
+      let totalRev = 0, totalCash = 0, totalCard = 0;
+      const catTotals = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
       if (container) container.innerHTML = "";
 
       records.forEach(rec => {
-        totalRevCents += rec.dailyTotalCents;
-
-        Object.keys(rec.categories).forEach(cat => {
-          categoryTotalsCents[cat] += rec.categories[cat];
-        });
+        totalRev += rec.dailyTotalCents; totalCash += rec.cashCents; totalCard += rec.cardCents;
+        Object.keys(rec.categories).forEach(cat => catTotals[cat] += rec.categories[cat]);
 
         if (container) {
           const tr = document.createElement("tr");
-          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
-          tr.innerHTML = `
-            <td>${rec.dayName ? rec.dayName + ' - ' : ''}${displayDateStr}</td>
-            <td>${fmt(rec.dailyTotalCents)}</td>
-          `;
+          tr.innerHTML = `<td>${rec.dayName ? rec.dayName + ' - ' : ''}${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : rec.rawDate}</td><td>${fmt(rec.dailyTotalCents)}</td>`;
           container.appendChild(tr);
         }
       });
 
-      safeSet("sales", fmt(totalRevCents));
+      safeSet("sales", fmt(totalRev));
+      safeSet("cashSales", fmt(totalCash));
+      safeSet("cardSales", fmt(totalCard));
       safeSet("products", records.length);
 
       const rollingCents = calculateRolling12Month(STATE.raw);
       safeSet("rollingTotal", fmt(rollingCents));
 
-      const vatThresholdCents = 90000 * 100;
-      const vatStatusEl = $("vatStatus");
-      if (vatStatusEl) {
-        if (rollingCents >= vatThresholdCents) {
-          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
-          vatStatusEl.style.color = "#ff4d4d";
-        } else if (rollingCents >= vatThresholdCents * 0.85) {
-          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
-          vatStatusEl.style.color = "#ffcc00";
-        } else {
-          vatStatusEl.innerText = "Safe (Below £90,000)";
-          vatStatusEl.style.color = "#4cd137";
-        }
+      const vatEl = $("vatStatus");
+      if (vatEl) {
+        if (rollingCents >= 9000000) { vatEl.innerText = "⚠ VAT Threshold Reached (£90k)"; vatEl.style.color = "#ff4d4d"; }
+        else if (rollingCents >= 7650000) { vatEl.innerText = "⚡ Approaching £90k Threshold"; vatEl.style.color = "#ffcc00"; }
+        else { vatEl.innerText = "Safe (Below £90,000)"; vatEl.style.color = "#4cd137"; }
       }
 
-      let topCat = "-";
-      let maxRevCents = -1;
-      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-        if (val > maxRevCents && val > 0) {
-          maxRevCents = val;
-          topCat = `${cat} (${fmt(val)})`;
-        }
-      });
+      const mom = calculateMoMChange(STATE.raw, records);
+      safeSet("momChange", (mom.pct >= 0 ? "+" : "") + mom.pct.toFixed(1) + "%");
+      safeSet("momSubtext", mom.text);
+
+      let topCat = "-", maxVal = -1;
+      Object.entries(catTotals).forEach(([cat, val]) => { if (val > maxVal && val > 0) { maxVal = val; topCat = `${cat} (${fmt(val)})`; } });
       safeSet("top", topCat);
 
-      renderBarChart(records);
-      renderSalesChart(records);
+      renderCharts(records);
     }
 
-    function renderBarChart(records) {
-      const canvas = $("barChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.barChart) STATE.barChart.destroy();
-
+    function renderCharts(records) {
       const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
       const data = records.map(r => r.dailyTotalCents / 100);
 
-      STATE.barChart = new Chart(canvas, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Daily Revenue (£)",
-            data,
-            backgroundColor: "#D4AF37"
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
-    }
-
-    function renderSalesChart(records) {
-      const canvas = $("salesChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.salesChart) STATE.salesChart.destroy();
-
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      STATE.salesChart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Sales Trend (£)",
-            data,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212, 175, 55, 0.1)",
-            fill: true
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
+      if ($("barChart") && Chart) {
+        if (STATE.barChart) STATE.barChart.destroy();
+        STATE.barChart = new Chart($("barChart"), {
+          type: "bar", data: { labels, datasets: [{ label: "Daily Revenue (£)", data, backgroundColor: "#D4AF37" }] },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+      if ($("salesChart") && Chart) {
+        if (STATE.salesChart) STATE.salesChart.destroy();
+        STATE.salesChart = new Chart($("salesChart"), {
+          type: "line", data: { labels, datasets: [{ label: "Sales Trend (£)", data, borderColor: "#D4AF37", backgroundColor: "rgba(212,175,55,0.1)", fill: true }] },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
     }
 
     const load = async () => {
       try {
-        const loader = $("loading");
-        if (loader) loader.classList.remove("hidden");
-
+        const loader = $("loading"); if (loader) loader.classList.remove("hidden");
         const res = await fetch(CONFIG.URL, { cache: "no-store" });
         const json = await res.json();
-
         let allRecords = [];
 
         if (json && json.tabs) {
-          Object.keys(json.tabs).forEach(tabName => {
-            const tabRows = json.tabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              const processed = processRows(tabRows);
-              allRecords = allRecords.concat(processed);
-            }
-          });
-        } else if (json && json.rows && Array.isArray(json.rows)) {
-          allRecords = processRows(json.rows);
-        } else if (Array.isArray(json)) {
-          allRecords = processRows(json);
+          Object.values(json.tabs).forEach(tabRows => { if (Array.isArray(tabRows)) allRecords = allRecords.concat(processRows(tabRows)); });
         }
-
         allRecords.sort((a, b) => a.dateInt - b.dateInt);
         STATE.raw = allRecords;
 
         if (STATE.raw.length > 0) {
-          const earliest = STATE.raw[0];
-          const latest = STATE.raw[STATE.raw.length - 1];
-          if (earliest.parsedDate && latest.parsedDate) {
-            const startIso = earliest.parsedDate.toISOString().split("T")[0];
-            const endIso = latest.parsedDate.toISOString().split("T")[0];
-            
-            if ($("startDate")) {
-              $("startDate").value = startIso;
-              $("startDate").min = startIso;
-              $("startDate").max = endIso;
-            }
-            if ($("endDate")) {
-              $("endDate").value = endIso;
-              $("endDate").min = startIso;
-              $("endDate").max = endIso;
-            }
-          }
+          const sIso = STATE.raw[0].parsedDate?.toISOString().split("T")[0];
+          const eIso = STATE.raw[STATE.raw.length - 1].parsedDate?.toISOString().split("T")[0];
+          if ($("startDate") && sIso) { $("startDate").value = sIso; $("startDate"].min = sIso; $("startDate"].max = eIso; }
+          if ($("endDate") && eIso) { $("endDate").value = eIso; $("endDate"].min = sIso; $("endDate"].max = eIso; }
         }
-
         renderDashboard(STATE.raw);
-        toast("All tabs loaded successfully");
+        toast("Data loaded successfully");
       } catch (e) {
-        console.error("Fetch error:", e);
-        toast("Failed to load spreadsheet data");
+        toast("Failed to load data");
       } finally {
-        const loader = $("loading");
-        if (loader) loader.classList.add("hidden");
+        const loader = $("loading"); if (loader) loader.classList.add("hidden");
+      }
+    };
+
+    const submitEntry = async () => {
+      if (currentPinInput.length !== 4) { toast("Please enter your full 4-digit PIN"); return; }
+
+      const payload = {
+        entryPin: currentPinInput,
+        dayName: $("entryDay")?.value || "",
+        date: $("entryDate")?.value || "",
+        cash: parseFloat($("entryCash")?.value) || 0,
+        card: parseFloat($("entryCard")?.value) || 0,
+        iceCream: parseFloat($("entryIceCream")?.value) || 0,
+        counter: parseFloat($("entryCounter")?.value) || 0,
+        kitchen: parseFloat($("entryKitchen")?.value) || 0,
+        drink: parseFloat($("entryDrink")?.value) || 0,
+        deli: parseFloat($("entryDeli")?.value) || 0,
+        alcohol: parseFloat($("entryAlcohol")?.value) || 0
+      };
+
+      if (!payload.date) { toast("Please select a date"); return; }
+
+      try {
+        const loader = $("loading"); if (loader) loader.classList.remove("hidden");
+        toast("Verifying PIN & saving...");
+
+        const res = await fetch(CONFIG.URL, { method: "POST", body: JSON.stringify(payload) });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          toast("Entry saved successfully!");
+          ["entryDay", "entryDate", "entryCash", "entryCard", "entryIceCream", "entryCounter", "entryKitchen", "entryDrink", "entryDeli", "entryAlcohol"].forEach(id => { if ($(id))$(id).value = ""; });
+          clearPin();
+          await load();
+        } else {
+          toast("Error: " + (result.message || "Invalid PIN"));
+          clearPin();
+        }
+      } catch (e) {
+        toast("Connection failed");
+      } finally {
+        const loader = $("loading"); if (loader) loader.classList.add("hidden");
       }
     };
 
     const applyRange = () => {
-      const startVal = $("startDate")?.value;
-      const endVal = $("endDate")?.value;
-
-      if (!startVal || !endVal) {
-        renderDashboard(STATE.raw);
-        return;
-      }
-
-      const [sY, sM, sD] = startVal.split("-").map(Number);
-      const [eY, eM, eD] = endVal.split("-").map(Number);
-
-      const startInt = sY * 10000 + sM * 100 + sD;
-      const endInt = eY * 10000 + eM * 100 + eD;
-
-      const filtered = STATE.raw.filter(r => {
-        if (!r.dateInt) return true;
-        return r.dateInt >= startInt && r.dateInt <= endInt;
-      });
-
-      renderDashboard(filtered);
+      const s = $("startDate")?.value, e = $("endDate")?.value;
+      if (!s || !e) { renderDashboard(STATE.raw); return; }
+      const sInt = parseInt(s.replaceAll("-", "")), eInt = parseInt(e.replaceAll("-", ""));
+      renderDashboard(STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt));
       toast("Date range applied");
     };
 
     const setRange = (type) => {
       if (STATE.raw.length === 0) return;
-      
-      const latestRec = STATE.raw[STATE.raw.length - 1];
-      const anchorDate = latestRec.parsedDate ? new Date(latestRec.parsedDate) : new Date();
+      const latest = STATE.raw[STATE.raw.length - 1];
+      const anchor = latest.parsedDate ? new Date(latest.parsedDate) : new Date();
 
-      if (type === "7") {
-        let startWindow = new Date(anchorDate);
-        startWindow.setDate(anchorDate.getDate() - 7);
-        
+      if (type === "7" || type === "31") {
+        const days = parseInt(type);
+        const startWindow = new Date(anchor);
+        startWindow.setDate(anchor.getDate() - days);
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const eInt = latestRec.dateInt;
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        renderDashboard(filtered);
-        toast("Showing last 7 active days");
-      } else if (type === "31") {
-        let startWindow = new Date(anchorDate);
-        startWindow.setDate(anchorDate.getDate() - 31);
-        
-        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const eInt = latestRec.dateInt;
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        renderDashboard(filtered);
-        toast("Showing last 31 active days");
+        renderDashboard(STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= latest.dateInt));
+        toast(`Showing last ${days} days`);
       } else if (type === "fytd") {
-        const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
-        const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-        
-        const fyStartInt = fyYear * 10000 + 201;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= latestRec.dateInt);
-        renderDashboard(filtered);
-        toast("Showing Financial Year-to-Date (Feb 1st start)");
+        const fyYear = (anchor.getMonth() > 1 || (anchor.getMonth() === 1 && anchor.getDate() >= 1)) ? anchor.getFullYear() : anchor.getFullYear() - 1;
+        renderDashboard(STATE.raw.filter(r => r.dateInt >= (fyYear * 10000 + 201) && r.dateInt <= latest.dateInt));
+        toast("Showing Financial YTD");
       }
     };
 
-    const resetView = () => {
-      if (STATE.raw.length > 0) {
-        const earliest = STATE.raw[0];
-        const latest = STATE.raw[STATE.raw.length - 1];
-        if (earliest.parsedDate && latest.parsedDate) {
-          if ($("startDate")) $("startDate").value = earliest.parsedDate.toISOString().split("T")[0];
-          if ($("endDate")) $("endDate").value = latest.parsedDate.toISOString().split("T")[0];
-        }
-      }
-      renderDashboard(STATE.raw);
-      toast("Reset to full dataset");
-    };
-
+    const resetView = () => { renderDashboard(STATE.raw); toast("Reset view"); };
     const login = () => {
-      const pwd = $("pass")?.value;
-      if (pwd === CONFIG.PASSWORD) {
-        $("login")?.classList.add("hidden");
-        $("app")?.classList.remove("hidden");
-        $("nav")?.classList.remove("hidden");
-        load();
-      } else {
-        toast("Invalid password");
-      }
+      if ($("pass")?.value === CONFIG.PASSWORD) {
+        $("login")?.classList.add("hidden"); $("app")?.classList.remove("hidden"); $("nav")?.classList.remove("hidden"); load();
+      } else { toast("Invalid password"); }
     };
+    const switchTab = (idx) => { const tabs = $("tabs"); if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`; };
 
-    const switchTab = (idx) => {
-      const tabs = $("tabs");
-      if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
-    };
-
-    window.App = {
-      login,
-      load,
-      setRange,
-      applyRange,
-      resetView,
-      switchTab
-    };
+    window.App = { login, load, setRange, applyRange, resetView, switchTab, submitEntry, pressPin, clearPin, backspacePin };
   </script>
 </body>
 </html>
