@@ -88,13 +88,19 @@
 
     .kpi-card h3 {
       margin: 0 0 5px 0;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--accent-gold);
     }
 
     .kpi-card .val {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: bold;
+    }
+
+    .kpi-card .subtext {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
     }
 
     /* Controls */
@@ -208,8 +214,13 @@
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <h3>TOTAL SALES</h3>
+        <h3>TOTAL SALES (FILTERED)</h3>
         <div class="val" id="sales">£0.00</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ROLLING 12-MONTH TOTAL</h3>
+        <div class="val" id="rollingTotal">£0.00</div>
+        <div class="subtext" id="vatStatus">Checking threshold...</div>
       </div>
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
@@ -221,14 +232,16 @@
       </div>
     </div>
 
-    <!-- DATE RANGE SELECTOR CONTROLS -->
+    <!-- FULL RANGE CONTROLS -->
     <div class="controls">
-      <input type="date" id="startDate">
-      <input type="date" id="endDate">
-      <button onclick="App.applyRange()">Apply Range</button>
-      <button onclick="App.setRange('today')">Today</button>
-      <button onclick="App.setRange('7')">7 Days</button>
-      <button onclick="App.setRange('31')">31 Days</button>
+      <label style="font-size:13px; color:var(--accent-gold);">From:</label>
+      <input type="date" id="startDate" onchange="App.applyRange()">
+      <label style="font-size:13px; color:var(--accent-gold);">To:</label>
+      <input type="date" id="endDate" onchange="App.applyRange()">
+      <button onclick="App.setRange('7')">Last 7 Days</button>
+      <button onclick="App.setRange('31')">Last 31 Days</button>
+      <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
+      <button onclick="App.resetView()">Reset All</button>
     </div>
 
     <!-- TABS SLIDER CONTAINER -->
@@ -270,7 +283,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbwJGEYV6WlBJfoqlnySram-ef71q32ZZT-r3vTaL6v6xn1_PqLmYcRDLVPOSPyZywhY/exec",
+      URL: "YOUR_DEPLOYED_APPS_SCRIPT_URL_HERE",
       PASSWORD: "1234"
     };
 
@@ -398,7 +411,6 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Strict rejection filter for summary and total rows to prevent double-counting
         if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
           return;
         }
@@ -436,11 +448,33 @@
       return parsedRecords;
     }
 
+    function calculateRolling12Month(allRecords) {
+      if (!allRecords || allRecords.length === 0) return 0;
+
+      // Find the latest record date to anchor our 12-month lookback
+      const latestRec = allRecords[allRecords.length - 1];
+      if (!latestRec.parsedDate) return 0;
+
+      const anchorDate = new Date(latestRec.parsedDate);
+      const startLookback = new Date(anchorDate);
+      startLookback.setFullYear(anchorDate.getFullYear() - 1);
+
+      const sInt = startLookback.getFullYear() * 10000 + (startLookback.getMonth() + 1) * 100 + startLookback.getDate();
+      const eInt = latestRec.dateInt;
+
+      let rollingSumCents = 0;
+      allRecords.forEach(r => {
+        if (r.dateInt >= sInt && r.dateInt <= eInt) {
+          rollingSumCents += r.dailyTotalCents;
+        }
+      });
+
+      return rollingSumCents;
+    }
+
     function renderDashboard(records) {
       const container = $("productTable");
       let totalRevCents = 0;
-      let totalCashCents = 0;
-      let totalCardCents = 0;
       const categoryTotalsCents = {
         "ICE CREAM": 0,
         "COUNTER": 0,
@@ -454,8 +488,6 @@
 
       records.forEach(rec => {
         totalRevCents += rec.dailyTotalCents;
-        totalCashCents += rec.cashCents;
-        totalCardCents += rec.cardCents;
 
         Object.keys(rec.categories).forEach(cat => {
           categoryTotalsCents[cat] += rec.categories[cat];
@@ -463,8 +495,9 @@
 
         if (container) {
           const tr = document.createElement("tr");
+          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
           tr.innerHTML = `
-            <td>${rec.dayName} ${rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate)}</td>
+            <td>${rec.dayName ? rec.dayName + ' - ' : ''}${displayDateStr}</td>
             <td>${fmt(rec.dailyTotalCents)}</td>
           `;
           container.appendChild(tr);
@@ -473,6 +506,25 @@
 
       safeSet("sales", fmt(totalRevCents));
       safeSet("products", records.length);
+
+      // Compute and display Rolling 12-Month Total across ALL raw records
+      const rollingCents = calculateRolling12Month(STATE.raw);
+      safeSet("rollingTotal", fmt(rollingCents));
+
+      const vatThresholdCents = 90000 * 100;
+      const vatStatusEl = $("vatStatus");
+      if (vatStatusEl) {
+        if (rollingCents >= vatThresholdCents) {
+          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+          vatStatusEl.style.color = "#ff4d4d";
+        } else if (rollingCents >= vatThresholdCents * 0.85) {
+          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
+          vatStatusEl.style.color = "#ffcc00";
+        } else {
+          vatStatusEl.innerText = "Safe (Below £90,000)";
+          vatStatusEl.style.color = "#4cd137";
+        }
+      }
 
       let topCat = "-";
       let maxRevCents = -1;
@@ -494,9 +546,8 @@
 
       if (STATE.barChart) STATE.barChart.destroy();
 
-      const recentRecords = records.slice(-31);
-      const labels = recentRecords.map(r => r.dayName || (r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate)));
-      const data = recentRecords.map(r => r.dailyTotalCents / 100);
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
 
       STATE.barChart = new Chart(canvas, {
         type: "bar",
@@ -526,16 +577,15 @@
 
       if (STATE.salesChart) STATE.salesChart.destroy();
 
-      const recentRecords = records.slice(-31);
-      const labels = recentRecords.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = recentRecords.map(r => r.dailyTotalCents / 100);
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
 
       STATE.salesChart = new Chart(canvas, {
         type: "line",
         data: {
           labels,
           datasets: [{
-            label: "Sales Trend (31 Days)",
+            label: "Sales Trend (£)",
             data,
             borderColor: "#D4AF37",
             backgroundColor: "rgba(212, 175, 55, 0.1)",
@@ -578,10 +628,32 @@
           allRecords = processRows(json);
         }
 
-        // Sort all records chronologically so the 31-day slice captures the most recent data
+        // Sort all records chronologically
         allRecords.sort((a, b) => a.dateInt - b.dateInt);
 
         STATE.raw = allRecords;
+
+        // Set date pickers to cover the full dataset range automatically
+        if (STATE.raw.length > 0) {
+          const earliest = STATE.raw[0];
+          const latest = STATE.raw[STATE.raw.length - 1];
+          if (earliest.parsedDate && latest.parsedDate) {
+            const startIso = earliest.parsedDate.toISOString().split("T")[0];
+            const endIso = latest.parsedDate.toISOString().split("T")[0];
+            
+            if ($("startDate")) {
+              $("startDate").value = startIso;
+              $("startDate").min = startIso;
+              $("startDate").max = endIso;
+            }
+            if ($("endDate")) {
+              $("endDate").value = endIso;
+              $("endDate").min = startIso;
+              $("endDate").max = endIso;
+            }
+          }
+        }
+
         renderDashboard(STATE.raw);
         toast("All tabs loaded successfully");
       } catch (e) {
@@ -617,21 +689,53 @@
     };
 
     const setRange = (type) => {
-      const now = new Date();
-      let start = new Date();
+      if (STATE.raw.length === 0) return;
+      
+      const latestRec = STATE.raw[STATE.raw.length - 1];
+      const anchorDate = latestRec.parsedDate ? new Date(latestRec.parsedDate) : new Date();
 
-      if (type === "today") {
-        start = now;
-      } else if (type === "7") {
-        start.setDate(now.getDate() - 7);
+      if (type === "7") {
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 7);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const eInt = latestRec.dateInt;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderDashboard(filtered);
+        toast("Showing last 7 active days");
       } else if (type === "31") {
-        start.setDate(now.getDate() - 31);
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 31);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const eInt = latestRec.dateInt;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderDashboard(filtered);
+        toast("Showing last 31 active days");
+      } else if (type === "fytd") {
+        const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
+        const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
+        
+        const fyStartInt = fyYear * 10000 + 201; // Feb 1st
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= latestRec.dateInt);
+        renderDashboard(filtered);
+        toast("Showing Financial Year-to-Date (Feb 1st start)");
       }
+    };
 
-      if ($("startDate")) $("startDate").value = start.toISOString().split("T")[0];
-      if ($("endDate")) $("endDate").value = now.toISOString().split("T")[0];
-
-      applyRange();
+    const resetView = () => {
+      if (STATE.raw.length > 0) {
+        const earliest = STATE.raw[0];
+        const latest = STATE.raw[STATE.raw.length - 1];
+        if (earliest.parsedDate && latest.parsedDate) {
+          if ($("startDate")) $("startDate").value = earliest.parsedDate.toISOString().split("T")[0];
+          if ($("endDate")) $("endDate").value = latest.parsedDate.toISOString().split("T")[0];
+        }
+      }
+      renderDashboard(STATE.raw);
+      toast("Reset to full dataset");
     };
 
     const login = () => {
@@ -656,6 +760,7 @@
       load,
       setRange,
       applyRange,
+      resetView,
       switchTab
     };
   </script>
