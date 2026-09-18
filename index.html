@@ -327,7 +327,8 @@
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
       
-      if (str === "-" || str === "£ -" || str === "-£" || str === "£-" || str === "- £") {
+      // Robust safeguard for £-, £ -, -£, and general unlogged dash placeholders
+      if (str === "-" || str === "£ -" || str === "-£" || str === "£-" || str === "- £" || str === "£-") {
         return 0;
       }
 
@@ -342,7 +343,6 @@
       const num = parseFloat(cleanStr);
       if (isNaN(num)) return 0;
 
-      // Keep exact floating-point conversion for accurate summation
       const cents = num * 100;
       
       return isNegative ? -cents : cents;
