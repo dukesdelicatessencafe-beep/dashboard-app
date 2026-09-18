@@ -366,6 +366,8 @@
         }
       }
 
+      if (y < 2000 || y > 2100) return null; // Prevent accidental 1900 fallback serials
+
       const dateInt = y * 10000 + m * 100 + d;
       const dateObj = new Date(y, m - 1, d);
 
@@ -423,14 +425,14 @@
           : (cashCents + cardCents);
 
         const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo && !dayName && dailyTotalCents === 0) return;
+        if (!parsedDateInfo) return; // Skip invalid or unparsable dates
         if (dailyTotalCents === 0 && !dayName) return;
 
         parsedRecords.push({
           dayName,
           rawDate,
-          parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
-          dateInt: parsedDateInfo ? parsedDateInfo.dateInt : 0,
+          parsedDate: parsedDateInfo.dateObj,
+          dateInt: parsedDateInfo.dateInt,
           cashCents,
           cardCents,
           dailyTotalCents,
