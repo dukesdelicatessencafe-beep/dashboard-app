@@ -1,362 +1,762 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Management Dashboard - Complete System</title>
-    <style>
-        :root {
-            --primary-gold: #D4AF37;
-            --accent-gold: #F9E3B4;
-            --bg-dark: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #F9E3B4;
-            --border-color: #333333;
-            --hover-gold: #e6c555;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales & Analytics Dashboard</title>
+  
+  <!-- CHART.JS LIBRARY -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    :root {
+      --primary-gold: #D4AF37;
+      --accent-gold: #F9E3B4;
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --text-light: #ffffff;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+    }
 
-        h1, h2, h3 {
-            color: var(--primary-gold);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-        }
+    .hidden { display: none !important; }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+    /* Login Form */
+    #login {
+      max-width: 320px;
+      margin: 100px auto;
+      padding: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--primary-gold);
+      border-radius: 8px;
+      text-align: center;
+    }
 
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
+    #login input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      border-radius: 4px;
+    }
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+    button {
+      background: var(--primary-gold);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
 
-        @media (max-width: 900px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
+    button:hover {
+      background: var(--accent-gold);
+    }
 
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: 600;
-            color: var(--primary-gold);
-        }
+    /* Navigation */
+    #nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
 
-        input, select, button {
-            background-color: #2a2a2a;
-            color: var(--accent-gold);
-            border: 1px solid var(--primary-gold);
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
+    /* KPI Cards Header */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
-        }
+    .kpi-card {
+      background: var(--card-bg);
+      border-left: 4px solid var(--primary-gold);
+      padding: 15px;
+      border-radius: 4px;
+    }
 
-        button {
-            background-color: var(--primary-gold);
-            color: var(--bg-dark);
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+    .kpi-card h3 {
+      margin: 0 0 5px 0;
+      font-size: 13px;
+      color: var(--accent-gold);
+    }
 
-        button:hover {
-            background-color: var(--hover-gold);
-        }
+    .kpi-card .val {
+      font-size: 20px;
+      font-weight: bold;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
+    .kpi-card .subtext {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
 
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            text-align: left;
-        }
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
 
-        th {
-            background-color: #181818;
-            color: var(--primary-gold);
-        }
+    .controls input[type="date"] {
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+    }
 
-        tr:nth-child(even) {
-            background-color: #171717;
-        }
+    /* Tabs Slider */
+    #tabsWrapper {
+      overflow: hidden;
+      width: 100%;
+    }
 
-        .hidden {
-            display: none !important;
-        }
+    #tabs {
+      display: flex;
+      transition: transform 0.3s ease;
+      width: 200%;
+    }
 
-        .pin-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            max-width: 320px;
-            margin: 15px auto;
-        }
-        
-        .pin-pad button {
-            padding: 18px;
-            font-size: 1.4rem;
-        }
+    .tab-content {
+      width: 50%;
+      box-sizing: border-box;
+      padding-right: 20px;
+    }
 
-        .status-banner {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .status-success { background-color: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid #28a745; }
-        .status-error { background-color: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545; }
-    </style>
+    /* Tables & Charts */
+    .chart-container {
+      position: relative;
+      height: 380px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    table th {
+      color: var(--accent-gold);
+    }
+
+    /* Notification & Loader */
+    #loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      color: var(--accent-gold);
+      z-index: 1000;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: var(--primary-gold);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: none;
+      z-index: 1001;
+    }
+  </style>
 </head>
 <body>
 
-<!-- Authentication & Mobile Manager PIN Layer -->
-<div id="authScreen" class="container card" style="max-width: 420px; margin-top: 80px; text-align: center;">
-    <h2>Manager Authentication</h2>
-    <p>Enter 4-Digit Mobile Manager PIN to Access System</p>
-    <input type="password" id="pinInput" readonly style="text-align: center; font-size: 1.8rem; letter-spacing: 8px;" maxlength="4" placeholder="••••">
-    <div class="pin-pad">
-        <button onclick="pressPin('1')">1</button>
-        <button onclick="pressPin('2')">2</button>
-        <button onclick="pressPin('3')">3</button>
-        <button onclick="pressPin('4')">4</button>
-        <button onclick="pressPin('5')">5</button>
-        <button onclick="pressPin('6')">6</button>
-        <button onclick="pressPin('7')">7</button>
-        <button onclick="pressPin('8')">8</button>
-        <button onclick="pressPin('9')">9</button>
-        <button onclick="clearPin()">C</button>
-        <button onclick="pressPin('0')">0</button>
-        <button onclick="submitPin()">↵</button>
-    </div>
-</div>
+  <!-- LOGIN SCREEN -->
+  <div id="login">
+    <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
+    <input type="password" id="pass" placeholder="Enter Password">
+    <button onclick="App.login()">Login</button>
+  </div>
 
-<!-- Main Comprehensive Dashboard Container -->
-<div id="dashboardContainer" class="container hidden">
-    <h1>Business Management Dashboard</h1>
-    <div id="statusMessage" class="hidden status-banner"></div>
+  <!-- NAVIGATION -->
+  <div id="nav" class="hidden">
+    <button onclick="App.switchTab(0)">Overview</button>
+    <button onclick="App.switchTab(1)">Analytics</button>
+  </div>
 
-    <div class="grid-2">
-        <!-- Date Filter & Setup Module -->
-        <div class="card">
-            <h2>Date Filter Setup</h2>
-            <label for="startDate">Start Date:</label>
-            <input type="date" id="startDate">
-            
-            <label for="endDate">End Date:</label>
-            <input type="date" id="endDate">
-            <button onclick="applyDateFilter()">Apply Date Range Filter</button>
-        </div>
-
-        <!-- Daily Entry Form Module (6 Categories Grid) -->
-        <div class="card">
-            <h2>Daily Entry Form (£)</h2>
-            <form id="entryForm" onsubmit="handleFormSubmit(event)">
-                <label>1. ICE CREAM (£)</label>
-                <input type="number" step="0.01" name="entryIceCream" placeholder="0.00" required>
-
-                <label>2. COUNTER (£)</label>
-                <input type="number" step="0.01" name="entryCounter" placeholder="0.00" required>
-
-                <label>3. Kitchen (£)</label>
-                <input type="number" step="0.01" name="entryKitchen" placeholder="0.00" required>
-
-                <label>4. DRINK (£)</label>
-                <input type="number" step="0.01" name="entryDrink" placeholder="0.00" required>
-
-                <label>5. DELI (£)</label>
-                <input type="number" step="0.01" name="entryDeli" placeholder="0.00" required>
-
-                <label>6. ALCOHOL (£)</label>
-                <input type="number" step="0.01" name="entryAlcohol" placeholder="0.00" required>
-
-                <button type="submit">Submit Entry to Database</button>
-            </form>
-        </div>
+  <!-- MAIN APP WRAPPER -->
+  <div id="app" class="hidden">
+    
+    <!-- KPI SUMMARY HEADER -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <h3>TOTAL SALES (FILTERED)</h3>
+        <div class="val" id="sales">£0.00</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ROLLING 12-MONTH TOTAL</h3>
+        <div class="val" id="rollingTotal">£0.00</div>
+        <div class="subtext" id="vatStatus">Checking threshold...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ACTIVE DAYS / RECORDS</h3>
+        <div class="val" id="products">0</div>
+      </div>
+      <div class="kpi-card">
+        <h3>TOP CATEGORY</h3>
+        <div class="val" id="top">-</div>
+      </div>
     </div>
 
-    <!-- Comprehensive Records Overview Table -->
-    <div class="card">
-        <h2>Records Overview & Data Sync</h2>
-        <button onclick="fetchData()" style="width: auto; padding: 8px 16px; margin-bottom: 15px;">Refresh Data</button>
-        <div id="tableContainer">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>1. Ice Cream (£)</th>
-                        <th>2. Counter (£)</th>
-                        <th>3. Kitchen (£)</th>
-                        <th>4. Drink (£)</th>
-                        <th>5. Deli (£)</th>
-                        <th>6. Alcohol (£)</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTableBody">
-                    <tr><td colspan="7" style="text-align: center;">Connecting and loading records from backend...</td></tr>
-                </tbody>
-            </table>
-        </div>
+    <!-- FULL RANGE CONTROLS -->
+    <div class="controls">
+      <label style="font-size:13px; color:var(--accent-gold);">From:</label>
+      <input type="date" id="startDate" onchange="App.applyRange()">
+      <label style="font-size:13px; color:var(--accent-gold);">To:</label>
+      <input type="date" id="endDate" onchange="App.applyRange()">
+      <button onclick="App.setRange('7')">Last 7 Days</button>
+      <button onclick="App.setRange('31')">Last 31 Days</button>
+      <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
+      <button onclick="App.resetView()">Reset All</button>
     </div>
-</div>
 
-<script>
+    <!-- TABS SLIDER CONTAINER -->
+    <div id="tabsWrapper">
+      <div id="tabs">
+        
+        <!-- TAB 0: OVERVIEW -->
+        <div class="tab-content">
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- TAB 1: ANALYTICS -->
+        <div class="tab-content">
+          <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Entry</th>
+                <th>Daily Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOADER & TOAST -->
+  <div id="loading" class="hidden">Loading dashboard data...</div>
+  <div id="toast"></div>
+
+  <!-- APP LOGIC ENGINE -->
+  <script>
     const CONFIG = {
-        URL: "https://script.google.com/macros/s/AKfycbyx8vGD5DrUmSd-XAE_rsMH0AyMpPwO0VD1poyCFyE5x0JZMlLoPGenwBhJLN38jNI8ow/exec"
+      URL: "https://script.google.com/macros/s/AKfycbyx8vGD5DrUmSd-XAE_rsMH0AyMpPwO0VD1poyCFyE5x0JZMlLoPGenwBhJLN38jNI8ow/exec",
+      PASSWORD: "1234"
     };
 
-    let enteredPin = "";
+    const STATE = {
+      raw: [],
+      barChart: null,
+      salesChart: null
+    };
 
-    function $(id) {
-        return document.getElementById(id);
-    }
+    const $ = (id) => document.getElementById(id);
 
-    function pressPin(num) {
-        if (enteredPin.length < 4) {
-            enteredPin += num;
-            $("pinInput").value = "*".repeat(enteredPin.length);
-        }
-    }
+    const safeSet = (id, text) => {
+      const el = $(id);
+      if (el) el.innerText = text;
+    };
 
-    function clearPin() {
-        enteredPin = "";
-        $("pinInput").value = "";
-    }
+    const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
 
-    function submitPin() {
-        if (enteredPin.length === 4) {
-            // Unlock dashboard view
-            $("authScreen").classList.add("hidden");
-            $("dashboardContainer").classList.remove("hidden");
-            initDashboard();
+    const toast = (msg) => {
+      const t = $("toast");
+      if (!t) return;
+      t.innerText = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    };
+
+    const cleanCents = (val) => {
+      if (val === null || val === undefined || val === "") return 0;
+      const cleanStr = String(val).replace(/[^0-9.-]+/g, "");
+      if (!cleanStr) return 0;
+      
+      const parts = cleanStr.split('.');
+      let cents = 0;
+      
+      if (parts[0]) {
+        cents += parseInt(parts[0], 10) * 100;
+      }
+      if (parts[1]) {
+        let dec = parts[1].padEnd(2, '0').slice(0, 2);
+        cents += parseInt(dec, 10);
+      }
+      
+      return isNaN(cents) ? 0 : cents;
+    };
+
+    const parseDateString = (dateStr) => {
+      if (!dateStr) return null;
+
+      let y, m, d;
+
+      if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
+        const serial = parseFloat(dateStr);
+        const utcDays = Math.floor(serial - 25569);
+        const utcValue = utcDays * 86400 * 1000;
+        const tempD = new Date(utcValue);
+        if (isNaN(tempD.getTime())) return null;
+        y = tempD.getUTCFullYear();
+        m = tempD.getUTCMonth() + 1;
+        d = tempD.getUTCDate();
+      } else {
+        const str = String(dateStr).trim();
+        const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) {
+          y = parseInt(isoMatch[1], 10);
+          m = parseInt(isoMatch[2], 10);
+          d = parseInt(isoMatch[3], 10);
         } else {
-            alert("Please input a valid 4-digit PIN code.");
+          const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+          if (ukMatch) {
+            d = parseInt(ukMatch[1], 10);
+            m = parseInt(ukMatch[2], 10);
+            y = parseInt(ukMatch[3], 10);
+          } else {
+            const tempD = new Date(str);
+            if (isNaN(tempD.getTime())) return null;
+            y = tempD.getFullYear();
+            m = tempD.getMonth() + 1;
+            d = tempD.getDate();
+          }
         }
-    }
+      }
 
-    function showStatus(message, isError = false) {
-        const banner = $("statusMessage");
-        banner.textContent = message;
-        banner.className = `status-banner ${isError ? 'status-error' : 'status-success'}`;
-        banner.classList.remove('hidden');
-        setTimeout(() => banner.classList.add('hidden'), 5000);
-    }
+      const dateInt = y * 10000 + m * 100 + d;
+      const dateObj = new Date(y, m - 1, d);
 
-    function initDashboard() {
-        const sIso = new Date().toISOString().split('T')[0];
-        const eIso = sIso;
+      return { year: y, month: m, day: d, dateInt, dateObj };
+    };
 
-        if ($("startDate") && sIso) { 
-            $("startDate").value = sIso; 
-            $("startDate").min = sIso; 
-            $("startDate").max = eIso; 
+    function processRows(rows) {
+      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
+
+      const headerRow = rows.find(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date"))) || rows[0] || [];
+
+      const getColIndex = (keywords) => {
+        if (!Array.isArray(keywords)) keywords = [keywords];
+        for (let kw of keywords) {
+          const idx = headerRow.findIndex(cell => {
+            if (!cell) return false;
+            const headerText = String(cell).toLowerCase().trim();
+            return headerText === kw.toLowerCase() || headerText.includes(kw.toLowerCase());
+          });
+          if (idx !== -1) return idx;
         }
-        if ($("endDate") && eIso) { 
-            $("endDate").value = eIso; 
-            $("endDate").min = sIso; 
-            $("endDate").max = eIso; 
+        return -1;
+      };
+
+      const idxTotal    = getColIndex(["total", "daily total"]);
+      const idxIceCream = getColIndex(["ice cream", "ice-cream"]);
+      const idxCounter  = getColIndex(["counter"]);
+      const idxKitchen  = getColIndex(["kitchen", "food"]);
+      const idxDrink    = getColIndex(["drink", "drinks"]);
+      const idxDeli     = getColIndex(["deli"]);
+      const idxAlcohol  = getColIndex(["alcohol", "bar"]);
+
+      const parsedRecords = [];
+
+      rows.forEach(row => {
+        if (!row || !Array.isArray(row)) return;
+
+        const dayName = row[0] ? String(row[0]).trim() : "";
+        const rawDate = row[1];
+        const cashVal = row[2];
+        const cardVal = row[3];
+
+        const lowerDay = String(dayName).toLowerCase();
+        const lowerDate = String(rawDate).toLowerCase();
+
+        if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
+          return;
         }
 
-        fetchData();
-    }
+        const cashCents = cleanCents(cashVal);
+        const cardCents = cleanCents(cardVal);
+        
+        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
+          ? cleanCents(row[idxTotal]) 
+          : (cashCents + cardCents);
 
-    function fetchData() {
-        fetch(CONFIG.URL)
-            .then(response => response.json())
-            .then(data => {
-                renderTable(data);
-            })
-            .catch(err => {
-                console.error("Fetch synchronization error:", err);
-                showStatus("Failed to retrieve live data records from backend.", true);
-            });
-    }
+        const parsedDateInfo = parseDateString(rawDate);
+        if (!parsedDateInfo && !dayName && dailyTotalCents === 0) return;
+        if (dailyTotalCents === 0 && !dayName) return;
 
-    function renderTable(rows) {
-        const tbody = $("dataTableBody");
-        tbody.innerHTML = "";
-
-        if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No records available.</td></tr>';
-            return;
-        }
-
-        rows.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.Date || 'N/A'}</td>
-                <td>£${parseFloat(row['ICE CREAM'] || row.entryIceCream || 0).toFixed(2)}</td>
-                <td>£${parseFloat(row['COUNTER'] || row.entryCounter || 0).toFixed(2)}</td>
-                <td>£${parseFloat(row['Kitchen'] || row.entryKitchen || 0).toFixed(2)}</td>
-                <td>£${parseFloat(row['DRINK'] || row.entryDrink || 0).toFixed(2)}</td>
-                <td>£${parseFloat(row['DELI'] || row.entryDeli || 0).toFixed(2)}</td>
-                <td>£${parseFloat(row['ALCOHOL'] || row.entryAlcohol || 0).toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
+        parsedRecords.push({
+          dayName,
+          rawDate,
+          parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
+          dateInt: parsedDateInfo ? parsedDateInfo.dateInt : 0,
+          cashCents,
+          cardCents,
+          dailyTotalCents,
+          categories: {
+            "ICE CREAM": idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : 0,
+            "COUNTER": idxCounter !== -1 ? cleanCents(row[idxCounter]) : 0,
+            "Kitchen": idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : 0,
+            "DRINK": idxDrink !== -1 ? cleanCents(row[idxDrink]) : 0,
+            "DELI": idxDeli !== -1 ? cleanCents(row[idxDeli]) : 0,
+            "ALCOHOL": idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : 0
+          }
         });
+      });
+
+      return parsedRecords;
     }
 
-    function applyDateFilter() {
-        showStatus("Date range filters successfully evaluated.");
-        fetchData();
+    function calculateRolling12Month(allRecords) {
+      if (!allRecords || allRecords.length === 0) return 0;
+
+      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
+      if (validRecords.length === 0) return 0;
+
+      const latestRec = validRecords[validRecords.length - 1];
+      const anchorDate = new Date(latestRec.parsedDate);
+      
+      const startLookback = new Date(anchorDate);
+      startLookback.setFullYear(anchorDate.getFullYear() - 1);
+
+      let rollingSumCents = 0;
+      validRecords.forEach(r => {
+        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
+          rollingSumCents += r.dailyTotalCents;
+        }
+      });
+
+      return rollingSumCents;
     }
 
-    function handleFormSubmit(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
+    function renderDashboard(records) {
+      const container = $("productTable");
+      let totalRevCents = 0;
+      const categoryTotalsCents = {
+        "ICE CREAM": 0,
+        "COUNTER": 0,
+        "Kitchen": 0,
+        "DRINK": 0,
+        "DELI": 0,
+        "ALCOHOL": 0
+      };
 
-        showStatus("Transmitting entry data to Google Sheets...");
+      if (container) container.innerHTML = "";
 
-        fetch(CONFIG.URL, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        })
-        .then(res => res.text())
-        .then(response => {
-            showStatus("Entry successfully recorded and synced!");
-            event.target.reset();
-            fetchData();
-        })
-        .catch(err => {
-            showStatus("Critical error submitting record entry.", true);
-            console.error(err);
+      records.forEach(rec => {
+        totalRevCents += rec.dailyTotalCents;
+
+        Object.keys(rec.categories).forEach(cat => {
+          categoryTotalsCents[cat] += rec.categories[cat];
         });
-    }
-</script>
 
+        if (container) {
+          const tr = document.createElement("tr");
+          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
+          tr.innerHTML = `
+            <td>${rec.dayName ? rec.dayName + ' - ' : ''}${displayDateStr}</td>
+            <td>${fmt(rec.dailyTotalCents)}</td>
+          `;
+          container.appendChild(tr);
+        }
+      });
+
+      safeSet("sales", fmt(totalRevCents));
+      safeSet("products", records.length);
+
+      const rollingCents = calculateRolling12Month(STATE.raw);
+      safeSet("rollingTotal", fmt(rollingCents));
+
+      const vatThresholdCents = 90000 * 100;
+      const vatStatusEl = $("vatStatus");
+      if (vatStatusEl) {
+        if (rollingCents >= vatThresholdCents) {
+          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+          vatStatusEl.style.color = "#ff4d4d";
+        } else if (rollingCents >= vatThresholdCents * 0.85) {
+          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
+          vatStatusEl.style.color = "#ffcc00";
+        } else {
+          vatStatusEl.innerText = "Safe (Below £90,000)";
+          vatStatusEl.style.color = "#4cd137";
+        }
+      }
+
+      let topCat = "-";
+      let maxRevCents = -1;
+      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+        if (val > maxRevCents && val > 0) {
+          maxRevCents = val;
+          topCat = `${cat} (${fmt(val)})`;
+        }
+      });
+      safeSet("top", topCat);
+
+      renderBarChart(records);
+      renderSalesChart(records);
+    }
+
+    function renderBarChart(records) {
+      const canvas = $("barChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.barChart) STATE.barChart.destroy();
+
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
+
+      STATE.barChart = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Daily Revenue (£)",
+            data,
+            backgroundColor: "#D4AF37"
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderSalesChart(records) {
+      const canvas = $("salesChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.salesChart) STATE.salesChart.destroy();
+
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
+
+      STATE.salesChart = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Sales Trend (£)",
+            data,
+            borderColor: "#D4AF37",
+            backgroundColor: "rgba(212, 175, 55, 0.1)",
+            fill: true
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    const load = async () => {
+      try {
+        const loader = $("loading");
+        if (loader) loader.classList.remove("hidden");
+
+        const res = await fetch(CONFIG.URL, { cache: "no-store" });
+        const json = await res.json();
+
+        let allRecords = [];
+
+        if (json && json.tabs) {
+          Object.keys(json.tabs).forEach(tabName => {
+            const tabRows = json.tabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              const processed = processRows(tabRows);
+              allRecords = allRecords.concat(processed);
+            }
+          });
+        } else if (json && json.rows && Array.isArray(json.rows)) {
+          allRecords = processRows(json.rows);
+        } else if (Array.isArray(json)) {
+          allRecords = processRows(json);
+        }
+
+        allRecords.sort((a, b) => a.dateInt - b.dateInt);
+        STATE.raw = allRecords;
+
+        if (STATE.raw.length > 0) {
+          const earliest = STATE.raw[0];
+          const latest = STATE.raw[STATE.raw.length - 1];
+          if (earliest.parsedDate && latest.parsedDate) {
+            const startIso = earliest.parsedDate.toISOString().split("T")[0];
+            const endIso = latest.parsedDate.toISOString().split("T")[0];
+            
+            if ($("startDate")) {
+              $("startDate").value = startIso;
+              $("startDate").min = startIso;
+              $("startDate").max = endIso;
+            }
+            if ($("endDate")) {
+              $("endDate").value = endIso;
+              $("endDate").min = startIso;
+              $("endDate").max = endIso;
+            }
+          }
+        }
+
+        renderDashboard(STATE.raw);
+        toast("All tabs loaded successfully");
+      } catch (e) {
+        console.error("Fetch error:", e);
+        toast("Failed to load spreadsheet data");
+      } finally {
+        const loader = $("loading");
+        if (loader) loader.classList.add("hidden");
+      }
+    };
+
+    const applyRange = () => {
+      const startVal = $("startDate")?.value;
+      const endVal = $("endDate")?.value;
+
+      if (!startVal || !endVal) {
+        renderDashboard(STATE.raw);
+        return;
+      }
+
+      const [sY, sM, sD] = startVal.split("-").map(Number);
+      const [eY, eM, eD] = endVal.split("-").map(Number);
+
+      const startInt = sY * 10000 + sM * 100 + sD;
+      const endInt = eY * 10000 + eM * 100 + eD;
+
+      const filtered = STATE.raw.filter(r => {
+        if (!r.dateInt) return true;
+        return r.dateInt >= startInt && r.dateInt <= endInt;
+      });
+
+      renderDashboard(filtered);
+    };
+
+    const setRange = (type) => {
+      if (STATE.raw.length === 0) return;
+      
+      const latestRec = STATE.raw[STATE.raw.length - 1];
+      const anchorDate = latestRec.parsedDate ? new Date(latestRec.parsedDate) : new Date();
+
+      if (type === "7") {
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 7);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const eInt = latestRec.dateInt;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderDashboard(filtered);
+        toast("Showing last 7 active days");
+      } else if (type === "31") {
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 31);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const eInt = latestRec.dateInt;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderDashboard(filtered);
+        toast("Showing last 31 active days");
+      } else if (type === "fytd") {
+        const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
+        const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
+        
+        const fyStartInt = fyYear * 10000 + 201;
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= latestRec.dateInt);
+        renderDashboard(filtered);
+        toast("Showing Financial Year-to-Date (Feb 1st start)");
+      }
+    };
+
+    const resetView = () => {
+      if (STATE.raw.length > 0) {
+        const earliest = STATE.raw[0];
+        const latest = STATE.raw[STATE.raw.length - 1];
+        if (earliest.parsedDate && latest.parsedDate) {
+          if ($("startDate")) $("startDate").value = earliest.parsedDate.toISOString().split("T")[0];
+          if ($("endDate")) $("endDate").value = latest.parsedDate.toISOString().split("T")[0];
+        }
+      }
+      renderDashboard(STATE.raw);
+      toast("Reset to full dataset");
+    };
+
+    const login = () => {
+      const pwd = $("pass")?.value;
+      if (pwd === CONFIG.PASSWORD) {
+        $("login")?.classList.add("hidden");
+        $("app")?.classList.remove("hidden");
+        $("nav")?.classList.remove("hidden");
+        load();
+      } else {
+        toast("Invalid password");
+      }
+    };
+
+    const switchTab = (idx) => {
+      const tabs = $("tabs");
+      if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
+    };
+
+    window.App = {
+      login,
+      load,
+      setRange,
+      applyRange,
+      resetView,
+      switchTab
+    };
+  </script>
 </body>
 </html>
