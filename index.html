@@ -215,7 +215,7 @@
     <div class="kpi-row">
       <div class="kpi-card">
         <h3>TOTAL SALES (FILTERED)</h3>
-        <div class="val" id="sales">£0.00</div>
+        <div class="val" id="sales">Syncing...</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -224,11 +224,11 @@
       </div>
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
-        <div class="val" id="products">0</div>
+        <div class="val" id="products">Syncing...</div>
       </div>
       <div class="kpi-card">
         <h3>TOP CATEGORY</h3>
-        <div class="val" id="top">-</div>
+        <div class="val" id="top">Syncing...</div>
       </div>
     </div>
 
@@ -283,7 +283,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbwqutO2srkoonraaL5Cw8bBkQiqwSwvd3axL5WSJZCYKJgEoyDhonZCp7qLgZQM44Ej/exec",
+      URL: "https://script.google.com/macros/s/AKfycbzJzN1gpl1wag1vMAXoU4ANrFL9WPyTQ6EJkz169V2NrCEBDXu9CUVOU83EL5OiPXcm2A/exec",
       PASSWORD: "1234"
     };
 
@@ -512,20 +512,34 @@
         }
       });
 
-      safeSet("sales", fmt(totalRevCents));
-      safeSet("products", records.length);
-
-      const rollingCents = calculateRolling12Month(STATE.raw);
       const vatStatusEl = $("vatStatus");
 
       if (!STATE.isFullLoaded) {
+        safeSet("sales", "Syncing...");
+        safeSet("products", "Syncing...");
+        safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
         if (vatStatusEl) {
           vatStatusEl.innerText = "Loading history...";
           vatStatusEl.style.color = "#aaa";
         }
       } else {
+        safeSet("sales", fmt(totalRevCents));
+        safeSet("products", records.length);
+
+        let topCat = "-";
+        let maxRevCents = -1;
+        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+          if (val > maxRevCents && val > 0) {
+            maxRevCents = val;
+            topCat = `${cat} (${fmt(val)})`;
+          }
+        });
+        safeSet("top", topCat);
+
+        const rollingCents = calculateRolling12Month(STATE.raw);
         safeSet("rollingTotal", fmt(rollingCents));
+
         const vatThresholdCents = 90000 * 100;
         if (vatStatusEl) {
           if (rollingCents >= vatThresholdCents) {
@@ -540,16 +554,6 @@
           }
         }
       }
-
-      let topCat = "-";
-      let maxRevCents = -1;
-      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-        if (val > maxRevCents && val > 0) {
-          maxRevCents = val;
-          topCat = `${cat} (${fmt(val)})`;
-        }
-      });
-      safeSet("top", topCat);
 
       renderBarChart(records);
       renderSalesChart(records);
@@ -626,7 +630,6 @@
 
         STATE.isFullLoaded = false;
 
-        // STEP 1: Fast initial load for the current year only
         const currentYear = new Date().getFullYear();
         const fastRes = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
         const fastJson = await fastRes.json();
@@ -669,7 +672,6 @@
         if (loader) loader.classList.add("hidden");
         toast("Current year loaded instantly");
 
-        // STEP 2: Background fetch for historical data
         setTimeout(async () => {
           try {
             const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
