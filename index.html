@@ -496,8 +496,6 @@
       const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
 
       const parsedRecords = [];
-
-      // Restricted row limit (Row 48 is index 47, maxRowLimit ensures we don't exceed rows.length either)
       const maxRowLimit = Math.min(rows.length, 48);
 
       for (let i = startIndex; i < maxRowLimit; i++) {
@@ -510,10 +508,12 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
+        // Explicitly ignore header text, total lines, or summary/aggregate rows
         if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
           continue;
         }
 
+        // Additional safeguard: ignore rows where column 0 has text like "MONDAY" but doesn't map to a clean single date structure or acts as a section marker
         const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
         if (!parsedDateInfo) continue;
 
@@ -527,8 +527,7 @@
         let catAlcohol = 0;
 
         // 2026 Layout Mapping (Bounded up to Column K / index 10):
-        // A:Day(0), B:Date(1), C:Cash(2), D:Card(3), E:ICE CREAM(4), F:COUNTER(5), G:Kitchen(6), H:DRINK(7), I:DELI(8), J:ALCOHOL(9), K:(10 boundary limit)
-        if (year >= 2026) {
+        if (year >= 2026 || year === 2025) {
           catIceCream = cleanCents(row[4]); // E: ICE CREAM
           catCounter  = cleanCents(row[5]); // F: COUNTER
           catKitchen  = cleanCents(row[6]); // G: Kitchen
@@ -536,7 +535,6 @@
           catDeli     = cleanCents(row[8]); // I: DELI
           catAlcohol  = cleanCents(row[9]); // J: ALCOHOL
         } else {
-          // Fallback mapping for older historical layouts
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
           const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
           
@@ -562,20 +560,24 @@
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
+        // Cleanly sum cash + card together as the standard daily total rule
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
-        const paymentTotal = cashCents + cardCents;
+        let dailyTotalCents = cashCents + cardCents;
 
-        let dailyTotalCents = paymentTotal > 0 ? paymentTotal : sumCategoriesCents;
+        // Fallback to sum of categories if cash/card cells are empty but categories are filled
+        if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
+          dailyTotalCents = sumCategoriesCents;
+        }
 
-        if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) continue;
+        if (dailyTotalCents === 0 && !dayName) continue;
 
         parsedRecords.push({
           dayName,
           rawDate,
           parsedDate: parsedDateInfo.dateObj,
           dateInt: parsedDateInfo.dateInt,
-          dailyTotalCents: dailyTotalCents !== 0 ? dailyTotalCents : sumCategoriesCents,
+          dailyTotalCents,
           categories: {
             "ICE CREAM": catIceCream,
             "COUNTER": catCounter,
