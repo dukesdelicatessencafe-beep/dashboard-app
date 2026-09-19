@@ -408,7 +408,16 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
+        // Stricter filter to ignore headers, totals, monthly summaries, and aggregate rows
+        if (
+          !rawDate || 
+          lowerDay.includes("total") || 
+          lowerDay.includes("weekly") || 
+          lowerDay.includes("month") || 
+          lowerDay.includes("sum") ||
+          lowerDate.includes("date") ||
+          lowerDate.includes("total")
+        ) {
           continue;
         }
 
@@ -457,6 +466,7 @@
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
+        // Strictly sum cash + card together as the standard daily total rule
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
         let dailyTotalCents = cashCents + cardCents;
