@@ -418,51 +418,46 @@
 
         let catIceCream = 0;
         let catCounter = 0;
-        let catKitchen = 0;
+        let catKitchen = 0; 
         let catDrink = 0;
         let catDeli = 0;
         let catAlcohol = 0;
 
-        // Date-aware layout mapping based on your timeline changes:
+        // Date-aware layout mapping based on timeline changes:
         const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
         const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
         const isBeforeAugust2025 = isBeforeMarch2024 || (year === 2024) || (year === 2025 && month < 8);
 
         if (isBeforeJune2023) {
-          // Pre-June 2023: No alcohol column
-          catKitchen  = cleanCents(row[2]);
-          catDrink    = cleanCents(row[3]);
-          catDeli     = cleanCents(row[4]);
+          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
+          catDrink    = cleanCents(row[7]);
+          catDeli     = cleanCents(row[8]);
           catAlcohol  = 0;
         } else if (isBeforeMarch2024) {
-          // June 2023 – Feb 2024: Alcohol added (Column H index 7)
-          catKitchen  = cleanCents(row[2]);
-          catDrink    = cleanCents(row[3]);
-          catDeli     = cleanCents(row[4]);
-          catAlcohol  = cleanCents(row[7]);
+          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
+          catDrink    = cleanCents(row[7]);
+          catDeli     = cleanCents(row[8]);
+          catAlcohol  = cleanCents(row[9]);
         } else if (isBeforeAugust2025) {
-          // March 2024 – July 2025: Counter added (Col E / index 3), Ice Cream added (Col F / index 4)
-          catIceCream = cleanCents(row[4]); // F
-          catCounter  = cleanCents(row[3]); // E
-          catKitchen  = cleanCents(row[5]);
-          catDrink    = cleanCents(row[6]);
-          catDeli     = cleanCents(row[7]);
-          catAlcohol  = cleanCents(row[8]);
+          catCounter  = cleanCents(row[4]); // E
+          catIceCream = cleanCents(row[5]); // F
+          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
+          catDrink    = cleanCents(row[7]);
+          catDeli     = cleanCents(row[8]);
+          catAlcohol  = cleanCents(row[9]);
         } else {
-          // August 2025 onwards: Ice cream moves to E (index 3), Counter moves to F (index 4)
-          catIceCream = cleanCents(row[3]); // E
-          catCounter  = cleanCents(row[4]); // F
-          catKitchen  = cleanCents(row[5]);
-          catDrink    = cleanCents(row[6]);
-          catDeli     = cleanCents(row[7]);
-          catAlcohol  = cleanCents(row[8]);
+          catIceCream = cleanCents(row[4]); // E
+          catCounter  = cleanCents(row[5]); // F
+          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
+          catDrink    = cleanCents(row[7]);
+          catDeli     = cleanCents(row[8]);
+          catAlcohol  = cleanCents(row[9]);
         }
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        // Try reading explicit total row if available, otherwise fallback to sum of categories
-        let dailyTotalCents = (row[9] !== undefined && row[9] !== "") 
-          ? cleanCents(row[9]) 
+        let dailyTotalCents = (row[10] !== undefined && row[10] !== "") 
+          ? cleanCents(row[10]) 
           : sumCategoriesCents;
 
         if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) continue;
