@@ -343,7 +343,8 @@
       const num = parseFloat(cleanStr);
       if (isNaN(num)) return 0;
 
-      const cents = num * 100;
+      // Fixed with Math.round to prevent floating-point decimal drift
+      const cents = Math.round(num * 100);
       return isNegative ? -cents : cents;
     };
 
