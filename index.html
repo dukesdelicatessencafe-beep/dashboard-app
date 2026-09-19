@@ -408,7 +408,6 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Stricter filter to ignore headers, weekly totals, month summaries, and empty/aggregate rows
         if (
           !rawDate || 
           lowerDay.includes("total") || 
@@ -468,7 +467,6 @@
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        // Strictly sum cash + card together as the standard daily total rule
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
         let dailyTotalCents = cashCents + cardCents;
@@ -725,25 +723,12 @@
         STATE.raw = allRecords;
 
         if (STATE.raw.length > 0) {
-          const earliest = STATE.raw[0];
-          if (earliest.parsedDate) {
-            const startIso = formatDateLocal(earliest.parsedDate);
-            const todayIso = formatDateLocal(new Date());
-            
-            if ($("startDate")) {
-              $("startDate").value = startIso;
-              $("startDate").min = startIso;
-              $("startDate").max = todayIso;
-            }
-            if ($("endDate")) {
-              $("endDate").value = todayIso;
-              $("endDate").min = startIso;
-              $("endDate").max = todayIso;
-            }
-          }
+          if ($("startDate")) $("startDate").value = "2026-07-01";
+          if ($("endDate")) $("endDate").value = "2026-07-31";
         }
 
-        renderDashboard(STATE.raw);
+        // Apply initial July filter immediately
+        applyRange();
         
         if (loader) loader.classList.add("hidden");
         toast("Current year loaded instantly");
@@ -769,13 +754,13 @@
             }
 
             STATE.isFullLoaded = true;
-            renderDashboard(STATE.raw);
+            applyRange();
             toast("Historical data synced in background");
 
           } catch (bgErr) {
             console.warn("Background history sync failed:", bgErr);
             STATE.isFullLoaded = true;
-            renderDashboard(STATE.raw);
+            applyRange();
           }
         }, 500);
 
@@ -803,7 +788,7 @@
       const endInt = eY * 10000 + eM * 100 + eD;
 
       const filtered = STATE.raw.filter(r => {
-        if (!r.dateInt) return true;
+        if (!r.dateInt) return false;
         return r.dateInt >= startInt && r.dateInt <= endInt;
       });
 
