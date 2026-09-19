@@ -423,16 +423,15 @@
         let catDeli = 0;
         let catAlcohol = 0;
 
-        // 2026 Layout Mapping based on: A:Day, B:Date, C:Cash, D:Card, E:ICE, F:CREAM, G:COUNTER, H:Kitchen, I:DRINK, J:DELI, K:ALCOHOL
+        // 2026 Layout Mapping:
+        // A:Day(0), B:Date(1), C:Cash(2), D:Card(3), E:ICE CREAM(4), F:COUNTER(5), G:Kitchen(6), H:DRINK(7), I:DELI(8), J:ALCOHOL(9)
         if (year >= 2026) {
-          const icePart1 = cleanCents(row[4]); // E: ICE
-          const icePart2 = cleanCents(row[5]); // F: CREAM
-          catIceCream = (icePart1 !== 0 && icePart2 !== 0) ? (icePart1 + icePart2) : (icePart1 || icePart2);
-          catCounter  = cleanCents(row[6]); // G: COUNTER
-          catKitchen  = cleanCents(row[7]); // H: Kitchen
-          catDrink    = cleanCents(row[8]); // I: DRINK
-          catDeli     = cleanCents(row[9]); // J: DELI
-          catAlcohol  = cleanCents(row[10]); // K: ALCOHOL
+          catIceCream = cleanCents(row[4]); // E: ICE CREAM
+          catCounter  = cleanCents(row[5]); // F: COUNTER
+          catKitchen  = cleanCents(row[6]); // G: Kitchen
+          catDrink    = cleanCents(row[7]); // H: DRINK
+          catDeli     = cleanCents(row[8]); // I: DELI
+          catAlcohol  = cleanCents(row[9]); // J: ALCOHOL
         } else {
           // Fallback mapping for older historical layouts
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
