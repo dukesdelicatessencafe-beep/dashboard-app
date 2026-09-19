@@ -2,41 +2,392 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sales Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales & Analytics Dashboard</title>
+  
+  <!-- CHART.JS LIBRARY -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
-    body { font-family: sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 20px; }
-    h1 { color: #2c3e50; }
-    .container { max-width: 1200px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    :root {
+      --primary-gold: #D4AF37;
+      --accent-gold: #F9E3B4;
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --text-light: #ffffff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Login Form */
+    #login {
+      max-width: 320px;
+      margin: 100px auto;
+      padding: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--primary-gold);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    #login input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    button {
+      background: var(--primary-gold);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: var(--accent-gold);
+    }
+
+    /* Navigation */
+    #nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* KPI Cards Header */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border-left: 4px solid var(--primary-gold);
+      padding: 15px;
+      border-radius: 4px;
+    }
+
+    .kpi-card h3 {
+      margin: 0 0 5px 0;
+      font-size: 13px;
+      color: var(--accent-gold);
+    }
+
+    .kpi-card .val {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .kpi-card .subtext {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .controls input[type="date"] {
+      background: #2a2a2a;
+      border: 1px solid var(--primary-gold);
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    /* Tabs Slider */
+    #tabsWrapper {
+      overflow: hidden;
+      width: 100%;
+    }
+
+    #tabs {
+      display: flex;
+      transition: transform 0.3s ease;
+      width: 200%;
+    }
+
+    .tab-content {
+      width: 50%;
+      box-sizing: border-box;
+      padding-right: 20px;
+    }
+
+    /* Tables & Charts */
+    .chart-container {
+      position: relative;
+      height: 380px;
+      width: 100%;
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    table th {
+      color: var(--accent-gold);
+    }
+
+    /* Notification & Loader */
+    #loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      color: var(--accent-gold);
+      z-index: 1000;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: var(--primary-gold);
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: none;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Dashboard</h1>
-    <div id="content">Loading dashboard data...</div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login">
+    <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
+    <input type="password" id="pass" placeholder="Enter Password">
+    <button onclick="App.login()">Login</button>
   </div>
 
+  <!-- NAVIGATION -->
+  <div id="nav" class="hidden">
+    <button onclick="App.switchTab(0)">Overview</button>
+    <button onclick="App.switchTab(1)">Analytics</button>
+  </div>
+
+  <!-- MAIN APP WRAPPER -->
+  <div id="app" class="hidden">
+    
+    <!-- KPI SUMMARY HEADER -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <h3>TOTAL SALES (FILTERED)</h3>
+        <div class="val" id="sales">Syncing...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ROLLING 12-MONTH TOTAL</h3>
+        <div class="val" id="rollingTotal">Syncing...</div>
+        <div class="subtext" id="vatStatus">Loading history...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>ACTIVE DAYS / RECORDS</h3>
+        <div class="val" id="products">Syncing...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>TOP CATEGORY</h3>
+        <div class="val" id="top">Syncing...</div>
+      </div>
+      <div class="kpi-card">
+        <h3>DATE RANGE TOTAL VALUE</h3>
+        <div class="val" id="rangeTotalVal">Syncing...</div>
+        <div class="subtext" id="rangeSpanSub">Syncing...</div>
+      </div>
+    </div>
+
+    <!-- FULL RANGE CONTROLS -->
+    <div class="controls">
+      <label style="font-size:13px; color:var(--accent-gold);">From:</label>
+      <input type="date" id="startDate" onchange="App.applyRange()">
+      <label style="font-size:13px; color:var(--accent-gold);">To:</label>
+      <input type="date" id="endDate" onchange="App.applyRange()">
+      <button onclick="App.setRange('7')">Last 7 Days</button>
+      <button onclick="App.setRange('31')">Last 31 Days</button>
+      <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
+      <button onclick="App.resetView()">Reset All</button>
+    </div>
+
+    <!-- TABS SLIDER CONTAINER -->
+    <div id="tabsWrapper">
+      <div id="tabs">
+        
+        <!-- TAB 0: OVERVIEW -->
+        <div class="tab-content">
+          <div class="chart-container">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- TAB 1: ANALYTICS -->
+        <div class="tab-content">
+          <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Entry</th>
+                <th>Daily Revenue</th>
+              </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOADER & TOAST -->
+  <div id="loading" class="hidden">Loading dashboard data...</div>
+  <div id="toast"></div>
+
+  <!-- APP LOGIC ENGINE -->
   <script>
-    // Global state object mock for context
-    window.STATE = { raw: [] };
+    const CONFIG = {
+      URL: "https://script.google.com/macros/s/AKfycbzJzN1gpl1wag1vMAXoU4ANrFL9WPyTQ6EJkz169V2NrCEBDXu9CUVOU83EL5OiPXcm2A/exec",
+      PASSWORD: "1234"
+    };
 
-    function cleanCents(val) {
-      if (!val) return 0;
-      let num = Number(String(val).replace(/[^0-9.-]+/g, ""));
-      return isNaN(num) ? 0 : Math.round(num * 100);
-    }
+    const STATE = {
+      raw: [],
+      isFullLoaded: false,
+      barChart: null,
+      salesChart: null
+    };
 
-    function parseDateString(rawDate) {
-      if (!rawDate) return null;
-      // Basic fallback date parser
-      let d = new Date(rawDate);
-      if (isNaN(d.getTime())) return null;
-      return {
-        dateObj: d,
-        year: d.getFullYear(),
-        month: d.getMonth() + 1,
-        dateInt: d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
-      };
-    }
+    const $ = (id) => document.getElementById(id);
+
+    const safeSet = (id, text) => {
+      const el = $(id);
+      if (el) el.innerText = text;
+    };
+
+    const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
+
+    const toast = (msg) => {
+      const t = $("toast");
+      if (!t) return;
+      t.innerText = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    };
+
+    const formatDateLocal = (dateObj) => {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
+    const cleanCents = (val) => {
+      if (val === null || val === undefined || val === "") return 0;
+      let str = String(val).trim();
+      
+      if (!/\d/.test(str)) return 0;
+
+      let isNegative = false;
+      if (str.startsWith("-") || (str.includes("-") && str.indexOf("-") < str.search(/\d/))) {
+        isNegative = true;
+      }
+
+      const cleanStr = str.replace(/[^0-9.-]+/g, "");
+      if (!cleanStr || cleanStr === "-") return 0;
+
+      const num = parseFloat(cleanStr);
+      if (isNaN(num)) return 0;
+
+      const cents = num * 100;
+      return isNegative ? -cents : cents;
+    };
+
+    const parseDateString = (dateStr) => {
+      if (!dateStr) return null;
+
+      let y, m, d;
+
+      if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
+        const serial = parseFloat(dateStr);
+        const utcDays = Math.floor(serial - 25569);
+        const utcValue = utcDays * 86400 * 1000;
+        const tempD = new Date(utcValue);
+        if (isNaN(tempD.getTime())) return null;
+        y = tempD.getUTCFullYear();
+        m = tempD.getUTCMonth() + 1;
+        d = tempD.getUTCDate();
+      } else {
+        const str = String(dateStr).trim();
+        const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) {
+          y = parseInt(isoMatch[1], 10);
+          m = parseInt(isoMatch[2], 10);
+          d = parseInt(isoMatch[3], 10);
+        } else {
+          const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+          if (ukMatch) {
+            d = parseInt(ukMatch[1], 10);
+            m = parseInt(ukMatch[2], 10);
+            y = parseInt(ukMatch[3], 10);
+          } else {
+            const tempD = new Date(str);
+            if (isNaN(tempD.getTime())) return null;
+            y = tempD.getFullYear();
+            m = tempD.getMonth() + 1;
+            d = tempD.getDate();
+          }
+        }
+      }
+
+      if (y < 2000 || y > 2100) return null;
+
+      const dateInt = y * 10000 + m * 100 + d;
+      const dateObj = new Date(y, m - 1, d);
+
+      return { year: y, month: m, day: d, dateInt, dateObj };
+    };
 
     function processRows(rows) {
       if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
@@ -153,6 +504,385 @@
 
       return parsedRecords;
     }
+
+    function calculateRolling12Month(allRecords) {
+      if (!allRecords || allRecords.length === 0) return 0;
+
+      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
+      if (validRecords.length === 0) return 0;
+
+      const latestRec = validRecords[validRecords.length - 1];
+      const anchorDate = new Date(latestRec.parsedDate);
+      
+      const startLookback = new Date(anchorDate);
+      startLookback.setFullYear(anchorDate.getFullYear() - 1);
+
+      let rollingSumCents = 0;
+      validRecords.forEach(r => {
+        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
+          rollingSumCents += r.dailyTotalCents;
+        }
+      });
+
+      return rollingSumCents;
+    }
+
+    function updateRangeTotalMetric(records) {
+      const startVal = $("startDate")?.value;
+      const endVal = $("endDate")?.value;
+      const rangeTotalEl = $("rangeTotalVal");
+      const rangeSpanEl = $("rangeSpanSub");
+      if (!rangeTotalEl || !rangeSpanEl) return;
+
+      if (!STATE.isFullLoaded) {
+        rangeTotalEl.innerText = "Syncing...";
+        rangeSpanEl.innerText = "Syncing...";
+        return;
+      }
+
+      let periodSumCents = 0;
+      records.forEach(r => {
+        periodSumCents += r.dailyTotalCents;
+      });
+
+      rangeTotalEl.innerText = fmt(periodSumCents);
+
+      if (!startVal || !endVal) {
+        rangeSpanEl.innerText = "Span: Full Dataset";
+        return;
+      }
+
+      const sDate = new Date(startVal);
+      const eDate = new Date(endVal);
+      const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+      
+      rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
+    }
+
+    function renderDashboard(records) {
+      const container = $("productTable");
+      let totalRevCents = 0;
+      const categoryTotalsCents = {
+        "ICE CREAM": 0,
+        "COUNTER": 0,
+        "Kitchen": 0,
+        "DRINK": 0,
+        "DELI": 0,
+        "ALCOHOL": 0
+      };
+
+      if (container) container.innerHTML = "";
+
+      records.forEach(rec => {
+        totalRevCents += rec.dailyTotalCents;
+
+        Object.keys(rec.categories).forEach(cat => {
+          categoryTotalsCents[cat] += rec.categories[cat];
+        });
+
+        if (container) {
+          const tr = document.createElement("tr");
+          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
+          tr.innerHTML = `
+            <td>${rec.dayName ? rec.dayName + ' - ' : ''}${displayDateStr}</td>
+            <td>${fmt(rec.dailyTotalCents)}</td>
+          `;
+          container.appendChild(tr);
+        }
+      });
+
+      const vatStatusEl = $("vatStatus");
+
+      if (!STATE.isFullLoaded) {
+        safeSet("sales", "Syncing...");
+        safeSet("products", "Syncing...");
+        safeSet("top", "Syncing...");
+        safeSet("rollingTotal", "Syncing...");
+        safeSet("rangeTotalVal", "Syncing...");
+        safeSet("rangeSpanSub", "Syncing...");
+        if (vatStatusEl) {
+          vatStatusEl.innerText = "Loading history...";
+          vatStatusEl.style.color = "#aaa";
+        }
+      } else {
+        safeSet("sales", fmt(totalRevCents));
+        safeSet("products", records.length);
+
+        let topCat = "-";
+        let maxRevCents = -1;
+        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+          if (val > maxRevCents && val > 0) {
+            maxRevCents = val;
+            topCat = `${cat} (${fmt(val)})`;
+          }
+        });
+        safeSet("top", topCat);
+
+        const rollingCents = calculateRolling12Month(STATE.raw);
+        safeSet("rollingTotal", fmt(rollingCents));
+
+        const vatThresholdCents = 90000 * 100;
+        if (vatStatusEl) {
+          if (rollingCents >= vatThresholdCents) {
+            vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+            vatStatusEl.style.color = "#ff4d4d";
+          } else if (rollingCents >= vatThresholdCents * 0.85) {
+            vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
+            vatStatusEl.style.color = "#ffcc00";
+          } else {
+            vatStatusEl.innerText = "Safe (Below £90,000)";
+            vatStatusEl.style.color = "#4cd137";
+          }
+        }
+        updateRangeTotalMetric(records);
+      }
+
+      renderBarChart(records);
+      renderSalesChart(records);
+    }
+
+    function renderBarChart(records) {
+      const canvas = $("barChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.barChart) STATE.barChart.destroy();
+
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
+
+      STATE.barChart = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Daily Revenue (£)",
+            data,
+            backgroundColor: "#D4AF37"
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderSalesChart(records) {
+      const canvas = $("salesChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.salesChart) STATE.salesChart.destroy();
+
+      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
+      const data = records.map(r => r.dailyTotalCents / 100);
+
+      STATE.salesChart = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Sales Trend (£)",
+            data,
+            borderColor: "#D4AF37",
+            backgroundColor: "rgba(212, 175, 55, 0.1)",
+            fill: true
+          }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    const load = async () => {
+      try {
+        const loader = $("loading");
+        if (loader) loader.classList.remove("hidden");
+
+        STATE.isFullLoaded = false;
+
+        const currentYear = new Date().getFullYear();
+        const fastRes = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
+        const fastJson = await fastRes.json();
+
+        let allRecords = [];
+
+        if (fastJson && fastJson.tabs) {
+          Object.keys(fastJson.tabs).forEach(tabName => {
+            const tabRows = fastJson.tabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              allRecords = allRecords.concat(processRows(tabRows));
+            }
+          });
+        }
+
+        allRecords.sort((a, b) => a.dateInt - b.dateInt);
+        STATE.raw = allRecords;
+
+        if (STATE.raw.length > 0) {
+          if ($("startDate")) $("startDate").value = "2026-07-01";
+          if ($("endDate")) $("endDate").value = "2026-07-31";
+        }
+
+        applyRange();
+        
+        if (loader) loader.classList.add("hidden");
+        toast("Current year loaded instantly");
+
+        setTimeout(async () => {
+          try {
+            const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
+            const fullJson = await fullRes.json();
+
+            let fullRecords = [];
+            if (fullJson && fullJson.tabs) {
+              Object.keys(fullJson.tabs).forEach(tabName => {
+                const tabRows = fullJson.tabs[tabName];
+                if (Array.isArray(tabRows) && tabRows.length > 0) {
+                  fullRecords = fullRecords.concat(processRows(tabRows));
+                }
+              });
+            }
+
+            if (fullRecords.length > 0) {
+              fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+              STATE.raw = fullRecords;
+            }
+
+            STATE.isFullLoaded = true;
+            applyRange();
+            toast("Historical data synced in background");
+
+          } catch (bgErr) {
+            console.warn("Background history sync failed:", bgErr);
+            STATE.isFullLoaded = true;
+            applyRange();
+          }
+        }, 500);
+
+      } catch (e) {
+        console.error("Fetch error:", e);
+        toast("Failed to load spreadsheet data");
+        const loader = $("loading");
+        if (loader) loader.classList.add("hidden");
+      }
+    };
+
+    const applyRange = () => {
+      const startVal = $("startDate")?.value;
+      const endVal = $("endDate")?.value;
+
+      if (!startVal || !endVal) {
+        renderDashboard(STATE.raw);
+        return;
+      }
+
+      const [sY, sM, sD] = startVal.split("-").map(Number);
+      const [eY, eM, eD] = endVal.split("-").map(Number);
+
+      const startInt = sY * 10000 + sM * 100 + sD;
+      const endInt = eY * 10000 + eM * 100 + eD;
+
+      const filtered = STATE.raw.filter(r => {
+        if (!r.dateInt) return false;
+        return r.dateInt >= startInt && r.dateInt <= endInt;
+      });
+
+      renderDashboard(filtered);
+    };
+
+    const setRange = (type) => {
+      if (STATE.raw.length === 0) return;
+      
+      const anchorDate = new Date();
+      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
+
+      if (type === "7") {
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 7);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
+        
+        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
+
+        renderDashboard(filtered);
+        toast("Showing last 7 days from today");
+      } else if (type === "31") {
+        let startWindow = new Date(anchorDate);
+        startWindow.setDate(anchorDate.getDate() - 31);
+        
+        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
+        
+        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
+
+        renderDashboard(filtered);
+        toast("Showing last 31 days from today");
+      } else if (type === "fytd") {
+        const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
+        const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
+        
+        const fyStartInt = fyYear * 10000 + 201;
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= todayInt);
+        
+        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
+
+        renderDashboard(filtered);
+        toast("Showing Financial Year-to-Date (Feb 1st start)");
+      }
+    };
+
+    const resetView = () => {
+      if (STATE.raw.length > 0) {
+        const earliest = STATE.raw[0];
+        if (earliest.parsedDate) {
+          if ($("startDate")) $("startDate").value = formatDateLocal(earliest.parsedDate);
+          if ($("endDate")) $("endDate").value = formatDateLocal(new Date());
+        }
+      }
+      renderDashboard(STATE.raw);
+      toast("Reset to full dataset");
+    };
+
+    const login = () => {
+      const pwd = $("pass")?.value;
+      if (pwd === CONFIG.PASSWORD) {
+        $("login")?.classList.add("hidden");
+        $("app")?.classList.remove("hidden");
+        $("nav")?.classList.remove("hidden");
+        load();
+      } else {
+        toast("Invalid password");
+      }
+    };
+
+    const switchTab = (idx) => {
+      const tabs = $("tabs");
+      if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
+    };
+
+    window.App = {
+      login,
+      load,
+      setRange,
+      applyRange,
+      resetView,
+      switchTab
+    };
   </script>
 </body>
 </html>
