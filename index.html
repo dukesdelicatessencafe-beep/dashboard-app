@@ -387,7 +387,8 @@
       if (y < 2000 || y > 2100) return null;
 
       const dateInt = y * 10000 + m * 100 + d;
-      const dateObj = new Date(y, m - 1, d);
+      // Fixed: Create local Date object explicitly to prevent UTC timezone date-shifting on month boundaries like Dec 31
+      const dateObj = new Date(y, m - 1, d, 0, 0, 0);
 
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
@@ -883,7 +884,6 @@
       if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
     };
 
-    // Inspect whichever date range is currently selected in the inputs
     const inspectDateRange = () => {
       applyRange();
       switchTab(1);
