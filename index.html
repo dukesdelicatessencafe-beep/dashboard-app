@@ -191,6 +191,21 @@
       display: none;
       z-index: 1001;
     }
+
+    /* Design Sync & Tables Styling */
+    .sync-section {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+      border: 1px solid var(--primary-gold);
+    }
+
+    .sync-section h2 {
+      color: var(--accent-gold);
+      font-size: 16px;
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
@@ -277,6 +292,91 @@
         </div>
 
       </div>
+    </div>
+
+    <!-- THE A0 MASTER DESIGN SYNC TABLE -->
+    <div class="sync-section">
+      <h2>The A0 Master Design Sync</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Category / Component</th>
+            <th>Locked Detail / Setting</th>
+            <th>Supplier / Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Color Palette</strong></td>
+            <td>#D4AF37 & #F9E3B4 (Gold theme)</td>
+            <td>Locked Settings</td>
+          </tr>
+          <tr>
+            <td><strong>Text & Graphics</strong></td>
+            <td>All text and graphics are gold</td>
+            <td>Design Rules</td>
+          </tr>
+          <tr>
+            <td><strong>Currency Symbol</strong></td>
+            <td>£ symbol is printed on the poster</td>
+            <td>Print Specifications</td>
+          </tr>
+          <tr>
+            <td><strong>Changeability</strong></td>
+            <td>Magnetic numbers used for changing items</td>
+            <td><a href="https://www.thesignman.co.uk" target="_blank" style="color:var(--accent-gold);">The Sign Man</a></td>
+          </tr>
+          <tr>
+            <td><strong>New Items Added</strong></td>
+            <td>Prosecco, Baileys Latte, Aperol Spritz, Pimms</td>
+            <td>Menu Additions</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- THE LAYOUT GRID (FOR THE 6 CATEGORIES) TABLE -->
+      <h2 style="margin-top: 30px;">The Layout Grid (For the 6 Categories)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Category Index</th>
+            <th>Category Name</th>
+            <th>Core Focus / Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>ICE CREAM</strong></td>
+            <td>Cones, tubs, scoops, sundaes (Column E)</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>COUNTER</strong></td>
+            <td>Baked goods, snacks, grab-and-go (Column F)</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Kitchen</strong></td>
+            <td>Hot food, meals, cooked items (Column G)</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>DRINK</strong></td>
+            <td>Soft drinks, coffees, teas (Column H, incl. Baileys Latte)</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>DELI</strong></td>
+            <td>Sandwiches, fillings, custom plates (Column I)</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>ALCOHOL</strong></td>
+            <td>Bar items (Column J, incl. Prosecco, Aperol Spritz, Pimms)</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
@@ -397,7 +497,10 @@
 
       const parsedRecords = [];
 
-      for (let i = startIndex; i < rows.length; i++) {
+      // Restricted row limit (Row 48 is index 47, maxRowLimit ensures we don't exceed rows.length either)
+      const maxRowLimit = Math.min(rows.length, 48);
+
+      for (let i = startIndex; i < maxRowLimit; i++) {
         const row = rows[i];
         if (!row || !Array.isArray(row)) continue;
 
@@ -423,8 +526,8 @@
         let catDeli = 0;
         let catAlcohol = 0;
 
-        // 2026 Layout Mapping:
-        // A:Day(0), B:Date(1), C:Cash(2), D:Card(3), E:ICE CREAM(4), F:COUNTER(5), G:Kitchen(6), H:DRINK(7), I:DELI(8), J:ALCOHOL(9)
+        // 2026 Layout Mapping (Bounded up to Column K / index 10):
+        // A:Day(0), B:Date(1), C:Cash(2), D:Card(3), E:ICE CREAM(4), F:COUNTER(5), G:Kitchen(6), H:DRINK(7), I:DELI(8), J:ALCOHOL(9), K:(10 boundary limit)
         if (year >= 2026) {
           catIceCream = cleanCents(row[4]); // E: ICE CREAM
           catCounter  = cleanCents(row[5]); // F: COUNTER
@@ -459,7 +562,6 @@
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        // Daily total derived from Cash (C=2) + Card (D=3) if available, or fallback to category sum
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
         const paymentTotal = cashCents + cardCents;
