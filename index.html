@@ -327,9 +327,7 @@
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
       
-      if (!/\d/.test(str)) {
-        return 0;
-      }
+      if (!/\d/.test(str)) return 0;
 
       let isNegative = false;
       if (str.startsWith("-") || (str.includes("-") && str.indexOf("-") < str.search(/\d/))) {
@@ -343,7 +341,6 @@
       if (isNaN(num)) return 0;
 
       const cents = num * 100;
-      
       return isNegative ? -cents : cents;
     };
 
@@ -395,61 +392,80 @@
     function processRows(rows) {
       if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
 
-      const headerRow = rows.find(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date"))) || rows[0] || [];
-
-      const getColIndex = (keywords) => {
-        if (!Array.isArray(keywords)) keywords = [keywords];
-        for (let kw of keywords) {
-          const idx = headerRow.findIndex(cell => {
-            if (!cell) return false;
-            const headerText = String(cell).toLowerCase().trim();
-            return headerText === kw.toLowerCase() || headerText.includes(kw.toLowerCase());
-          });
-          if (idx !== -1) return idx;
-        }
-        return -1;
-      };
-
-      const idxTotal    = getColIndex(["total", "daily total"]);
-      const idxIceCream = getColIndex(["ice cream", "ice-cream"]);
-      const idxCounter  = getColIndex(["counter"]);
-      const idxKitchen  = getColIndex(["kitchen", "food"]);
-      const idxDrink    = getColIndex(["drink", "drinks"]);
-      const idxDeli     = getColIndex(["deli"]);
-      const idxAlcohol  = getColIndex(["alcohol", "bar"]);
+      const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date")));
+      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
 
       const parsedRecords = [];
 
-      rows.forEach(row => {
-        if (!row || !Array.isArray(row)) return;
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !Array.isArray(row)) continue;
 
         const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1];
+        const rawDate = row[1] !== undefined ? row[1] : row[0];
 
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
         if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
-          return;
+          continue;
         }
 
-        const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo) return;
+        const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
+        if (!parsedDateInfo) continue;
 
-        const catIceCream = idxIceCream !== -1 ? cleanCents(row[idxIceCream]) : cleanCents(row[2]);
-        const catCounter  = idxCounter !== -1 ? cleanCents(row[idxCounter]) : cleanCents(row[3]);
-        const catKitchen  = idxKitchen !== -1 ? cleanCents(row[idxKitchen]) : cleanCents(row[4]);
-        const catDrink    = idxDrink !== -1 ? cleanCents(row[idxDrink]) : cleanCents(row[5]);
-        const catDeli     = idxDeli !== -1 ? cleanCents(row[idxDeli]) : cleanCents(row[6]);
-        const catAlcohol  = idxAlcohol !== -1 ? cleanCents(row[idxAlcohol]) : cleanCents(row[7]);
+        const { year, month } = parsedDateInfo;
+
+        let catIceCream = 0;
+        let catCounter = 0;
+        let catKitchen = 0;
+        let catDrink = 0;
+        let catDeli = 0;
+        let catAlcohol = 0;
+
+        // Date-aware layout mapping based on your timeline changes:
+        const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
+        const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
+        const isBeforeAugust2025 = isBeforeMarch2024 || (year === 2024) || (year === 2025 && month < 8);
+
+        if (isBeforeJune2023) {
+          // Pre-June 2023: No alcohol column
+          catKitchen  = cleanCents(row[2]);
+          catDrink    = cleanCents(row[3]);
+          catDeli     = cleanCents(row[4]);
+          catAlcohol  = 0;
+        } else if (isBeforeMarch2024) {
+          // June 2023 – Feb 2024: Alcohol added (Column H index 7)
+          catKitchen  = cleanCents(row[2]);
+          catDrink    = cleanCents(row[3]);
+          catDeli     = cleanCents(row[4]);
+          catAlcohol  = cleanCents(row[7]);
+        } else if (isBeforeAugust2025) {
+          // March 2024 – July 2025: Counter added (Col E / index 3), Ice Cream added (Col F / index 4)
+          catIceCream = cleanCents(row[4]); // F
+          catCounter  = cleanCents(row[3]); // E
+          catKitchen  = cleanCents(row[5]);
+          catDrink    = cleanCents(row[6]);
+          catDeli     = cleanCents(row[7]);
+          catAlcohol  = cleanCents(row[8]);
+        } else {
+          // August 2025 onwards: Ice cream moves to E (index 3), Counter moves to F (index 4)
+          catIceCream = cleanCents(row[3]); // E
+          catCounter  = cleanCents(row[4]); // F
+          catKitchen  = cleanCents(row[5]);
+          catDrink    = cleanCents(row[6]);
+          catDeli     = cleanCents(row[7]);
+          catAlcohol  = cleanCents(row[8]);
+        }
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        let dailyTotalCents = (idxTotal !== -1 && row[idxTotal] !== undefined && row[idxTotal] !== "") 
-          ? cleanCents(row[idxTotal]) 
+        // Try reading explicit total row if available, otherwise fallback to sum of categories
+        let dailyTotalCents = (row[9] !== undefined && row[9] !== "") 
+          ? cleanCents(row[9]) 
           : sumCategoriesCents;
 
-        if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) return;
+        if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) continue;
 
         parsedRecords.push({
           dayName,
@@ -466,7 +482,7 @@
             "ALCOHOL": catAlcohol
           }
         });
-      });
+      }
 
       return parsedRecords;
     }
