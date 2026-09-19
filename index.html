@@ -208,7 +208,7 @@
   <div id="nav" class="hidden">
     <button onclick="App.switchTab(0)">Overview</button>
     <button onclick="App.switchTab(1)">Analytics</button>
-    <button onclick="App.inspectJuly()" style="background: var(--accent-gold);">Inspect July</button>
+    <button onclick="App.inspectDateRange()" style="background: var(--accent-gold);">Inspect Range</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -343,7 +343,6 @@
       const num = parseFloat(cleanStr);
       if (isNaN(num)) return 0;
 
-      // Fixed with Math.round to prevent floating-point decimal drift
       const cents = Math.round(num * 100);
       return isNegative ? -cents : cents;
     };
@@ -884,13 +883,11 @@
       if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
     };
 
-    // Inspect July by setting date range and switching to the analytics table view
-    const inspectJuly = () => {
-      if ($("startDate")) $("startDate").value = "2026-07-01";
-      if ($("endDate")) $("endDate").value = "2026-07-31";
+    // Inspect whichever date range is currently selected in the inputs
+    const inspectDateRange = () => {
       applyRange();
       switchTab(1);
-      toast("Switched to July breakdown table");
+      toast("Switched to analytics table for current date range");
     };
 
     window.App = {
@@ -900,7 +897,7 @@
       applyRange,
       resetView,
       switchTab,
-      inspectJuly
+      inspectDateRange
     };
   </script>
 </body>
