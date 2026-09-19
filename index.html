@@ -191,21 +191,6 @@
       display: none;
       z-index: 1001;
     }
-
-    /* Design Sync & Tables Styling */
-    .sync-section {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 30px;
-      border: 1px solid var(--primary-gold);
-    }
-
-    .sync-section h2 {
-      color: var(--accent-gold);
-      font-size: 16px;
-      margin-top: 0;
-    }
   </style>
 </head>
 <body>
@@ -292,91 +277,6 @@
         </div>
 
       </div>
-    </div>
-
-    <!-- THE A0 MASTER DESIGN SYNC TABLE -->
-    <div class="sync-section">
-      <h2>The A0 Master Design Sync</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Category / Component</th>
-            <th>Locked Detail / Setting</th>
-            <th>Supplier / Reference</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Color Palette</strong></td>
-            <td>#D4AF37 & #F9E3B4 (Gold theme)</td>
-            <td>Locked Settings</td>
-          </tr>
-          <tr>
-            <td><strong>Text & Graphics</strong></td>
-            <td>All text and graphics are gold</td>
-            <td>Design Rules</td>
-          </tr>
-          <tr>
-            <td><strong>Currency Symbol</strong></td>
-            <td>£ symbol is printed on the poster</td>
-            <td>Print Specifications</td>
-          </tr>
-          <tr>
-            <td><strong>Changeability</strong></td>
-            <td>Magnetic numbers used for changing items</td>
-            <td><a href="https://www.thesignman.co.uk" target="_blank" style="color:var(--accent-gold);">The Sign Man</a></td>
-          </tr>
-          <tr>
-            <td><strong>New Items Added</strong></td>
-            <td>Prosecco, Baileys Latte, Aperol Spritz, Pimms</td>
-            <td>Menu Additions</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- THE LAYOUT GRID (FOR THE 6 CATEGORIES) TABLE -->
-      <h2 style="margin-top: 30px;">The Layout Grid (For the 6 Categories)</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Category Index</th>
-            <th>Category Name</th>
-            <th>Core Focus / Items</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td><strong>ICE CREAM</strong></td>
-            <td>Cones, tubs, scoops, sundaes (Column E)</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td><strong>COUNTER</strong></td>
-            <td>Baked goods, snacks, grab-and-go (Column F)</td>
-          </tr>
-          <tr>
-            <td>3</td>
-            <td><strong>Kitchen</strong></td>
-            <td>Hot food, meals, cooked items (Column G)</td>
-          </tr>
-          <tr>
-            <td>4</td>
-            <td><strong>DRINK</strong></td>
-            <td>Soft drinks, coffees, teas (Column H, incl. Baileys Latte)</td>
-          </tr>
-          <tr>
-            <td>5</td>
-            <td><strong>DELI</strong></td>
-            <td>Sandwiches, fillings, custom plates (Column I)</td>
-          </tr>
-          <tr>
-            <td>6</td>
-            <td><strong>ALCOHOL</strong></td>
-            <td>Bar items (Column J, incl. Prosecco, Aperol Spritz, Pimms)</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
   </div>
@@ -508,12 +408,10 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Explicitly ignore header text, total lines, or summary/aggregate rows
         if (!rawDate || lowerDay.includes("total") || lowerDay.includes("weekly") || lowerDay.includes("month") || lowerDate.includes("date")) {
           continue;
         }
 
-        // Additional safeguard: ignore rows where column 0 has text like "MONDAY" but doesn't map to a clean single date structure or acts as a section marker
         const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
         if (!parsedDateInfo) continue;
 
@@ -526,14 +424,13 @@
         let catDeli = 0;
         let catAlcohol = 0;
 
-        // 2026 Layout Mapping (Bounded up to Column K / index 10):
         if (year >= 2026 || year === 2025) {
-          catIceCream = cleanCents(row[4]); // E: ICE CREAM
-          catCounter  = cleanCents(row[5]); // F: COUNTER
-          catKitchen  = cleanCents(row[6]); // G: Kitchen
-          catDrink    = cleanCents(row[7]); // H: DRINK
-          catDeli     = cleanCents(row[8]); // I: DELI
-          catAlcohol  = cleanCents(row[9]); // J: ALCOHOL
+          catIceCream = cleanCents(row[4]);
+          catCounter  = cleanCents(row[5]);
+          catKitchen  = cleanCents(row[6]);
+          catDrink    = cleanCents(row[7]);
+          catDeli     = cleanCents(row[8]);
+          catAlcohol  = cleanCents(row[9]);
         } else {
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
           const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
@@ -560,12 +457,10 @@
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        // Cleanly sum cash + card together as the standard daily total rule
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
         let dailyTotalCents = cashCents + cardCents;
 
-        // Fallback to sum of categories if cash/card cells are empty but categories are filled
         if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
           dailyTotalCents = sumCategoriesCents;
         }
