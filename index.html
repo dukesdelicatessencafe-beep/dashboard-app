@@ -206,6 +206,7 @@
   <div id="nav" class="hidden">
     <button onclick="App.switchTab(0)">Overview</button>
     <button onclick="App.switchTab(1)">Analytics</button>
+    <button onclick="App.inspectJuly()" style="background: var(--accent-gold);">Inspect July</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -731,8 +732,14 @@
         STATE.raw = allRecords;
 
         if (STATE.raw.length > 0) {
-          if ($("startDate")) $("startDate").value = "2026-07-01";
-          if ($("endDate")) $("endDate").value = "2026-07-31";
+          const savedStart = localStorage.getItem("dash_startDate");
+          const savedEnd = localStorage.getItem("dash_endDate");
+
+          if (savedStart && $("startDate")) $("startDate").value = savedStart;
+          else if ($("startDate")) $("startDate").value = "2026-07-01";
+
+          if (savedEnd && $("endDate")) $("endDate").value = savedEnd;
+          else if ($("endDate")) $("endDate").value = "2026-07-31";
         }
 
         applyRange();
@@ -782,6 +789,9 @@
     const applyRange = () => {
       const startVal = $("startDate")?.value;
       const endVal = $("endDate")?.value;
+
+      if (startVal) localStorage.setItem("dash_startDate", startVal);
+      if (endVal) localStorage.setItem("dash_endDate", endVal);
 
       if (!startVal || !endVal) {
         renderDashboard(STATE.raw);
@@ -875,13 +885,31 @@
       if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
     };
 
+    // Mobile inspection helper popup for July
+    const inspectJuly = () => {
+      const julyRecords = STATE.raw.filter(r => r.dateInt >= 20260701 && r.dateInt <= 20260731);
+      if (julyRecords.length === 0) {
+        alert("No July 2026 records found yet.");
+        return;
+      }
+      let summary = "July 2026 Breakdown:\n\n";
+      let sum = 0;
+      julyRecords.forEach(r => {
+        sum += r.dailyTotalCents;
+        summary += `${r.dayName} (${r.parsedDate.toLocaleDateString("en-GB")}): £${(r.dailyTotalCents/100).toFixed(2)}\n`;
+      });
+      summary += `\nTotal: £${(sum/100).toFixed(2)}`;
+      alert(summary);
+    };
+
     window.App = {
       login,
       load,
       setRange,
       applyRange,
       resetView,
-      switchTab
+      switchTab,
+      inspectJuly
     };
   </script>
 </body>
