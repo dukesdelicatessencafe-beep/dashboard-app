@@ -423,42 +423,49 @@
         let catDeli = 0;
         let catAlcohol = 0;
 
-        // Date-aware layout mapping based on timeline changes:
-        const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
-        const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
-        const isBeforeAugust2025 = isBeforeMarch2024 || (year === 2024) || (year === 2025 && month < 8);
-
-        if (isBeforeJune2023) {
-          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = 0;
-        } else if (isBeforeMarch2024) {
-          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = cleanCents(row[9]);
-        } else if (isBeforeAugust2025) {
-          catCounter  = cleanCents(row[4]); // E
-          catIceCream = cleanCents(row[5]); // F
-          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = cleanCents(row[9]);
+        // 2026 Layout Mapping based on: A:Day, B:Date, C:Cash, D:Card, E:ICE, F:CREAM, G:COUNTER, H:Kitchen, I:DRINK, J:DELI, K:ALCOHOL
+        if (year >= 2026) {
+          const icePart1 = cleanCents(row[4]); // E: ICE
+          const icePart2 = cleanCents(row[5]); // F: CREAM
+          catIceCream = (icePart1 !== 0 && icePart2 !== 0) ? (icePart1 + icePart2) : (icePart1 || icePart2);
+          catCounter  = cleanCents(row[6]); // G: COUNTER
+          catKitchen  = cleanCents(row[7]); // H: Kitchen
+          catDrink    = cleanCents(row[8]); // I: DRINK
+          catDeli     = cleanCents(row[9]); // J: DELI
+          catAlcohol  = cleanCents(row[10]); // K: ALCOHOL
         } else {
-          catIceCream = cleanCents(row[4]); // E
-          catCounter  = cleanCents(row[5]); // F
-          catKitchen  = cleanCents(row[6]); // Kitchen in Col G
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = cleanCents(row[9]);
+          // Fallback mapping for older historical layouts
+          const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
+          const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
+          
+          if (isBeforeJune2023) {
+            catKitchen  = cleanCents(row[6]);
+            catDrink    = cleanCents(row[7]);
+            catDeli     = cleanCents(row[8]);
+            catAlcohol  = 0;
+          } else if (isBeforeMarch2024) {
+            catKitchen  = cleanCents(row[6]);
+            catDrink    = cleanCents(row[7]);
+            catDeli     = cleanCents(row[8]);
+            catAlcohol  = cleanCents(row[9]);
+          } else {
+            catIceCream = cleanCents(row[4]);
+            catCounter  = cleanCents(row[5]);
+            catKitchen  = cleanCents(row[6]);
+            catDrink    = cleanCents(row[7]);
+            catDeli     = cleanCents(row[8]);
+            catAlcohol  = cleanCents(row[9]);
+          }
         }
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        let dailyTotalCents = (row[10] !== undefined && row[10] !== "") 
-          ? cleanCents(row[10]) 
-          : sumCategoriesCents;
+        // Daily total derived from Cash (C=2) + Card (D=3) if available, or fallback to category sum
+        const cashCents = cleanCents(row[2]);
+        const cardCents = cleanCents(row[3]);
+        const paymentTotal = cashCents + cardCents;
+
+        let dailyTotalCents = paymentTotal > 0 ? paymentTotal : sumCategoriesCents;
 
         if (dailyTotalCents === 0 && !dayName && sumCategoriesCents === 0) continue;
 
