@@ -155,6 +155,8 @@
       border-collapse: collapse;
       background: var(--card-bg);
       margin-bottom: 20px;
+      user-select: text; /* Allows easy text selection/copying on mobile */
+      -webkit-user-select: text;
     }
 
     table th, table td {
@@ -167,7 +169,7 @@
       color: var(--accent-gold);
     }
 
-    /* Notification & Loader */
+    /* Loader & Toast */
     #loading {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -409,7 +411,6 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Strict filter to exclude any subtotal, weekly block, or aggregate row headers
         if (
           !rawDate || 
           lowerDay.includes("total") || 
@@ -427,7 +428,6 @@
         const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
         if (!parsedDateInfo) continue;
 
-        // Ensure we only process valid days of the week explicitly
         const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
         if (!validDays.includes(lowerDay)) continue;
 
@@ -481,9 +481,7 @@
           dailyTotalCents = sumCategoriesCents;
         }
 
-        // Skip the row entirely if there is nothing recorded after the day name (all values are 0)
         if (dailyTotalCents === 0 && sumCategoriesCents === 0) continue;
-
         if (dailyTotalCents === 0 && !dayName) continue;
 
         parsedRecords.push({
@@ -885,21 +883,13 @@
       if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
     };
 
-    // Mobile inspection helper popup for July
+    // Inspect July by setting date range and switching to the analytics table view
     const inspectJuly = () => {
-      const julyRecords = STATE.raw.filter(r => r.dateInt >= 20260701 && r.dateInt <= 20260731);
-      if (julyRecords.length === 0) {
-        alert("No July 2026 records found yet.");
-        return;
-      }
-      let summary = "July 2026 Breakdown:\n\n";
-      let sum = 0;
-      julyRecords.forEach(r => {
-        sum += r.dailyTotalCents;
-        summary += `${r.dayName} (${r.parsedDate.toLocaleDateString("en-GB")}): £${(r.dailyTotalCents/100).toFixed(2)}\n`;
-      });
-      summary += `\nTotal: £${(sum/100).toFixed(2)}`;
-      alert(summary);
+      if ($("startDate")) $("startDate").value = "2026-07-01";
+      if ($("endDate")) $("endDate").value = "2026-07-31";
+      applyRange();
+      switchTab(1);
+      toast("Switched to July breakdown table");
     };
 
     window.App = {
