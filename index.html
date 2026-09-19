@@ -426,7 +426,7 @@
         const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
         if (!parsedDateInfo) continue;
 
-        // Ensure we only process valid days of the week (ignoring summary rows that happen to sit outside named days)
+        // Ensure we only process valid days of the week explicitly
         const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
         if (!validDays.includes(lowerDay)) continue;
 
