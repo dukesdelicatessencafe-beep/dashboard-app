@@ -396,7 +396,7 @@
       const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
 
       const parsedRecords = [];
-      const maxRowLimit = Math.min(rows.length, 48);
+      const maxRowLimit = rows.length;
 
       for (let i = startIndex; i < maxRowLimit; i++) {
         const row = rows[i];
@@ -408,15 +408,17 @@
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
-        // Stricter filter to ignore headers, totals, monthly summaries, and aggregate rows
+        // Stricter filter to ignore headers, weekly totals, month summaries, and empty/aggregate rows
         if (
           !rawDate || 
           lowerDay.includes("total") || 
           lowerDay.includes("weekly") || 
           lowerDay.includes("month") || 
           lowerDay.includes("sum") ||
+          lowerDay.includes("deductions") ||
           lowerDate.includes("date") ||
-          lowerDate.includes("total")
+          lowerDate.includes("total") ||
+          lowerDate.includes("month")
         ) {
           continue;
         }
