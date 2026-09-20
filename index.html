@@ -217,9 +217,9 @@
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <h3>YTD SALES (JAN 1 - TODAY)</h3>
-        <div class="val" id="ytdSales">Syncing...</div>
-        <div class="subtext" id="ytdSub">Current calendar year</div>
+        <h3>FINANCIAL YTD (FEB 1 - TODAY)</h3>
+        <div class="val" id="fytdSales">Syncing...</div>
+        <div class="subtext">Current financial year</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -249,7 +249,6 @@
       <input type="date" id="endDate" onchange="App.applyRange()">
       <button onclick="App.setRange('7')">Last 7 Days</button>
       <button onclick="App.setRange('31')">Last 31 Days</button>
-      <button onclick="App.setRange('fytd')">Financial YTD (Feb 1)</button>
       <button onclick="App.resetView()">Reset All</button>
     </div>
 
@@ -505,19 +504,23 @@
       return parsedRecords;
     }
 
-    function calculateYTD(allRecords) {
+    function calculateFYTD(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
       
-      const currentYear = new Date().getFullYear();
-      const ytdStartInt = currentYear * 10000 + 101; // Jan 1st of current year
+      const anchorDate = new Date();
+      const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
+      const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
+      
+      const fyStartInt = fyYear * 10000 + 201; // Feb 1st
+      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
-      let ytdSumCents = 0;
+      let fytdSumCents = 0;
       allRecords.forEach(r => {
-        if (r.dateInt >= ytdStartInt) {
-          ytdSumCents += r.dailyTotalCents;
+        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) {
+          fytdSumCents += r.dailyTotalCents;
         }
       });
-      return ytdSumCents;
+      return fytdSumCents;
     }
 
     function calculateRolling12Month(allRecords) {
@@ -607,7 +610,7 @@
       const vatStatusEl = $("vatStatus");
 
       if (!STATE.isFullLoaded) {
-        safeSet("ytdSales", "Syncing...");
+        safeSet("fytdSales", "Syncing...");
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
@@ -618,8 +621,8 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        const ytdCents = calculateYTD(STATE.raw);
-        safeSet("ytdSales", fmt(ytdCents));
+        const fytdCents = calculateFYTD(STATE.raw);
+        safeSet("fytdSales", fmt(fytdCents));
         safeSet("products", records.length);
 
         let topCat = "-";
@@ -723,7 +726,7 @@
       try {
         const loader = $("loading");
         
-        // 1. Force Default Date Pickers to Current Month (ignoring and resetting old local storage)
+        // 1. Default Date Pickers to Current Month
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
@@ -858,17 +861,6 @@
 
         renderDashboard(filtered);
         toast("Showing last 31 days from today");
-      } else if (type === "fytd") {
-        const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
-        const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-        
-        const fyStartInt = fyYear * 10000 + 201;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= todayInt);
-        
-        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
-
-        renderDashboard(filtered);
-        toast("Showing Financial Year-to-Date (Feb 1st start)");
       }
     };
 
