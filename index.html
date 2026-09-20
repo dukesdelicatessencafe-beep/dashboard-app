@@ -296,7 +296,7 @@
         </div>
       </div>
 
-      <!-- NEW: CASH VS CARD SPLIT KPI -->
+      <!-- CASH VS CARD SPLIT KPI -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardSplitVal">Syncing...</div>
@@ -677,7 +677,7 @@
 
     // Calculates Cash vs Card split for the filtered records
     function calculateCashCardSplit(records) {
-      if (!records || records.length === 0) return { cashPct: 0, cardPct: 0, cashTotal: 0, cardTotal: 0 };
+      if (!records || records.length === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
       
       let totalCash = 0;
       let totalCard = 0;
@@ -688,7 +688,7 @@
       });
 
       const combined = totalCash + totalCard;
-      if (combined === 0) return { cashPct: 0, cardPct: 0, cashTotal: 0, cardTotal: 0 };
+      if (combined === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
 
       const cashPct = ((totalCash / combined) * 100).toFixed(1);
       const cardPct = ((totalCard / combined) * 100).toFixed(1);
