@@ -286,11 +286,16 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
+      <!-- BANKING CONSOLIDATION CARD WITH BUILT-IN DATE PICKER -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
-        <div class="val" id="bankingVal">Syncing...</div>
-        <div class="subtext" id="bankingSub">Cash ready to bank</div>
+        <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
+        <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px;">
+          <label for="lastBankedDate" style="font-size: 11px; color: var(--accent-gold); white-space: nowrap;">Last Banked:</label>
+          <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 11px; width: 100%;">
+        </div>
       </div>
+
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
@@ -331,12 +336,8 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS & BANKING CONFIG -->
+    <!-- FULL RANGE CONTROLS -->
     <div class="controls">
-      <div class="control-group" style="border-right: 1px solid #444; padding-right: 15px;">
-        <label style="font-size:13px; color:var(--pos-green); font-weight:bold;">Last Banked Date:</label>
-        <input type="date" id="lastBankedDate" onchange="App.applyRange()">
-      </div>
       <div class="control-group">
         <label style="font-size:13px; color:var(--accent-gold);">From:</label>
         <input type="date" id="startDate" onchange="App.applyRange()">
@@ -678,7 +679,6 @@
       let count = 0;
 
       allRecords.forEach(r => {
-        // Sum cash from strictly after the last banked date up through today
         if (r.dateInt > lastBankedInt && r.dateInt <= todayInt) {
           unbankedCashCents += (r.cashCents || 0);
           count++;
@@ -887,14 +887,11 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        // Banking Consolidation Metric
         const bankingData = calculateBankingConsolidation(STATE.raw);
         const bankingValEl = $("bankingVal");
-        const bankedDateVal = $("lastBankedDate")?.value || "Not Set";
         if (bankingValEl) {
-          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:var(--accent-gold); font-weight:normal;">Unbanked across ${bankingData.daysCount} days</span>`;
+          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked across ${bankingData.daysCount} days</span>`;
         }
-        safeSet("bankingSub", `Since last banked: ${bankedDateVal}`);
 
         const fytdData = calculateFYTD(STATE.raw);
         const fytdDiff = fytdData.current - fytdData.prev;
