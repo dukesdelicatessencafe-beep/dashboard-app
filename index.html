@@ -217,9 +217,14 @@
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <h3>FINANCIAL YTD (FEB 1 - TODAY)</h3>
+        <h3>FINANCIAL YTD (FEB 1)</h3>
         <div class="val" id="fytdSales">Syncing...</div>
-        <div class="subtext">Current financial year</div>
+        <div class="subtext">Feb 1 - Today</div>
+      </div>
+      <div class="kpi-card">
+        <h3>CALENDAR YTD (JAN 1)</h3>
+        <div class="val" id="ytdSales">Syncing...</div>
+        <div class="subtext">Jan 1 - Today</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -523,6 +528,23 @@
       return fytdSumCents;
     }
 
+    function calculateYTD(allRecords) {
+      if (!allRecords || allRecords.length === 0) return 0;
+      
+      const anchorDate = new Date();
+      const currentYear = anchorDate.getFullYear();
+      const ytdStartInt = currentYear * 10000 + 101; // Jan 1st
+      const todayInt = currentYear * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
+
+      let ytdSumCents = 0;
+      allRecords.forEach(r => {
+        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) {
+          ytdSumCents += r.dailyTotalCents;
+        }
+      });
+      return ytdSumCents;
+    }
+
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
@@ -611,6 +633,7 @@
 
       if (!STATE.isFullLoaded) {
         safeSet("fytdSales", "Syncing...");
+        safeSet("ytdSales", "Syncing...");
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
@@ -623,6 +646,10 @@
       } else {
         const fytdCents = calculateFYTD(STATE.raw);
         safeSet("fytdSales", fmt(fytdCents));
+
+        const ytdCents = calculateYTD(STATE.raw);
+        safeSet("ytdSales", fmt(ytdCents));
+
         safeSet("products", records.length);
 
         let topCat = "-";
