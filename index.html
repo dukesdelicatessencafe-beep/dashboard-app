@@ -98,6 +98,7 @@
     .kpi-card .val {
       font-size: 18px;
       font-weight: bold;
+      line-height: 1.3;
     }
 
     .kpi-card .subtext {
@@ -709,7 +710,7 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        // FYTD Data (Previous first, then current + variance)
+        // FYTD Data (Previous first on top, (Cur: ...) stacked underneath, then variance)
         const fytdData = calculateFYTD(STATE.raw);
         safeSet("fytdSales", fmt(fytdData.current));
         
@@ -718,7 +719,7 @@
         const fytdSign = fytdDiff >= 0 ? "+" : "";
         const fytdEl = $("fytdCompVal");
         if (fytdEl) {
-          fytdEl.innerHTML = `${fmt(fytdData.prev)} (Cur: ${fmt(fytdData.current)}) <br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+          fytdEl.innerHTML = `${fmt(fytdData.prev)}<br><span style="font-size:16px; font-weight:bold; color:#fff;">(Cur: ${fmt(fytdData.current)})</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
         }
         safeSet("fytdCompSub", "Previous vs Current Period");
 
@@ -726,14 +727,14 @@
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
 
-        // Month Comparison Data (Previous first, then current + variance)
+        // Month Comparison Data (Previous first on top, (Cur: ...) stacked underneath, then variance)
         const mthData = calculateMonthComparison(STATE.raw);
         const mthDiff = mthData.current - mthData.prev;
         const mthPct = mthData.prev > 0 ? ((mthDiff / mthData.prev) * 100).toFixed(1) : "0.0";
         const mthSign = mthDiff >= 0 ? "+" : "";
         const mthEl = $("mthCompVal");
         if (mthEl) {
-          mthEl.innerHTML = `${fmt(mthData.prev)} (Cur: ${fmt(mthData.current)}) <br><span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${mthSign}${fmt(mthDiff)} (${mthSign}${mthPct}%)</span>`;
+          mthEl.innerHTML = `${fmt(mthData.prev)}<br><span style="font-size:16px; font-weight:bold; color:#fff;">(Cur: ${fmt(mthData.current)})</span><br><span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${mthSign}${fmt(mthDiff)} (${mthSign}${mthPct}%)</span>`;
         }
         safeSet("mthCompSub", "Previous vs Current (Equiv. Days)");
 
