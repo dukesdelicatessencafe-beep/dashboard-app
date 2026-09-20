@@ -371,7 +371,9 @@
             <thead>
               <tr>
                 <th>Date / Entry</th>
-                <th>Daily Revenue</th>
+                <th>Cash (£)</th>
+                <th>Card (£)</th>
+                <th>Daily Revenue (£)</th>
               </tr>
             </thead>
             <tbody id="productTable"></tbody>
@@ -863,6 +865,8 @@
           const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
           tr.innerHTML = `
             <td>${rec.dayName ? rec.dayName + ' - ' : ''}${displayDateStr}</td>
+            <td>${fmt(rec.cashCents)}</td>
+            <td>${fmt(rec.cardCents)}</td>
             <td>${fmt(rec.dailyTotalCents)}</td>
           `;
           container.appendChild(tr);
