@@ -217,8 +217,9 @@
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <h3>TOTAL SALES (FILTERED)</h3>
-        <div class="val" id="sales">Syncing...</div>
+        <h3>YTD SALES (JAN 1 - TODAY)</h3>
+        <div class="val" id="ytdSales">Syncing...</div>
+        <div class="subtext" id="ytdSub">Current calendar year</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -504,6 +505,21 @@
       return parsedRecords;
     }
 
+    function calculateYTD(allRecords) {
+      if (!allRecords || allRecords.length === 0) return 0;
+      
+      const currentYear = new Date().getFullYear();
+      const ytdStartInt = currentYear * 10000 + 101; // Jan 1st of current year
+
+      let ytdSumCents = 0;
+      allRecords.forEach(r => {
+        if (r.dateInt >= ytdStartInt) {
+          ytdSumCents += r.dailyTotalCents;
+        }
+      });
+      return ytdSumCents;
+    }
+
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
@@ -561,7 +577,6 @@
 
     function renderDashboard(records) {
       const container = $("productTable");
-      let totalRevCents = 0;
       const categoryTotalsCents = {
         "ICE CREAM": 0,
         "COUNTER": 0,
@@ -574,8 +589,6 @@
       if (container) container.innerHTML = "";
 
       records.forEach(rec => {
-        totalRevCents += rec.dailyTotalCents;
-
         Object.keys(rec.categories).forEach(cat => {
           categoryTotalsCents[cat] += rec.categories[cat];
         });
@@ -594,7 +607,7 @@
       const vatStatusEl = $("vatStatus");
 
       if (!STATE.isFullLoaded) {
-        safeSet("sales", "Syncing...");
+        safeSet("ytdSales", "Syncing...");
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
@@ -605,7 +618,8 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        safeSet("sales", fmt(totalRevCents));
+        const ytdCents = calculateYTD(STATE.raw);
+        safeSet("ytdSales", fmt(ytdCents));
         safeSet("products", records.length);
 
         let topCat = "-";
