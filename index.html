@@ -273,14 +273,14 @@
               <tr>
                 <th>Date / Entry</th>
                 <th>Daily Revenue</th>
-              </tr>
-            </thead>
-            <tbody id="productTable"></tbody>
-          </table>
-        </div>
-
+            </tr>
+          </thead>
+          <tbody id="productTable"></tbody>
+        </table>
       </div>
+
     </div>
+  </div>
 
   </div>
 
@@ -450,7 +450,7 @@
         } else {
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
           const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
-          
+           
           if (isBeforeJune2023) {
             catKitchen  = cleanCents(row[6]);
             catDrink    = cleanCents(row[7]);
@@ -504,6 +504,7 @@
       return parsedRecords;
     }
 
+    // OPTIMIZED O(N) SLIDING WINDOW ALGORITHM FOR ROLLING 12-MONTH TOTAL
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
@@ -517,11 +518,20 @@
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
       let rollingSumCents = 0;
-      validRecords.forEach(r => {
+      let left = 0;
+
+      // Sliding window execution in a single fast pass O(N)
+      for (let right = 0; right < validRecords.length; right++) {
+        const r = validRecords[right];
         if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
           rollingSumCents += r.dailyTotalCents;
         }
-      });
+        // Retract left pointer elements falling out of range
+        while (validRecords[left].parsedDate < startLookback) {
+          rollingSumCents -= validRecords[left].dailyTotalCents;
+          left++;
+        }
+      }
 
       return rollingSumCents;
     }
@@ -741,7 +751,7 @@
         }
 
         applyRange();
-        
+         
         if (loader) loader.classList.add("hidden");
         toast("Current year loaded instantly");
 
@@ -812,17 +822,17 @@
 
     const setRange = (type) => {
       if (STATE.raw.length === 0) return;
-      
+       
       const anchorDate = new Date();
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       if (type === "7") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 7);
-        
+         
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
         const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-        
+         
         if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
@@ -831,10 +841,10 @@
       } else if (type === "31") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 31);
-        
+         
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
         const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-        
+         
         if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
@@ -843,10 +853,10 @@
       } else if (type === "fytd") {
         const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
         const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-        
+         
         const fyStartInt = fyYear * 10000 + 201;
         const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= todayInt);
-        
+         
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
         renderDashboard(filtered);
