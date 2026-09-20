@@ -286,9 +286,9 @@
         <div class="subtext">Jan 1 - Today</div>
       </div>
       <div class="kpi-card">
-        <h3>CURRENT MONTH VS PREV MONTH</h3>
+        <h3>CURRENT MONTH TARGET (+10%)</h3>
         <div class="val" id="mthCompVal">Syncing...</div>
-        <div class="subtext" id="mthCompSub">Comparing equivalent days</div>
+        <div class="subtext" id="mthCompSub">Dynamic Target Tracker</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -679,42 +679,46 @@
       return ytdSumCents;
     }
 
-    function calculateMonthComparison(allRecords) {
-      if (!allRecords || allRecords.length === 0) return { current: 0, prev: 0 };
+    function calculateMonthTargetKPI(allRecords) {
+      if (!allRecords || allRecords.length === 0) return { current: 0, prevMonthTotal: 0, target: 0, remaining: 0 };
 
       const anchorDate = new Date();
       const curYear = anchorDate.getFullYear();
       const curMonth = anchorDate.getMonth() + 1;
       const curDay = anchorDate.getDate();
 
+      // Current Month Taken so far
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
 
-      let prevYear = curYear;
-      let prevMonth = curMonth - 1;
-      if (prevMonth === 0) {
-        prevMonth = 12;
-        prevYear -= 1;
-      }
-
-      const prevMonthStartInt = prevYear * 10000 + prevMonth * 100 + 1;
-      const maxDayInPrevMonth = new Date(prevYear, prevMonth, 0).getDate();
-      const matchedPrevDay = Math.min(curDay, maxDayInPrevMonth);
-      const prevMonthEndInt = prevYear * 10000 + prevMonth * 100 + matchedPrevDay;
+      // Previous Year Same Month Total (Full month sum of prev year)
+      const prevYear = curYear - 1;
+      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
+      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
+      const prevMonthEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
 
       let currentCents = 0;
-      let prevCents = 0;
+      let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
         if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
           currentCents += r.dailyTotalCents;
         }
         if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthEndInt) {
-          prevCents += r.dailyTotalCents;
+          prevMonthFullCents += r.dailyTotalCents;
         }
       });
 
-      return { current: currentCents, prev: prevCents };
+      // Target set to +10% over previous year same month
+      const targetCents = Math.round(prevMonthFullCents * 1.10);
+      const remainingCents = targetCents - currentCents;
+
+      return {
+        current: currentCents,
+        prevMonthTotal: prevMonthFullCents,
+        target: targetCents,
+        remaining: remainingCents
+      };
     }
 
     function calculateRolling12Month(allRecords) {
@@ -830,15 +834,14 @@
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
 
-        const mthData = calculateMonthComparison(STATE.raw);
-        const mthDiff = mthData.current - mthData.prev;
-        const mthPct = mthData.prev > 0 ? ((mthDiff / mthData.prev) * 100).toFixed(1) : "0.0";
-        const mthSign = mthDiff >= 0 ? "+" : "";
+        const mthData = calculateMonthTargetKPI(STATE.raw);
         const mthEl = $("mthCompVal");
         if (mthEl) {
-          mthEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(mthData.prev)}</span><br><span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${mthSign}${fmt(mthDiff)} (${mthSign}${mthPct}%)</span>`;
+          const remainingText = mthData.remaining > 0 ? `Needed: ${fmt(mthData.remaining)}` : `Target Reached! 🎉`;
+          const remainingColor = mthData.remaining > 0 ? 'negative' : 'positive';
+          mthEl.innerHTML = `Taken: ${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(mthData.target)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
         }
-        safeSet("mthCompSub", "Previous vs Current (Equiv. Days)");
+        safeSet("mthCompSub", `Prev Year Same Month: ${fmt(mthData.prevMonthTotal)}`);
 
         safeSet("products", records.length);
 
@@ -1003,7 +1006,6 @@
         const daySelect = $("entryDay");
         if (!dateInput || !daySelect || !dateInput.value) return;
 
-        // Parse date string locally in user's timezone to avoid offset issues
         const parts = dateInput.value.split("-");
         if (parts.length === 3) {
           const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
@@ -1043,7 +1045,6 @@
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
-            // Re-initialize entry date and day picker to today
             const todayStr = formatDateLocal(new Date());
             if ($("entryDate")) {
               $("entryDate").value = todayStr;
