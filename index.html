@@ -356,7 +356,7 @@
               <div class="form-grid">
                 <div class="form-group">
                   <label for="entryDate">Entry Date</label>
-                  <input type="date" id="entryDate" required>
+                  <input type="date" id="entryDate" onchange="App.onEntryDateChange()" required>
                 </div>
                 <div class="form-group">
                   <label for="entryDay">Day of Week</label>
@@ -423,7 +423,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbyOTCnE_KreI05vgY_OYVv0HtQYxtq2qTmiOMqV13c83_yZXjAiSo7Sn4IxBqKp-TfLNA/exec",
+      URL: "https://script.google.com/macros/s/AKfycby-C_eWgM4GfNbn3tZHEfyzxb7FZvPZkC5KMwXzJs5yVta-xlS7w6sAsV0ffer59BZmKQ/exec",
       PASSWORD: "1234"
     };
 
@@ -998,6 +998,22 @@
         const e = $("endDate")?.value || "End";
         toast(`Inspecting range: ${s} to ${e}`);
       },
+      onEntryDateChange: () => {
+        const dateInput = $("entryDate");
+        const daySelect = $("entryDay");
+        if (!dateInput || !daySelect || !dateInput.value) return;
+
+        // Parse date string locally in user's timezone to avoid offset issues
+        const parts = dateInput.value.split("-");
+        if (parts.length === 3) {
+          const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          if (!isNaN(dObj.getTime())) {
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            const dayName = days[dObj.getDay()];
+            daySelect.value = dayName;
+          }
+        }
+      },
       submitDataEntry: async (e) => {
         e.preventDefault();
         const loader = $("loading");
@@ -1027,6 +1043,12 @@
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
+            // Re-initialize entry date and day picker to today
+            const todayStr = formatDateLocal(new Date());
+            if ($("entryDate")) {
+              $("entryDate").value = todayStr;
+              App.onEntryDateChange();
+            }
             load();
             App.switchTab(0);
           } else {
@@ -1057,6 +1079,7 @@
         }
         if ($("entryDate") && !$("entryDate").value) {
           $("entryDate").value = defaultEnd;
+          App.onEntryDateChange();
         }
 
         const cachedData = localStorage.getItem("dash_cached_records");
