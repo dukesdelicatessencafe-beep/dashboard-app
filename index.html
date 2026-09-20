@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales & Analytics Dashboard</title>
+  <title>Sales & Analytics Dashboard with Data Entry</title>
   
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -71,6 +71,7 @@
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
     /* KPI Cards Header */
@@ -94,7 +95,6 @@
       color: var(--accent-gold);
     }
 
-    /* Standardized uniform size for main KPI values and text */
     .kpi-card .val {
       font-size: 18px;
       font-weight: bold;
@@ -127,7 +127,7 @@
       border-radius: 4px;
     }
 
-    /* Tabs Slider */
+    /* Tabs Slider (4 Tabs = 400% width) */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -136,13 +136,64 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 200%;
+      width: 400%;
     }
 
     .tab-content {
-      width: 50%;
+      width: 25%;
       box-sizing: border-box;
       padding-right: 20px;
+    }
+
+    /* Data Entry Sheet Form Styles */
+    .entry-form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--primary-gold);
+      border-radius: 8px;
+      padding: 25px;
+      max-width: 700px;
+      margin: 0 auto 20px auto;
+    }
+
+    .entry-form-card h2 {
+      color: var(--primary-gold);
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: var(--accent-gold);
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input, .form-group select {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--primary-gold);
+      outline: none;
     }
 
     /* Tables & Charts */
@@ -215,6 +266,7 @@
   <div id="nav" class="hidden">
     <button onclick="App.switchTab(0)">Overview</button>
     <button onclick="App.switchTab(1)">Analytics</button>
+    <button onclick="App.switchTab(2)">Data Entry Sheet</button>
     <button onclick="App.inspectDateRange()" style="background: var(--accent-gold);">Inspect Range</button>
   </div>
 
@@ -271,17 +323,17 @@
 
     <!-- TABS SLIDER CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs">
+      <div id="tabs" style="width: 400%;">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content">
+        <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="barChart"></canvas>
           </div>
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content">
+        <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
@@ -295,6 +347,69 @@
             <tbody id="productTable"></tbody>
           </table>
         </div>
+
+        <!-- TAB 2: DATA ENTRY SHEET -->
+        <div class="tab-content" style="width: 25%;">
+          <div class="entry-form-card">
+            <h2>Daily Record Data Entry</h2>
+            <form id="dataEntryForm" onsubmit="App.submitDataEntry(event)">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="entryDate">Entry Date</label>
+                  <input type="date" id="entryDate" required>
+                </div>
+                <div class="form-group">
+                  <label for="entryDay">Day of Week</label>
+                  <select id="entryDay" required>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="entryCash">Cash Total (£)</label>
+                  <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" required>
+                </div>
+                <div class="form-group">
+                  <label for="entryCard">Card Total (£)</label>
+                  <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" required>
+                </div>
+                <div class="form-group">
+                  <label for="catIceCream">Ice Cream (£)</label>
+                  <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                  <label for="catCounter">Counter (£)</label>
+                  <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                  <label for="catKitchen">Kitchen (£)</label>
+                  <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                  <label for="catDrink">Drink (£)</label>
+                  <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                  <label for="catDeli">Deli (£)</label>
+                  <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                  <label for="catAlcohol">Alcohol (£)</label>
+                  <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00">
+                </div>
+              </div>
+              <button type="submit" style="width: 100%; padding: 12px; font-size: 15px;">Save & Submit Entry</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Placeholder for structural balance if needed -->
+        <div class="tab-content" style="width: 25%;"></div>
 
       </div>
     </div>
@@ -346,7 +461,6 @@
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
-      
       if (!/\d/.test(str)) return 0;
 
       let isNegative = false;
@@ -366,7 +480,6 @@
 
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
-
       let y, m, d;
 
       if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
@@ -528,10 +641,10 @@
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
       
-      const fyStartInt = fyYear * 10000 + 201; // Feb 1st current FY
+      const fyStartInt = fyYear * 10000 + 201; 
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
-      const prevFyStartInt = (fyYear - 1) * 10000 + 201; // Feb 1st prev FY
+      const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
       const prevTodayInt = (anchorDate.getFullYear() - 1) * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       let currentCents = 0;
@@ -554,7 +667,7 @@
       
       const anchorDate = new Date();
       const currentYear = anchorDate.getFullYear();
-      const ytdStartInt = currentYear * 10000 + 101; // Jan 1st
+      const ytdStartInt = currentYear * 10000 + 101; 
       const todayInt = currentYear * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       let ytdSumCents = 0;
@@ -704,7 +817,6 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        // FYTD Data (Current on top with 1st Feb specified, previous stacked underneath, then variance)
         const fytdData = calculateFYTD(STATE.raw);
         const fytdDiff = fytdData.current - fytdData.prev;
         const fytdPct = fytdData.prev > 0 ? ((fytdDiff / fytdData.prev) * 100).toFixed(1) : "0.0";
@@ -715,11 +827,9 @@
         }
         safeSet("fytdCompSub", "Since 1st Feb");
 
-        // Calendar YTD
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
 
-        // Month Comparison Data (Current on top, previous stacked underneath, then variance)
         const mthData = calculateMonthComparison(STATE.raw);
         const mthDiff = mthData.current - mthData.prev;
         const mthPct = mthData.prev > 0 ? ((mthDiff / mthData.prev) * 100).toFixed(1) : "0.0";
@@ -833,7 +943,6 @@
       try {
         const loader = $("loading");
         
-        // 1. Default Date Pickers to Current Month
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
@@ -848,8 +957,10 @@
           $("endDate").value = defaultEnd;
           localStorage.setItem("dash_endDate", defaultEnd);
         }
+        if ($("entryDate")) {
+          $("entryDate").value = defaultEnd;
+        }
 
-        // 2. Check Local Storage Cache First for Instant Rendering
         const cachedData = localStorage.getItem("dash_cached_records");
         if (cachedData) {
           try {
@@ -872,7 +983,6 @@
           loader.classList.remove("hidden");
         }
 
-        // 3. Fetch fresh data in background / initial load
         const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
         const fullJson = await fullRes.json();
 
@@ -896,9 +1006,7 @@
         applyRange();
         if (loader) loader.classList.add("hidden");
         
-        if (cachedData) {
-          toast("Background sync updated with latest data");
-        } else {
+        if (!cachedData) {
           toast("Historical data loaded completely");
         }
 
@@ -997,13 +1105,70 @@
 
     const switchTab = (idx) => {
       const tabs = $("tabs");
-      if (tabs) tabs.style.transform = `translateX(-${idx * 50}%)`;
+      if (tabs) tabs.style.transform = `translateX(-${idx * 25}%)`;
     };
 
     const inspectDateRange = () => {
       applyRange();
       switchTab(1);
       toast("Switched to analytics table for current date range");
+    };
+
+    const submitDataEntry = async (event) => {
+      event.preventDefault();
+      
+      const dayName = $("entryDay").value;
+      const rawDate = $("entryDate").value;
+      const cash = parseFloat($("entryCash").value) || 0;
+      const card = parseFloat($("entryCard").value) || 0;
+      
+      const catIceCream = parseFloat($("catIceCream").value) || 0;
+      const catCounter = parseFloat($("catCounter").value) || 0;
+      const catKitchen = parseFloat($("catKitchen").value) || 0;
+      const catDrink = parseFloat($("catDrink").value) || 0;
+      const catDeli = parseFloat($("catDeli").value) || 0;
+      const catAlcohol = parseFloat($("catAlcohol").value) || 0;
+
+      const parsedInfo = parseDateString(rawDate);
+      if (!parsedInfo) {
+        toast("Invalid date selected");
+        return;
+      }
+
+      const newRecord = {
+        dayName,
+        rawDate,
+        parsedDate: parsedInfo.dateObj,
+        dateInt: parsedInfo.dateInt,
+        dailyTotalCents: Math.round((cash + card) * 100),
+        categories: {
+          "ICE CREAM": Math.round(catIceCream * 100),
+          "COUNTER": Math.round(catCounter * 100),
+          "Kitchen": Math.round(catKitchen * 100),
+          "DRINK": Math.round(catDrink * 100),
+          "DELI": Math.round(catDeli * 100),
+          "ALCOHOL": Math.round(catAlcohol * 100)
+        }
+      };
+
+      // Append locally and refresh
+      STATE.raw.push(newRecord);
+      STATE.raw.sort((a, b) => a.dateInt - b.dateInt);
+      localStorage.setItem("dash_cached_records", JSON.stringify(STATE.raw));
+
+      applyRange();
+      switchTab(0);
+      toast("New record added successfully!");
+      
+      // Reset form numerical fields
+      $("entryCash").value = "0.00";
+      $("entryCard").value = "0.00";
+      $("catIceCream").value = "0.00";
+      $("catCounter").value = "0.00";
+      $("catKitchen").value = "0.00";
+      $("catDrink").value = "0.00";
+      $("catDeli").value = "0.00";
+      $("catAlcohol").value = "0.00";
     };
 
     window.App = {
@@ -1013,7 +1178,8 @@
       applyRange,
       resetView,
       switchTab,
-      inspectDateRange
+      inspectDateRange,
+      submitDataEntry
     };
   </script>
 </body>
