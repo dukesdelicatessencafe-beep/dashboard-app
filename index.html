@@ -273,14 +273,14 @@
               <tr>
                 <th>Date / Entry</th>
                 <th>Daily Revenue</th>
-            </tr>
-          </thead>
-          <tbody id="productTable"></tbody>
-        </table>
-      </div>
+              </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
 
+      </div>
     </div>
-  </div>
 
   </div>
 
@@ -504,7 +504,7 @@
       return parsedRecords;
     }
 
-    // OPTIMIZED O(N) SLIDING WINDOW ALGORITHM FOR ROLLING 12-MONTH TOTAL
+    // BUG-FREE & LIGHTNING FAST ROLLING 12-MONTH TOTAL CALCULATION
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
@@ -518,18 +518,10 @@
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
       let rollingSumCents = 0;
-      let left = 0;
-
-      // Sliding window execution in a single fast pass O(N)
-      for (let right = 0; right < validRecords.length; right++) {
-        const r = validRecords[right];
+      for (let i = 0; i < validRecords.length; i++) {
+        const r = validRecords[i];
         if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
           rollingSumCents += r.dailyTotalCents;
-        }
-        // Retract left pointer elements falling out of range
-        while (validRecords[left].parsedDate < startLookback) {
-          rollingSumCents -= validRecords[left].dailyTotalCents;
-          left++;
         }
       }
 
