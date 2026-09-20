@@ -286,9 +286,14 @@
         <div class="subtext">Jan 1 - Today</div>
       </div>
       <div class="kpi-card">
+        <h3>CURRENT MONTH VS PREV YR (%)</h3>
+        <div class="val" id="mthPctCompVal">Syncing...</div>
+        <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
+      </div>
+      <div class="kpi-card">
         <h3>CURRENT MONTH TARGET (+10%)</h3>
-        <div class="val" id="mthCompVal">Syncing...</div>
-        <div class="subtext" id="mthCompSub">Dynamic Target Tracker</div>
+        <div class="val" id="mthTargetVal">Syncing...</div>
+        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -679,42 +684,52 @@
       return ytdSumCents;
     }
 
-    function calculateMonthTargetKPI(allRecords) {
-      if (!allRecords || allRecords.length === 0) return { current: 0, prevMonthTotal: 0, target: 0, remaining: 0 };
+    function calculateMonthKPIs(allRecords) {
+      if (!allRecords || allRecords.length === 0) return { current: 0, prevMonthPartial: 0, pctDiff: "0.0", prevMonthTotal: 0, target: 0, remaining: 0 };
 
       const anchorDate = new Date();
       const curYear = anchorDate.getFullYear();
       const curMonth = anchorDate.getMonth() + 1;
       const curDay = anchorDate.getDate();
 
-      // Current Month Taken so far
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
 
-      // Previous Year Same Month Total (Full month sum of prev year)
       const prevYear = curYear - 1;
       const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
       const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
-      const prevMonthEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
+      const targetPrevDay = Math.min(curDay, lastDayPrevMonth);
+      const prevMonthPartialEndInt = prevYear * 10000 + curMonth * 100 + targetPrevDay;
+
+      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
 
       let currentCents = 0;
+      let prevMonthPartialCents = 0;
       let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
         if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
           currentCents += r.dailyTotalCents;
         }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthEndInt) {
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) {
+          prevMonthPartialCents += r.dailyTotalCents;
+        }
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
           prevMonthFullCents += r.dailyTotalCents;
         }
       });
 
-      // Target set to +10% over previous year same month
+      const diffCents = currentCents - prevMonthPartialCents;
+      const pctVal = prevMonthPartialCents > 0 ? ((diffCents / prevMonthPartialCents) * 100).toFixed(1) : "0.0";
+
       const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingCents = targetCents - currentCents;
 
       return {
         current: currentCents,
+        prevMonthPartial: prevMonthPartialCents,
+        pctDiff: pctVal,
+        diffCents: diffCents,
         prevMonthTotal: prevMonthFullCents,
         target: targetCents,
         remaining: remainingCents
@@ -810,7 +825,8 @@
       if (!STATE.isFullLoaded) {
         safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
-        safeSet("mthCompVal", "Syncing...");
+        safeSet("mthPctCompVal", "Syncing...");
+        safeSet("mthTargetVal", "Syncing...");
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
@@ -834,14 +850,23 @@
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
 
-        const mthData = calculateMonthTargetKPI(STATE.raw);
-        const mthEl = $("mthCompVal");
-        if (mthEl) {
+        const mthData = calculateMonthKPIs(STATE.raw);
+        
+        const mthPctEl = $("mthPctCompVal");
+        if (mthPctEl) {
+          const isPos = mthData.diffCents >= 0;
+          const signStr = isPos ? "+" : "";
+          mthPctEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(mthData.prevMonthPartial)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(mthData.diffCents)} (${signStr}${mthData.pctDiff}%)</span>`;
+        }
+        safeSet("mthPctCompSub", "vs Same Period Last Year");
+
+        const mthTargetEl = $("mthTargetVal");
+        if (mthTargetEl) {
           const remainingText = mthData.remaining > 0 ? `Needed: ${fmt(mthData.remaining)}` : `Target Reached! 🎉`;
           const remainingColor = mthData.remaining > 0 ? 'negative' : 'positive';
-          mthEl.innerHTML = `Taken: ${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(mthData.target)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
+          mthTargetEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(mthData.target)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
         }
-        safeSet("mthCompSub", `Prev Year Same Month: ${fmt(mthData.prevMonthTotal)}`);
+        safeSet("mthTargetSub", `Prev Full Month: ${fmt(mthData.prevMonthTotal)}`);
 
         safeSet("products", records.length);
 
