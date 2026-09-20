@@ -286,14 +286,21 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
-      <!-- BANKING CONSOLIDATION CARD WITH BUILT-IN DATE PICKER -->
+      <!-- UNBANKED CASH CARD WITH BUILT-IN DATE PICKER -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
-        <h3>BANKING CONSOLIDATION</h3>
+        <h3>UNBANKED CASH (EXCLUDES CARD)</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
         <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px;">
           <label for="lastBankedDate" style="font-size: 11px; color: var(--accent-gold); white-space: nowrap;">Last Banked:</label>
           <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 11px; width: 100%;">
         </div>
+      </div>
+
+      <!-- NEW: CASH VS CARD SPLIT KPI -->
+      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+        <h3>CASH VS CARD SPLIT</h3>
+        <div class="val" id="cashCardSplitVal">Syncing...</div>
+        <div class="subtext" id="cashCardSplitSub">Based on Selected Date Range</div>
       </div>
 
       <div class="kpi-card">
@@ -603,12 +610,12 @@
         let catAlcohol = 0;
 
         if (year >= 2026 || year === 2025) {
-          catIceCream = cleanCents(row[4]);
-          catCounter  = cleanCents(row[5]);
-          catKitchen  = cleanCents(row[6]);
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = cleanCents(row[9]);
+          catIceCream = cleanCents(row[5]);
+          catCounter  = cleanCents(row[6]);
+          catKitchen  = cleanCents(row[7]);
+          catDrink    = cleanCents(row[8]);
+          catDeli     = cleanCents(row[9]);
+          catAlcohol  = cleanCents(row[10]);
         } else {
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
           const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
@@ -624,21 +631,21 @@
             catDeli     = cleanCents(row[8]);
             catAlcohol  = cleanCents(row[9]);
           } else {
-            catIceCream = cleanCents(row[4]);
-            catCounter  = cleanCents(row[5]);
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = cleanCents(row[9]);
+            catIceCream = cleanCents(row[5]);
+            catCounter  = cleanCents(row[6]);
+            catKitchen  = cleanCents(row[7]);
+            catDrink    = cleanCents(row[8]);
+            catDeli     = cleanCents(row[9]);
+            catAlcohol  = cleanCents(row[10]);
           }
         }
 
-        const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
-        let dailyTotalCents = cashCents + cardCents;
+        
+        let dailyTotalCents = cleanCents(row[4]);
 
+        const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
         if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
           dailyTotalCents = sumCategoriesCents;
         }
@@ -668,6 +675,28 @@
       return parsedRecords;
     }
 
+    // Calculates Cash vs Card split for the filtered records
+    function calculateCashCardSplit(records) {
+      if (!records || records.length === 0) return { cashPct: 0, cardPct: 0, cashTotal: 0, cardTotal: 0 };
+      
+      let totalCash = 0;
+      let totalCard = 0;
+
+      records.forEach(r => {
+        totalCash += (r.cashCents || 0);
+        totalCard += (r.cardCents || 0);
+      });
+
+      const combined = totalCash + totalCard;
+      if (combined === 0) return { cashPct: 0, cardPct: 0, cashTotal: 0, cardTotal: 0 };
+
+      const cashPct = ((totalCash / combined) * 100).toFixed(1);
+      const cardPct = ((totalCard / combined) * 100).toFixed(1);
+
+      return { cashPct, cardPct, cashTotal: totalCash, cardTotal: totalCard };
+    }
+
+    // Strictly tracks unbanked physical cash (excludes card transactions)
     function calculateBankingConsolidation(allRecords) {
       if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
       
@@ -877,6 +906,7 @@
 
       if (!STATE.isFullLoaded) {
         safeSet("bankingVal", "Syncing...");
+        safeSet("cashCardSplitVal", "Syncing...");
         safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
         safeSet("mthPctCompVal", "Syncing...");
@@ -894,7 +924,13 @@
         const bankingData = calculateBankingConsolidation(STATE.raw);
         const bankingValEl = $("bankingVal");
         if (bankingValEl) {
-          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked across ${bankingData.daysCount} days</span>`;
+          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked cash across ${bankingData.daysCount} days</span>`;
+        }
+
+        const splitData = calculateCashCardSplit(records);
+        const cashCardSplitEl = $("cashCardSplitVal");
+        if (cashCardSplitEl) {
+          cashCardSplitEl.innerHTML = `Cash: ${splitData.cashPct}% | Card: ${splitData.cardPct}%<br><span style="font-size:12px; font-weight:normal; color:#aaa;">Cash: ${fmt(splitData.cashTotal)} | Card: ${fmt(splitData.cardTotal)}</span>`;
         }
 
         const fytdData = calculateFYTD(STATE.raw);
