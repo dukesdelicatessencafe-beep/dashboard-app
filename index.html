@@ -224,14 +224,9 @@
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
       <div class="kpi-card">
-        <h3>FINANCIAL YTD (FEB 1)</h3>
-        <div class="val" id="fytdSales">Syncing...</div>
-        <div class="subtext">Feb 1 - Today</div>
-      </div>
-      <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
-        <div class="subtext" id="fytdCompSub">Comparing equivalent period</div>
+        <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
       </div>
       <div class="kpi-card">
         <h3>CALENDAR YTD (JAN 1)</h3>
@@ -696,7 +691,6 @@
       const vatStatusEl = $("vatStatus");
 
       if (!STATE.isFullLoaded) {
-        safeSet("fytdSales", "Syncing...");
         safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
         safeSet("mthCompVal", "Syncing...");
@@ -710,31 +704,29 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        // FYTD Data (Previous first on top, (Cur: ...) stacked underneath, then variance)
+        // FYTD Data (Current on top with 1st Feb specified, previous stacked underneath, then variance)
         const fytdData = calculateFYTD(STATE.raw);
-        safeSet("fytdSales", fmt(fytdData.current));
-        
         const fytdDiff = fytdData.current - fytdData.prev;
         const fytdPct = fytdData.prev > 0 ? ((fytdDiff / fytdData.prev) * 100).toFixed(1) : "0.0";
         const fytdSign = fytdDiff >= 0 ? "+" : "";
         const fytdEl = $("fytdCompVal");
         if (fytdEl) {
-          fytdEl.innerHTML = `${fmt(fytdData.prev)}<br><span style="font-size:16px; font-weight:bold; color:#fff;">(Cur: ${fmt(fytdData.current)})</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+          fytdEl.innerHTML = `${fmt(fytdData.current)} <span style="font-size:11px; font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(fytdData.prev)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
         }
-        safeSet("fytdCompSub", "Previous vs Current Period");
+        safeSet("fytdCompSub", "Since 1st Feb");
 
         // Calendar YTD
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
 
-        // Month Comparison Data (Previous first on top, (Cur: ...) stacked underneath, then variance)
+        // Month Comparison Data (Current on top, previous stacked underneath, then variance)
         const mthData = calculateMonthComparison(STATE.raw);
         const mthDiff = mthData.current - mthData.prev;
         const mthPct = mthData.prev > 0 ? ((mthDiff / mthData.prev) * 100).toFixed(1) : "0.0";
         const mthSign = mthDiff >= 0 ? "+" : "";
         const mthEl = $("mthCompVal");
         if (mthEl) {
-          mthEl.innerHTML = `${fmt(mthData.prev)}<br><span style="font-size:16px; font-weight:bold; color:#fff;">(Cur: ${fmt(mthData.current)})</span><br><span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${mthSign}${fmt(mthDiff)} (${mthSign}${mthPct}%)</span>`;
+          mthEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(mthData.prev)}</span><br><span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${mthSign}${fmt(mthDiff)} (${mthSign}${mthPct}%)</span>`;
         }
         safeSet("mthCompSub", "Previous vs Current (Equiv. Days)");
 
