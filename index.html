@@ -423,7 +423,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycby-C_eWgM4GfNbn3tZHEfyzxb7FZvPZkC5KMwXzJs5yVta-xlS7w6sAsV0ffer59BZmKQ/exec",
+      URL: "https://script.google.com/macros/s/AKfycbyniaPckUO1F5XGaHMxQyyD8XUHh4mPiSUv6uAwF2Z0vGst0eBRE065jEkt2aRuFRnjOQ/exec",
       PASSWORD: "1234"
     };
 
@@ -939,6 +939,106 @@
       });
     }
 
+    const App = {
+      login: () => {
+        const p = $("pass").value;
+        if (p === CONFIG.PASSWORD) {
+          $("login").classList.add("hidden");
+          $("nav").classList.remove("hidden");
+          $("app").classList.remove("hidden");
+          load();
+        } else {
+          alert("Incorrect Password");
+        }
+      },
+      switchTab: (index) => {
+        const tabs = $("tabs");
+        if (tabs) {
+          tabs.style.transform = `translateX(-${index * 25}%)`;
+        }
+      },
+      setRange: (daysStr) => {
+        const days = parseInt(daysStr, 10);
+        const endD = new Date();
+        const startD = new Date();
+        startD.setDate(endD.getDate() - days);
+
+        const sStr = formatDateLocal(startD);
+        const eStr = formatDateLocal(endD);
+
+        if ($("startDate")) $("startDate").value = sStr;
+        if ($("endDate")) $("endDate").value = eStr;
+
+        App.applyRange();
+      },
+      applyRange: () => {
+        const sVal = $("startDate")?.value;
+        const eVal = $("endDate")?.value;
+
+        if (sVal) localStorage.setItem("dash_startDate", sVal);
+        if (eVal) localStorage.setItem("dash_endDate", eVal);
+
+        if (!STATE.raw || STATE.raw.length === 0) return;
+
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        renderDashboard(filtered);
+      },
+      resetView: () => {
+        localStorage.removeItem("dash_startDate");
+        localStorage.removeItem("dash_endDate");
+        load();
+      },
+      inspectDateRange: () => {
+        const s = $("startDate")?.value || "Start";
+        const e = $("endDate")?.value || "End";
+        toast(`Inspecting range: ${s} to ${e}`);
+      },
+      submitDataEntry: async (e) => {
+        e.preventDefault();
+        const loader = $("loading");
+        if (loader) loader.classList.remove("hidden");
+
+        const payload = {
+          dayName: $("entryDay").value,
+          rawDate: $("entryDate").value,
+          cash: parseFloat($("entryCash").value) || 0,
+          card: parseFloat($("entryCard").value) || 0,
+          catIceCream: parseFloat($("catIceCream").value) || 0,
+          catCounter: parseFloat($("catCounter").value) || 0,
+          catKitchen: parseFloat($("catKitchen").value) || 0,
+          catDrink: parseFloat($("catDrink").value) || 0,
+          catDeli: parseFloat($("catDeli").value) || 0,
+          catAlcohol: parseFloat($("catAlcohol").value) || 0
+        };
+
+        try {
+          const res = await fetch(CONFIG.URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (loader) loader.classList.add("hidden");
+
+          if (json.status === "success") {
+            toast("Data successfully submitted!");
+            $("dataEntryForm").reset();
+            load();
+            App.switchTab(0);
+          } else {
+            alert("Submission error: " + (json.message || "Unknown error"));
+          }
+        } catch (err) {
+          if (loader) loader.classList.add("hidden");
+          alert("Network error during submission: " + err.message);
+        }
+      }
+    };
+
     const load = async () => {
       try {
         const loader = $("loading");
@@ -949,15 +1049,13 @@
         const defaultStart = formatDateLocal(firstDayOfMonth);
         const defaultEnd = formatDateLocal(now);
 
-        if ($("startDate")) {
+        if ($("startDate") && !$("startDate").value) {
           $("startDate").value = defaultStart;
-          localStorage.setItem("dash_startDate", defaultStart);
         }
-        if ($("endDate")) {
+        if ($("endDate") && !$("endDate").value) {
           $("endDate").value = defaultEnd;
-          localStorage.setItem("dash_endDate", defaultEnd);
         }
-        if ($("entryDate")) {
+        if ($("entryDate") && !$("entryDate").value) {
           $("entryDate").value = defaultEnd;
         }
 
@@ -971,7 +1069,7 @@
             STATE.raw = parsedCache;
             STATE.isFullLoaded = true;
 
-            applyRange();
+            App.applyRange();
             if (loader) loader.classList.add("hidden");
             toast("Loaded instantly from local cache");
           } catch (cacheErr) {
@@ -999,183 +1097,24 @@
         if (fullRecords.length > 0) {
           fullRecords.sort((a, b) => a.dateInt - b.dateInt);
           STATE.raw = fullRecords;
-          localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords));
+          STATE.isFullLoaded = true;
+
+          try {
+            localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords));
+          } catch (e) {
+            console.warn("Cache write failed:", e);
+          }
         }
 
-        STATE.isFullLoaded = true;
-        applyRange();
         if (loader) loader.classList.add("hidden");
-        
-        if (!cachedData) {
-          toast("Historical data loaded completely");
-        }
-
-      } catch (e) {
-        console.error("Fetch error:", e);
-        if (!STATE.isFullLoaded) {
-          toast("Failed to load spreadsheet data");
-          const loader = $("loading");
-          if (loader) loader.classList.add("hidden");
-        }
-      }
-    };
-
-    const applyRange = () => {
-      const startVal = $("startDate")?.value;
-      const endVal = $("endDate")?.value;
-
-      if (startVal) localStorage.setItem("dash_startDate", startVal);
-      if (endVal) localStorage.setItem("dash_endDate", endVal);
-
-      if (!startVal || !endVal) {
-        renderDashboard(STATE.raw);
-        return;
-      }
-
-      const [sY, sM, sD] = startVal.split("-").map(Number);
-      const [eY, eM, eD] = endVal.split("-").map(Number);
-
-      const startInt = sY * 10000 + sM * 100 + sD;
-      const endInt = eY * 10000 + eM * 100 + eD;
-
-      const filtered = STATE.raw.filter(r => {
-        if (!r.dateInt) return false;
-        return r.dateInt >= startInt && r.dateInt <= endInt;
-      });
-
-      renderDashboard(filtered);
-    };
-
-    const setRange = (type) => {
-      if (STATE.raw.length === 0) return;
-      
-      const anchorDate = new Date();
-      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
-      if (type === "7") {
-        let startWindow = new Date(anchorDate);
-        startWindow.setDate(anchorDate.getDate() - 7);
-        
-        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-        
-        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
-        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
-
-        renderDashboard(filtered);
-        toast("Showing last 7 days from today");
-      } else if (type === "31") {
-        let startWindow = new Date(anchorDate);
-        startWindow.setDate(anchorDate.getDate() - 31);
-        
-        const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
-        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-        
-        if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
-        if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
-
-        renderDashboard(filtered);
-        toast("Showing last 31 days from today");
-      }
-    };
-
-    const resetView = () => {
-      if (STATE.raw.length > 0) {
-        const earliest = STATE.raw[0];
-        if (earliest.parsedDate) {
-          if ($("startDate")) $("startDate").value = formatDateLocal(earliest.parsedDate);
-          if ($("endDate")) $("endDate").value = formatDateLocal(new Date());
-        }
-      }
-      renderDashboard(STATE.raw);
-      toast("Reset to full dataset");
-    };
-
-    const login = () => {
-      const pwd = $("pass")?.value;
-      if (pwd === CONFIG.PASSWORD) {
-        $("login")?.classList.add("hidden");
-        $("app")?.classList.remove("hidden");
-        $("nav")?.classList.remove("hidden");
-        load();
-      } else {
-        toast("Invalid password");
-      }
-    };
-
-    const switchTab = (idx) => {
-      const tabs = $("tabs");
-      if (tabs) tabs.style.transform = `translateX(-${idx * 25}%)`;
-    };
-
-    const inspectDateRange = () => {
-      applyRange();
-      switchTab(1);
-      toast("Switched to analytics table for current date range");
-    };
-
-    const submitDataEntry = async (event) => {
-      event.preventDefault();
-      
-      const payload = {
-        dayName: $("entryDay").value,
-        rawDate: $("entryDate").value,
-        cash: parseFloat($("entryCash").value) || 0,
-        card: parseFloat($("entryCard").value) || 0,
-        catIceCream: parseFloat($("catIceCream").value) || 0,
-        catCounter: parseFloat($("catCounter").value) || 0,
-        catKitchen: parseFloat($("catKitchen").value) || 0,
-        catDrink: parseFloat($("catDrink").value) || 0,
-        catDeli: parseFloat($("catDeli").value) || 0,
-        catAlcohol: parseFloat($("catAlcohol").value) || 0
-      };
-
-      toast("Posting data to spreadsheet...");
-
-      try {
-        // Send POST request to your Google Apps Script web app
-        const response = await fetch(CONFIG.URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "text/plain;charset=utf-8" }
-        });
-
-        const result = await response.json();
-
-        if (result && result.status === "success") {
-          toast("Successfully saved to spreadsheet!");
-          
-          // Refresh the data from the server to pull in the new row
-          load();
-          switchTab(0);
-
-          // Reset numerical inputs
-          $("entryCash").value = "0.00";
-          $("entryCard").value = "0.00";
-          $("catIceCream").value = "0.00";
-          $("catCounter").value = "0.00";
-          $("catKitchen").value = "0.00";
-          $("catDrink").value = "0.00";
-          $("catDeli").value = "0.00";
-          $("catAlcohol").value = "0.00";
-        } else {
-          toast("Error: " + (result.message || "Failed to save"));
-        }
+        App.applyRange();
       } catch (err) {
-        console.error("POST error:", err);
-        toast("Network error while writing to sheet");
+        console.error("Failed to load dashboard data:", err);
+        const loader = $("loading");
+        if (loader) loader.classList.add("hidden");
+        toast("Failed to load live data. Using offline mode.");
+        App.applyRange();
       }
-    };
-
-    window.App = {
-      login,
-      load,
-      setRange,
-      applyRange,
-      resetView,
-      switchTab,
-      inspectDateRange,
-      submitDataEntry
     };
   </script>
 </body>
