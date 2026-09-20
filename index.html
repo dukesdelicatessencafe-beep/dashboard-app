@@ -450,7 +450,7 @@
         } else {
           const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
           const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
-           
+          
           if (isBeforeJune2023) {
             catKitchen  = cleanCents(row[6]);
             catDrink    = cleanCents(row[7]);
@@ -504,7 +504,6 @@
       return parsedRecords;
     }
 
-    // BUG-FREE & LIGHTNING FAST ROLLING 12-MONTH TOTAL CALCULATION
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
 
@@ -709,80 +708,74 @@
     const load = async () => {
       try {
         const loader = $("loading");
-        if (loader) loader.classList.remove("hidden");
+        
+        // 1. Check Local Storage Cache First for Instant Rendering
+        const cachedData = localStorage.getItem("dash_cached_records");
+        if (cachedData) {
+          try {
+            const parsedCache = JSON.parse(cachedData);
+            parsedCache.forEach(r => {
+              if (r.parsedDate) r.parsedDate = new Date(r.parsedDate);
+            });
+            STATE.raw = parsedCache;
+            STATE.isFullLoaded = true;
 
-        STATE.isFullLoaded = false;
+            const savedStart = localStorage.getItem("dash_startDate");
+            const savedEnd = localStorage.getItem("dash_endDate");
+            if (savedStart && $("startDate")) $("startDate").value = savedStart;
+            else if ($("startDate")) $("startDate").value = "2026-07-01";
+            if (savedEnd && $("endDate")) $("endDate").value = savedEnd;
+            else if ($("endDate")) $("endDate").value = "2026-07-31";
 
-        const currentYear = new Date().getFullYear();
-        const fastRes = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-        const fastJson = await fastRes.json();
+            applyRange();
+            if (loader) loader.classList.add("hidden");
+            toast("Loaded instantly from local cache");
+          } catch (cacheErr) {
+            console.warn("Cache read failed:", cacheErr);
+          }
+        }
 
-        let allRecords = [];
+        if (!STATE.isFullLoaded && loader) {
+          loader.classList.remove("hidden");
+        }
 
-        if (fastJson && fastJson.tabs) {
-          Object.keys(fastJson.tabs).forEach(tabName => {
-            const tabRows = fastJson.tabs[tabName];
+        // 2. Fetch fresh data in background / initial load
+        const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
+        const fullJson = await fullRes.json();
+
+        let fullRecords = [];
+        if (fullJson && fullJson.tabs) {
+          Object.keys(fullJson.tabs).forEach(tabName => {
+            const tabRows = fullJson.tabs[tabName];
             if (Array.isArray(tabRows) && tabRows.length > 0) {
-              allRecords = allRecords.concat(processRows(tabRows));
+              fullRecords = fullRecords.concat(processRows(tabRows));
             }
           });
         }
 
-        allRecords.sort((a, b) => a.dateInt - b.dateInt);
-        STATE.raw = allRecords;
-
-        if (STATE.raw.length > 0) {
-          const savedStart = localStorage.getItem("dash_startDate");
-          const savedEnd = localStorage.getItem("dash_endDate");
-
-          if (savedStart && $("startDate")) $("startDate").value = savedStart;
-          else if ($("startDate")) $("startDate").value = "2026-07-01";
-
-          if (savedEnd && $("endDate")) $("endDate").value = savedEnd;
-          else if ($("endDate")) $("endDate").value = "2026-07-31";
+        if (fullRecords.length > 0) {
+          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+          STATE.raw = fullRecords;
+          localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords));
         }
 
+        STATE.isFullLoaded = true;
         applyRange();
-         
         if (loader) loader.classList.add("hidden");
-        toast("Current year loaded instantly");
-
-        setTimeout(async () => {
-          try {
-            const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
-            const fullJson = await fullRes.json();
-
-            let fullRecords = [];
-            if (fullJson && fullJson.tabs) {
-              Object.keys(fullJson.tabs).forEach(tabName => {
-                const tabRows = fullJson.tabs[tabName];
-                if (Array.isArray(tabRows) && tabRows.length > 0) {
-                  fullRecords = fullRecords.concat(processRows(tabRows));
-                }
-              });
-            }
-
-            if (fullRecords.length > 0) {
-              fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-              STATE.raw = fullRecords;
-            }
-
-            STATE.isFullLoaded = true;
-            applyRange();
-            toast("Historical data synced in background");
-
-          } catch (bgErr) {
-            console.warn("Background history sync failed:", bgErr);
-            STATE.isFullLoaded = true;
-            applyRange();
-          }
-        }, 500);
+        
+        if (cachedData) {
+          toast("Background sync updated with latest data");
+        } else {
+          toast("Historical data loaded completely");
+        }
 
       } catch (e) {
         console.error("Fetch error:", e);
-        toast("Failed to load spreadsheet data");
-        const loader = $("loading");
-        if (loader) loader.classList.add("hidden");
+        if (!STATE.isFullLoaded) {
+          toast("Failed to load spreadsheet data");
+          const loader = $("loading");
+          if (loader) loader.classList.add("hidden");
+        }
       }
     };
 
@@ -814,17 +807,17 @@
 
     const setRange = (type) => {
       if (STATE.raw.length === 0) return;
-       
+      
       const anchorDate = new Date();
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       if (type === "7") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 7);
-         
+        
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
         const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-         
+        
         if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
@@ -833,10 +826,10 @@
       } else if (type === "31") {
         let startWindow = new Date(anchorDate);
         startWindow.setDate(anchorDate.getDate() - 31);
-         
+        
         const sInt = startWindow.getFullYear() * 10000 + (startWindow.getMonth() + 1) * 100 + startWindow.getDate();
         const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= todayInt);
-         
+        
         if ($("startDate")) $("startDate").value = formatDateLocal(startWindow);
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
@@ -845,10 +838,10 @@
       } else if (type === "fytd") {
         const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
         const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-         
+        
         const fyStartInt = fyYear * 10000 + 201;
         const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= todayInt);
-         
+        
         if ($("endDate")) $("endDate").value = formatDateLocal(anchorDate);
 
         renderDashboard(filtered);
