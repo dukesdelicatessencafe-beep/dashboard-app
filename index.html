@@ -127,7 +127,7 @@
       border-radius: 4px;
     }
 
-    /* Tabs Slider (4 Tabs = 400% width) */
+    /* Tabs Slider */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -403,12 +403,12 @@
                   <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00">
                 </div>
               </div>
-              <button type="submit" style="width: 100%; padding: 12px; font-size: 15px;">Save & Submit Entry</button>
+              <button type="submit" style="width: 100%; padding: 12px; font-size: 15px;">Save & Submit to Spreadsheet</button>
             </form>
           </div>
         </div>
 
-        <!-- Placeholder for structural balance if needed -->
+        <!-- Placeholder for structural balance -->
         <div class="tab-content" style="width: 25%;"></div>
 
       </div>
@@ -1117,58 +1117,54 @@
     const submitDataEntry = async (event) => {
       event.preventDefault();
       
-      const dayName = $("entryDay").value;
-      const rawDate = $("entryDate").value;
-      const cash = parseFloat($("entryCash").value) || 0;
-      const card = parseFloat($("entryCard").value) || 0;
-      
-      const catIceCream = parseFloat($("catIceCream").value) || 0;
-      const catCounter = parseFloat($("catCounter").value) || 0;
-      const catKitchen = parseFloat($("catKitchen").value) || 0;
-      const catDrink = parseFloat($("catDrink").value) || 0;
-      const catDeli = parseFloat($("catDeli").value) || 0;
-      const catAlcohol = parseFloat($("catAlcohol").value) || 0;
-
-      const parsedInfo = parseDateString(rawDate);
-      if (!parsedInfo) {
-        toast("Invalid date selected");
-        return;
-      }
-
-      const newRecord = {
-        dayName,
-        rawDate,
-        parsedDate: parsedInfo.dateObj,
-        dateInt: parsedInfo.dateInt,
-        dailyTotalCents: Math.round((cash + card) * 100),
-        categories: {
-          "ICE CREAM": Math.round(catIceCream * 100),
-          "COUNTER": Math.round(catCounter * 100),
-          "Kitchen": Math.round(catKitchen * 100),
-          "DRINK": Math.round(catDrink * 100),
-          "DELI": Math.round(catDeli * 100),
-          "ALCOHOL": Math.round(catAlcohol * 100)
-        }
+      const payload = {
+        dayName: $("entryDay").value,
+        rawDate: $("entryDate").value,
+        cash: parseFloat($("entryCash").value) || 0,
+        card: parseFloat($("entryCard").value) || 0,
+        catIceCream: parseFloat($("catIceCream").value) || 0,
+        catCounter: parseFloat($("catCounter").value) || 0,
+        catKitchen: parseFloat($("catKitchen").value) || 0,
+        catDrink: parseFloat($("catDrink").value) || 0,
+        catDeli: parseFloat($("catDeli").value) || 0,
+        catAlcohol: parseFloat($("catAlcohol").value) || 0
       };
 
-      // Append locally and refresh
-      STATE.raw.push(newRecord);
-      STATE.raw.sort((a, b) => a.dateInt - b.dateInt);
-      localStorage.setItem("dash_cached_records", JSON.stringify(STATE.raw));
+      toast("Posting data to spreadsheet...");
 
-      applyRange();
-      switchTab(0);
-      toast("New record added successfully!");
-      
-      // Reset form numerical fields
-      $("entryCash").value = "0.00";
-      $("entryCard").value = "0.00";
-      $("catIceCream").value = "0.00";
-      $("catCounter").value = "0.00";
-      $("catKitchen").value = "0.00";
-      $("catDrink").value = "0.00";
-      $("catDeli").value = "0.00";
-      $("catAlcohol").value = "0.00";
+      try {
+        // Send POST request to your Google Apps Script web app
+        const response = await fetch(CONFIG.URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }
+        });
+
+        const result = await response.json();
+
+        if (result && result.status === "success") {
+          toast("Successfully saved to spreadsheet!");
+          
+          // Refresh the data from the server to pull in the new row
+          load();
+          switchTab(0);
+
+          // Reset numerical inputs
+          $("entryCash").value = "0.00";
+          $("entryCard").value = "0.00";
+          $("catIceCream").value = "0.00";
+          $("catCounter").value = "0.00";
+          $("catKitchen").value = "0.00";
+          $("catDrink").value = "0.00";
+          $("catDeli").value = "0.00";
+          $("catAlcohol").value = "0.00";
+        } else {
+          toast("Error: " + (result.message || "Failed to save"));
+        }
+      } catch (err) {
+        console.error("POST error:", err);
+        toast("Network error while writing to sheet");
+      }
     };
 
     window.App = {
