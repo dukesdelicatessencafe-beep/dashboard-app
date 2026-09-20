@@ -723,23 +723,20 @@
       try {
         const loader = $("loading");
         
-        // 1. Initialize Date Pickers to Current Month (if not already set in localStorage)
+        // 1. Force Default Date Pickers to Current Month (ignoring and resetting old local storage)
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
-        const savedStart = localStorage.getItem("dash_startDate");
-        const savedEnd = localStorage.getItem("dash_endDate");
+        const defaultStart = formatDateLocal(firstDayOfMonth);
+        const defaultEnd = formatDateLocal(now);
 
-        if (!savedStart && $("startDate")) {
-          $("startDate").value = formatDateLocal(firstDayOfMonth);
-        } else if (savedStart && $("startDate")) {
-          $("startDate").value = savedStart;
+        if ($("startDate")) {
+          $("startDate").value = defaultStart;
+          localStorage.setItem("dash_startDate", defaultStart);
         }
-
-        if (!savedEnd && $("endDate")) {
-          $("endDate").value = formatDateLocal(now);
-        } else if (savedEnd && $("endDate")) {
-          $("endDate").value = savedEnd;
+        if ($("endDate")) {
+          $("endDate").value = defaultEnd;
+          localStorage.setItem("dash_endDate", defaultEnd);
         }
 
         // 2. Check Local Storage Cache First for Instant Rendering
