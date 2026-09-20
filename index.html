@@ -117,6 +117,10 @@
       flex-wrap: wrap;
       margin-bottom: 20px;
       align-items: center;
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #333;
     }
 
     .controls input[type="date"] {
@@ -125,6 +129,13 @@
       color: #fff;
       padding: 8px;
       border-radius: 4px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 15px;
     }
 
     /* Tabs Slider */
@@ -275,6 +286,11 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
+      <div class="kpi-card" style="border-left-color: var(--pos-green);">
+        <h3>BANKING CONSOLIDATION</h3>
+        <div class="val" id="bankingVal">Syncing...</div>
+        <div class="subtext" id="bankingSub">Cash ready to bank</div>
+      </div>
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
@@ -315,12 +331,20 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS -->
+    <!-- FULL RANGE CONTROLS & BANKING CONFIG -->
     <div class="controls">
-      <label style="font-size:13px; color:var(--accent-gold);">From:</label>
-      <input type="date" id="startDate" onchange="App.applyRange()">
-      <label style="font-size:13px; color:var(--accent-gold);">To:</label>
-      <input type="date" id="endDate" onchange="App.applyRange()">
+      <div class="control-group" style="border-right: 1px solid #444; padding-right: 15px;">
+        <label style="font-size:13px; color:var(--pos-green); font-weight:bold;">Last Banked Date:</label>
+        <input type="date" id="lastBankedDate" onchange="App.applyRange()">
+      </div>
+      <div class="control-group">
+        <label style="font-size:13px; color:var(--accent-gold);">From:</label>
+        <input type="date" id="startDate" onchange="App.applyRange()">
+      </div>
+      <div class="control-group">
+        <label style="font-size:13px; color:var(--accent-gold);">To:</label>
+        <input type="date" id="endDate" onchange="App.applyRange()">
+      </div>
       <button onclick="App.setRange('7')">Last 7 Days</button>
       <button onclick="App.setRange('31')">Last 31 Days</button>
       <button onclick="App.resetView()">Reset All</button>
@@ -625,6 +649,8 @@
           parsedDate: parsedDateInfo.dateObj,
           dateInt: parsedDateInfo.dateInt,
           dailyTotalCents,
+          cashCents,
+          cardCents,
           categories: {
             "ICE CREAM": catIceCream,
             "COUNTER": catCounter,
@@ -637,6 +663,29 @@
       }
 
       return parsedRecords;
+    }
+
+    function calculateBankingConsolidation(allRecords) {
+      if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
+      
+      const lastBankedVal = $("lastBankedDate")?.value;
+      if (!lastBankedVal) return { unbankedCash: 0, daysCount: 0 };
+
+      const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
+      const todayInt = parseInt(formatDateLocal(new Date()).replace(/-/g, ""), 10);
+
+      let unbankedCashCents = 0;
+      let count = 0;
+
+      allRecords.forEach(r => {
+        // Sum cash from strictly after the last banked date up through today
+        if (r.dateInt > lastBankedInt && r.dateInt <= todayInt) {
+          unbankedCashCents += (r.cashCents || 0);
+          count++;
+        }
+      });
+
+      return { unbankedCash: unbankedCashCents, daysCount: count };
     }
 
     function calculateFYTD(allRecords) {
@@ -823,6 +872,7 @@
       const vatStatusEl = $("vatStatus");
 
       if (!STATE.isFullLoaded) {
+        safeSet("bankingVal", "Syncing...");
         safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
         safeSet("mthPctCompVal", "Syncing...");
@@ -837,6 +887,15 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
+        // Banking Consolidation Metric
+        const bankingData = calculateBankingConsolidation(STATE.raw);
+        const bankingValEl = $("bankingVal");
+        const bankedDateVal = $("lastBankedDate")?.value || "Not Set";
+        if (bankingValEl) {
+          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:var(--accent-gold); font-weight:normal;">Unbanked across ${bankingData.daysCount} days</span>`;
+        }
+        safeSet("bankingSub", `Since last banked: ${bankedDateVal}`);
+
         const fytdData = calculateFYTD(STATE.raw);
         const fytdDiff = fytdData.current - fytdData.prev;
         const fytdPct = fytdData.prev > 0 ? ((fytdDiff / fytdData.prev) * 100).toFixed(1) : "0.0";
@@ -1002,9 +1061,11 @@
       applyRange: () => {
         const sVal = $("startDate")?.value;
         const eVal = $("endDate")?.value;
+        const lastBankedVal = $("lastBankedDate")?.value;
 
         if (sVal) localStorage.setItem("dash_startDate", sVal);
         if (eVal) localStorage.setItem("dash_endDate", eVal);
+        if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
 
         if (!STATE.raw || STATE.raw.length === 0) return;
 
@@ -1019,6 +1080,7 @@
       resetView: () => {
         localStorage.removeItem("dash_startDate");
         localStorage.removeItem("dash_endDate");
+        localStorage.removeItem("dash_lastBankedDate");
         load();
       },
       inspectDateRange: () => {
@@ -1096,7 +1158,11 @@
         
         const defaultStart = formatDateLocal(firstDayOfMonth);
         const defaultEnd = formatDateLocal(now);
+        const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultStart;
 
+        if ($("lastBankedDate") && !$("lastBankedDate").value) {
+          $("lastBankedDate").value = defaultLastBanked;
+        }
         if ($("startDate") && !$("startDate").value) {
           $("startDate").value = defaultStart;
         }
