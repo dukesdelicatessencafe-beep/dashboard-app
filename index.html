@@ -15,6 +15,8 @@
       --bg-dark: #121212;
       --card-bg: #1e1e1e;
       --text-light: #ffffff;
+      --pos-green: #4cd137;
+      --neg-red: #ff4d4d;
     }
 
     body {
@@ -74,7 +76,7 @@
     /* KPI Cards Header */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 15px;
       margin-bottom: 20px;
     }
@@ -88,7 +90,7 @@
 
     .kpi-card h3 {
       margin: 0 0 5px 0;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--accent-gold);
     }
 
@@ -102,6 +104,9 @@
       color: #aaa;
       margin-top: 4px;
     }
+
+    .positive { color: var(--pos-green); }
+    .negative { color: var(--neg-red); }
 
     /* Controls */
     .controls {
@@ -222,9 +227,19 @@
         <div class="subtext">Feb 1 - Today</div>
       </div>
       <div class="kpi-card">
+        <h3>FINANCIAL YTD VS PREV FYTD</h3>
+        <div class="val" id="fytdCompVal">Syncing...</div>
+        <div class="subtext" id="fytdCompSub">Comparing equivalent period</div>
+      </div>
+      <div class="kpi-card">
         <h3>CALENDAR YTD (JAN 1)</h3>
         <div class="val" id="ytdSales">Syncing...</div>
         <div class="subtext">Jan 1 - Today</div>
+      </div>
+      <div class="kpi-card">
+        <h3>CURRENT MONTH VS PREV MONTH</h3>
+        <div class="val" id="mthCompVal">Syncing...</div>
+        <div class="subtext" id="mthCompSub">Comparing equivalent days</div>
       </div>
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -510,22 +525,32 @@
     }
 
     function calculateFYTD(allRecords) {
-      if (!allRecords || allRecords.length === 0) return 0;
+      if (!allRecords || allRecords.length === 0) return { current: 0, prev: 0 };
       
       const anchorDate = new Date();
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
       
-      const fyStartInt = fyYear * 10000 + 201; // Feb 1st
+      const fyStartInt = fyYear * 10000 + 201; // Feb 1st current FY
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
-      let fytdSumCents = 0;
+      const prevFyStartInt = (fyYear - 1) * 10000 + 201; // Feb 1st prev FY
+      // Equivalent day matching in previous FY
+      const prevTodayInt = (anchorDate.getFullYear() - 1) * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
+
+      let currentCents = 0;
+      let prevCents = 0;
+
       allRecords.forEach(r => {
         if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) {
-          fytdSumCents += r.dailyTotalCents;
+          currentCents += r.dailyTotalCents;
+        }
+        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) {
+          prevCents += r.dailyTotalCents;
         }
       });
-      return fytdSumCents;
+
+      return { current: currentCents, prev: prevCents };
     }
 
     function calculateYTD(allRecords) {
@@ -543,6 +568,46 @@
         }
       });
       return ytdSumCents;
+    }
+
+    function calculateMonthComparison(allRecords) {
+      if (!allRecords || allRecords.length === 0) return { current: 0, prev: 0 };
+
+      const anchorDate = new Date();
+      const curYear = anchorDate.getFullYear();
+      const curMonth = anchorDate.getMonth() + 1;
+      const curDay = anchorDate.getDate();
+
+      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
+      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+
+      // Previous month calculation
+      let prevYear = curYear;
+      let prevMonth = curMonth - 1;
+      if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear -= 1;
+      }
+
+      const prevMonthStartInt = prevYear * 10000 + prevMonth * 100 + 1;
+      // Match equivalent day or cap to max days in prev month
+      const maxDayInPrevMonth = new Date(prevYear, prevMonth, 0).getDate();
+      const matchedPrevDay = Math.min(curDay, maxDayInPrevMonth);
+      const prevMonthEndInt = prevYear * 10000 + prevMonth * 100 + matchedPrevDay;
+
+      let currentCents = 0;
+      let prevCents = 0;
+
+      allRecords.forEach(r => {
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
+          currentCents += r.dailyTotalCents;
+        }
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthEndInt) {
+          prevCents += r.dailyTotalCents;
+        }
+      });
+
+      return { current: currentCents, prev: prevCents };
     }
 
     function calculateRolling12Month(allRecords) {
@@ -633,7 +698,9 @@
 
       if (!STATE.isFullLoaded) {
         safeSet("fytdSales", "Syncing...");
+        safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
+        safeSet("mthCompVal", "Syncing...");
         safeSet("products", "Syncing...");
         safeSet("top", "Syncing...");
         safeSet("rollingTotal", "Syncing...");
@@ -644,11 +711,33 @@
           vatStatusEl.style.color = "#aaa";
         }
       } else {
-        const fytdCents = calculateFYTD(STATE.raw);
-        safeSet("fytdSales", fmt(fytdCents));
+        // FYTD Data
+        const fytdData = calculateFYTD(STATE.raw);
+        safeSet("fytdSales", fmt(fytdData.current));
+        
+        const fytdDiff = fytdData.current - fytdData.prev;
+        const fytdPct = fytdData.prev > 0 ? ((fytdDiff / fytdData.prev) * 100).toFixed(1) : "0.0";
+        const fytdSign = fytdDiff >= 0 ? "+" : "";
+        const fytdEl = $("fytdCompVal");
+        if (fytdEl) {
+          fytdEl.innerHTML = `${fmt(fytdData.current)} <span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:14px;">(${fytdSign}${fmt(fytdDiff)}, ${fytdSign}${fytdPct}%)</span>`;
+        }
+        safeSet("fytdCompSub", `Prev FYTD: ${fmt(fytdData.prev)}`);
 
+        // Calendar YTD
         const ytdCents = calculateYTD(STATE.raw);
         safeSet("ytdSales", fmt(ytdCents));
+
+        // Month Comparison Data
+        const mthData = calculateMonthComparison(STATE.raw);
+        const mthDiff = mthData.current - mthData.prev;
+        const mthPct = mthData.prev > 0 ? ((mthDiff / mthData.prev) * 100).toFixed(1) : "0.0";
+        const mthSign = mthDiff >= 0 ? "+" : "";
+        const mthEl = $("mthCompVal");
+        if (mthEl) {
+          mthEl.innerHTML = `${fmt(mthData.current)} <span class="${mthDiff >= 0 ? 'positive' : 'negative'}" style="font-size:14px;">(${mthSign}${fmt(mthDiff)}, ${mthSign}${mthPct}%)</span>`;
+        }
+        safeSet("mthCompSub", `Prev Month (to date): ${fmt(mthData.prev)}`);
 
         safeSet("products", records.length);
 
