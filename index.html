@@ -138,6 +138,12 @@
       margin-right: 15px;
     }
 
+    #weekButtonsContainer {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     /* Tabs Slider */
     #tabsWrapper {
       overflow: hidden;
@@ -368,8 +374,7 @@
         <label style="font-size:13px; color:var(--accent-gold);">To:</label>
         <input type="date" id="endDate" onchange="App.applyRange()">
       </div>
-      <button onclick="App.setRange('7')">Last 7 Days</button>
-      <button onclick="App.setRange('31')">Last 31 Days</button>
+      <div id="weekButtonsContainer"></div>
       <button onclick="App.resetView()">Reset All</button>
     </div>
 
@@ -1128,6 +1133,40 @@
       });
     }
 
+    // Dynamic Current Month Week Generator
+    function initWeekButtons() {
+      const container = $("weekButtonsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth(); 
+      const lastDay = new Date(year, month + 1, 0).getDate();
+
+      let startDay = 1;
+      let weekNum = 1;
+
+      while (startDay <= lastDay) {
+        let endDay = Math.min(startDay + 6, lastDay);
+        
+        const sStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
+        const eStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+
+        const btn = document.createElement("button");
+        btn.innerText = `Wk ${weekNum} (${startDay}-${endDay})`;
+        btn.onclick = () => {
+          if ($("startDate")) $("startDate").value = sStr;
+          if ($("endDate")) $("endDate").value = eStr;
+          App.applyRange();
+        };
+        container.appendChild(btn);
+
+        startDay = endDay + 1;
+        weekNum++;
+      }
+    }
+
     const App = {
       login: () => {
         const p = $("pass").value;
@@ -1145,20 +1184,6 @@
         if (tabs) {
           tabs.style.transform = `translateX(-${index * 25}%)`;
         }
-      },
-      setRange: (daysStr) => {
-        const days = parseInt(daysStr, 10);
-        const endD = new Date();
-        const startD = new Date();
-        startD.setDate(endD.getDate() - days);
-
-        const sStr = formatDateLocal(startD);
-        const eStr = formatDateLocal(endD);
-
-        if ($("startDate")) $("startDate").value = sStr;
-        if ($("endDate")) $("endDate").value = eStr;
-
-        App.applyRange();
       },
       applyRange: () => {
         const sVal = $("startDate")?.value;
@@ -1275,6 +1300,8 @@
           $("entryDate").value = defaultEnd;
           App.onEntryDateChange();
         }
+
+        initWeekButtons();
 
         const cachedData = localStorage.getItem("dash_cached_records");
         if (cachedData) {
