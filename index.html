@@ -284,9 +284,9 @@
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
     
-    <!-- KPI SUMMARY HEADER -->
+    <!-- KPI SUMMARY HEADER (ALL ISOLATED MODULES) -->
     <div class="kpi-row">
-      <!-- BANKING CONSOLIDATION CARD WITH BUILT-IN DATE PICKER -->
+      <!-- BANKING CONSOLIDATION CARD -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
@@ -296,46 +296,61 @@
         </div>
       </div>
 
-      <!-- ISOLATED CASH VS CARD SPLIT KPI -->
+      <!-- CASH VS CARD SPLIT KPI -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
         <div class="subtext" id="cashCardSub">Percentage Breakdown (Cols C & D)</div>
       </div>
 
+      <!-- FINANCIAL YTD VS PREV FYTD KPI -->
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
         <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
       </div>
+
+      <!-- CALENDAR YTD KPI -->
       <div class="kpi-card">
         <h3>CALENDAR YTD (JAN 1)</h3>
         <div class="val" id="ytdSales">Syncing...</div>
         <div class="subtext">Jan 1 - Today</div>
       </div>
+
+      <!-- CURRENT MONTH VS PREV YR KPI -->
       <div class="kpi-card">
         <h3>CURRENT MONTH VS PREV YR (%)</h3>
         <div class="val" id="mthPctCompVal">Syncing...</div>
         <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
       </div>
+
+      <!-- CURRENT MONTH TARGET KPI -->
       <div class="kpi-card">
         <h3>CURRENT MONTH TARGET (+10%)</h3>
         <div class="val" id="mthTargetVal">Syncing...</div>
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
+
+      <!-- ROLLING 12-MONTH TOTAL KPI -->
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">Syncing...</div>
         <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
+
+      <!-- ACTIVE DAYS / RECORDS KPI -->
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
         <div class="val" id="products">Syncing...</div>
       </div>
+
+      <!-- TOP CATEGORY KPI -->
       <div class="kpi-card">
         <h3>TOP CATEGORY</h3>
         <div class="val" id="top">Syncing...</div>
       </div>
+
+      <!-- DATE RANGE TOTAL VALUE KPI -->
       <div class="kpi-card">
         <h3>DATE RANGE TOTAL VALUE</h3>
         <div class="val" id="rangeTotalVal">Syncing...</div>
@@ -675,11 +690,21 @@
       return parsedRecords;
     }
 
-    function calculateBankingConsolidation(allRecords) {
-      if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
-      
+    // --- ISOLATED MODULE: BANKING CONSOLIDATION KPI ---
+    function renderBankingKPI(allRecords) {
+      const bankingValEl = $("bankingVal");
+      if (!bankingValEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        bankingValEl.innerText = "Syncing...";
+        return;
+      }
+
       const lastBankedVal = $("lastBankedDate")?.value;
-      if (!lastBankedVal) return { unbankedCash: 0, daysCount: 0 };
+      if (!lastBankedVal) {
+        bankingValEl.innerText = "Set Date";
+        return;
+      }
 
       const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
       const todayInt = parseInt(formatDateLocal(new Date()).replace(/-/g, ""), 10);
@@ -694,12 +719,45 @@
         }
       });
 
-      return { unbankedCash: unbankedCashCents, daysCount: count };
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked across ${count} days</span>`;
     }
 
-    function calculateFYTD(allRecords) {
-      if (!allRecords || allRecords.length === 0) return { current: 0, prev: 0 };
-      
+    // --- ISOLATED MODULE: CASH VS CARD SPLIT KPI ---
+    function renderCashCardKPI(records) {
+      const cashCardEl = $("cashCardVal");
+      if (!cashCardEl) return;
+
+      if (!STATE.isFullLoaded) {
+        cashCardEl.innerText = "Syncing...";
+        return;
+      }
+
+      let periodCashCents = 0;
+      let periodCardCents = 0;
+
+      records.forEach(rec => {
+        periodCashCents += (rec.cashCents || 0);
+        periodCardCents += (rec.cardCents || 0);
+      });
+
+      const periodTotalCents = periodCashCents + periodCardCents;
+      const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
+      const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
+
+      cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
+    }
+
+    // --- ISOLATED MODULE: FINANCIAL YTD KPI ---
+    function renderFytdKPI(allRecords) {
+      const fytdEl = $("fytdCompVal");
+      if (!fytdEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        fytdEl.innerText = "Syncing...";
+        safeSet("fytdCompSub", "Since 1st Feb");
+        return;
+      }
+
       const anchorDate = new Date();
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
@@ -722,12 +780,24 @@
         }
       });
 
-      return { current: currentCents, prev: prevCents };
+      const fytdDiff = currentCents - prevCents;
+      const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
+      const fytdSign = fytdDiff >= 0 ? "+" : "";
+
+      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-size:11px; font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+      safeSet("fytdCompSub", "Since 1st Feb");
     }
 
-    function calculateYTD(allRecords) {
-      if (!allRecords || allRecords.length === 0) return 0;
-      
+    // --- ISOLATED MODULE: CALENDAR YTD KPI ---
+    function renderYtdKPI(allRecords) {
+      const ytdEl = $("ytdSales");
+      if (!ytdEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        ytdEl.innerText = "Syncing...";
+        return;
+      }
+
       const anchorDate = new Date();
       const currentYear = anchorDate.getFullYear();
       const ytdStartInt = currentYear * 10000 + 101; 
@@ -739,11 +809,19 @@
           ytdSumCents += r.dailyTotalCents;
         }
       });
-      return ytdSumCents;
+      ytdEl.innerText = fmt(ytdSumCents);
     }
 
-    function calculateMonthKPIs(allRecords) {
-      if (!allRecords || allRecords.length === 0) return { current: 0, prevMonthPartial: 0, pctDiff: "0.0", prevMonthTotal: 0, target: 0, remaining: 0 };
+    // --- ISOLATED MODULE: CURRENT MONTH VS PREV YR KPI ---
+    function renderMonthCompKPI(allRecords) {
+      const mthPctEl = $("mthPctCompVal");
+      if (!mthPctEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        mthPctEl.innerText = "Syncing...";
+        safeSet("mthPctCompSub", "Month-on-Month % Comparison");
+        return;
+      }
 
       const anchorDate = new Date();
       const curYear = anchorDate.getFullYear();
@@ -759,11 +837,8 @@
       const targetPrevDay = Math.min(curDay, lastDayPrevMonth);
       const prevMonthPartialEndInt = prevYear * 10000 + curMonth * 100 + targetPrevDay;
 
-      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
-
       let currentCents = 0;
       let prevMonthPartialCents = 0;
-      let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
         if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
@@ -772,33 +847,82 @@
         if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) {
           prevMonthPartialCents += r.dailyTotalCents;
         }
+      });
+
+      const diffCents = currentCents - prevMonthPartialCents;
+      const pctVal = prevMonthPartialCents > 0 ? ((diffCents / prevMonthPartialCents) * 100).toFixed(1) : "0.0";
+      const isPos = diffCents >= 0;
+      const signStr = isPos ? "+" : "";
+
+      mthPctEl.innerHTML = `${fmt(currentCents)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(prevMonthPartialCents)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(diffCents)} (${signStr}${pctVal}%)</span>`;
+      safeSet("mthPctCompSub", "vs Same Period Last Year");
+    }
+
+    // --- ISOLATED MODULE: CURRENT MONTH TARGET KPI ---
+    function renderMonthTargetKPI(allRecords) {
+      const mthTargetEl = $("mthTargetVal");
+      if (!mthTargetEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        mthTargetEl.innerText = "Syncing...";
+        safeSet("mthTargetSub", "10% Growth Goal Tracker");
+        return;
+      }
+
+      const anchorDate = new Date();
+      const curYear = anchorDate.getFullYear();
+      const curMonth = anchorDate.getMonth() + 1;
+      const curDay = anchorDate.getDate();
+
+      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
+      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+
+      const prevYear = curYear - 1;
+      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
+      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
+      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
+
+      let currentCents = 0;
+      let prevMonthFullCents = 0;
+
+      allRecords.forEach(r => {
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
+          currentCents += r.dailyTotalCents;
+        }
         if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
           prevMonthFullCents += r.dailyTotalCents;
         }
       });
 
-      const diffCents = currentCents - prevMonthPartialCents;
-      const pctVal = prevMonthPartialCents > 0 ? ((diffCents / prevMonthPartialCents) * 100).toFixed(1) : "0.0";
-
       const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingCents = targetCents - currentCents;
+      const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
+      const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
 
-      return {
-        current: currentCents,
-        prevMonthPartial: prevMonthPartialCents,
-        pctDiff: pctVal,
-        diffCents: diffCents,
-        prevMonthTotal: prevMonthFullCents,
-        target: targetCents,
-        remaining: remainingCents
-      };
+      mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
+      safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
     }
 
-    function calculateRolling12Month(allRecords) {
-      if (!allRecords || allRecords.length === 0) return 0;
+    // --- ISOLATED MODULE: ROLLING 12-MONTH TOTAL & VAT STATUS KPI ---
+    function renderRolling12MonthKPI(allRecords) {
+      const rollingEl = $("rollingTotal");
+      const vatStatusEl = $("vatStatus");
+      if (!rollingEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        rollingEl.innerText = "Syncing...";
+        if (vatStatusEl) {
+          vatStatusEl.innerText = "Loading history...";
+          vatStatusEl.style.color = "#aaa";
+        }
+        return;
+      }
 
       const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
-      if (validRecords.length === 0) return 0;
+      if (validRecords.length === 0) {
+        rollingEl.innerText = "£0.00";
+        return;
+      }
 
       const latestRec = validRecords[validRecords.length - 1];
       const anchorDate = new Date(latestRec.parsedDate);
@@ -814,10 +938,66 @@
         }
       }
 
-      return rollingSumCents;
+      rollingEl.innerText = fmt(rollingSumCents);
+
+      const vatThresholdCents = 90000 * 100;
+      if (vatStatusEl) {
+        if (rollingSumCents >= vatThresholdCents) {
+          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+          vatStatusEl.style.color = "#ff4d4d";
+        } else if (rollingSumCents >= vatThresholdCents * 0.85) {
+          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
+          vatStatusEl.style.color = "#ffcc00";
+        } else {
+          vatStatusEl.innerText = "Safe (Below £90,000)";
+          vatStatusEl.style.color = "#4cd137";
+        }
+      }
     }
 
-    function updateRangeTotalMetric(records) {
+    // --- ISOLATED MODULE: ACTIVE DAYS / RECORDS KPI ---
+    function renderActiveDaysKPI(records) {
+      safeSet("products", STATE.isFullLoaded ? records.length : "Syncing...");
+    }
+
+    // --- ISOLATED MODULE: TOP CATEGORY KPI ---
+    function renderTopCategoryKPI(records) {
+      const topEl = $("top");
+      if (!topEl) return;
+
+      if (!STATE.isFullLoaded) {
+        topEl.innerText = "Syncing...";
+        return;
+      }
+
+      const categoryTotalsCents = {
+        "ICE CREAM": 0,
+        "COUNTER": 0,
+        "Kitchen": 0,
+        "DRINK": 0,
+        "DELI": 0,
+        "ALCOHOL": 0
+      };
+
+      records.forEach(rec => {
+        Object.keys(rec.categories).forEach(cat => {
+          categoryTotalsCents[cat] += rec.categories[cat];
+        });
+      });
+
+      let topCat = "-";
+      let maxRevCents = -1;
+      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+        if (val > maxRevCents && val > 0) {
+          maxRevCents = val;
+          topCat = `${cat} (${fmt(val)})`;
+        }
+      });
+      topEl.innerText = topCat;
+    }
+
+    // --- ISOLATED MODULE: DATE RANGE TOTAL VALUE KPI ---
+    function renderDateRangeTotalKPI(records) {
       const startVal = $("startDate")?.value;
       const endVal = $("endDate")?.value;
       const rangeTotalEl = $("rangeTotalVal");
@@ -849,30 +1029,12 @@
       rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
+    // Master Dashboard Render Orchestrator invoking isolated KPI modules
     function renderDashboard(records) {
       const container = $("productTable");
-      const categoryTotalsCents = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
-      };
-
       if (container) container.innerHTML = "";
 
-      let periodCashCents = 0;
-      let periodCardCents = 0;
-
       records.forEach(rec => {
-        periodCashCents += (rec.cashCents || 0);
-        periodCardCents += (rec.cardCents || 0);
-
-        Object.keys(rec.categories).forEach(cat => {
-          categoryTotalsCents[cat] += rec.categories[cat];
-        });
-
         if (container) {
           const tr = document.createElement("tr");
           const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
@@ -886,101 +1048,17 @@
         }
       });
 
-      // Render Isolated Cash vs Card KPI
-      const periodTotalCents = periodCashCents + periodCardCents;
-      const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
-      const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
-
-      const cashCardEl = $("cashCardVal");
-      if (cashCardEl) {
-        cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
-      }
-
-      const vatStatusEl = $("vatStatus");
-
-      if (!STATE.isFullLoaded) {
-        safeSet("bankingVal", "Syncing...");
-        safeSet("fytdCompVal", "Syncing...");
-        safeSet("ytdSales", "Syncing...");
-        safeSet("mthPctCompVal", "Syncing...");
-        safeSet("mthTargetVal", "Syncing...");
-        safeSet("products", "Syncing...");
-        safeSet("top", "Syncing...");
-        safeSet("rollingTotal", "Syncing...");
-        safeSet("rangeTotalVal", "Syncing...");
-        safeSet("rangeSpanSub", "Syncing...");
-        if (vatStatusEl) {
-          vatStatusEl.innerText = "Loading history...";
-          vatStatusEl.style.color = "#aaa";
-        }
-      } else {
-        const bankingData = calculateBankingConsolidation(STATE.raw);
-        const bankingValEl = $("bankingVal");
-        if (bankingValEl) {
-          bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked across ${bankingData.daysCount} days</span>`;
-        }
-
-        const fytdData = calculateFYTD(STATE.raw);
-        const fytdDiff = fytdData.current - fytdData.prev;
-        const fytdPct = fytdData.prev > 0 ? ((fytdDiff / fytdData.prev) * 100).toFixed(1) : "0.0";
-        const fytdSign = fytdDiff >= 0 ? "+" : "";
-        const fytdEl = $("fytdCompVal");
-        if (fytdEl) {
-          fytdEl.innerHTML = `${fmt(fytdData.current)} <span style="font-size:11px; font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(fytdData.prev)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
-        }
-        safeSet("fytdCompSub", "Since 1st Feb");
-
-        const ytdCents = calculateYTD(STATE.raw);
-        safeSet("ytdSales", fmt(ytdCents));
-
-        const mthData = calculateMonthKPIs(STATE.raw);
-        
-        const mthPctEl = $("mthPctCompVal");
-        if (mthPctEl) {
-          const isPos = mthData.diffCents >= 0;
-          const signStr = isPos ? "+" : "";
-          mthPctEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(mthData.prevMonthPartial)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(mthData.diffCents)} (${signStr}${mthData.pctDiff}%)</span>`;
-        }
-        safeSet("mthPctCompSub", "vs Same Period Last Year");
-
-        const mthTargetEl = $("mthTargetVal");
-        if (mthTargetEl) {
-          const remainingText = mthData.remaining > 0 ? `Needed: ${fmt(mthData.remaining)}` : `Target Reached! 🎉`;
-          const remainingColor = mthData.remaining > 0 ? 'negative' : 'positive';
-          mthTargetEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(mthData.target)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
-        }
-        safeSet("mthTargetSub", `Prev Full Month: ${fmt(mthData.prevMonthTotal)}`);
-
-        safeSet("products", records.length);
-
-        let topCat = "-";
-        let maxRevCents = -1;
-        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-          if (val > maxRevCents && val > 0) {
-            maxRevCents = val;
-            topCat = `${cat} (${fmt(val)})`;
-          }
-        });
-        safeSet("top", topCat);
-
-        const rollingCents = calculateRolling12Month(STATE.raw);
-        safeSet("rollingTotal", fmt(rollingCents));
-
-        const vatThresholdCents = 90000 * 100;
-        if (vatStatusEl) {
-          if (rollingCents >= vatThresholdCents) {
-            vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
-            vatStatusEl.style.color = "#ff4d4d";
-          } else if (rollingCents >= vatThresholdCents * 0.85) {
-            vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
-            vatStatusEl.style.color = "#ffcc00";
-          } else {
-            vatStatusEl.innerText = "Safe (Below £90,000)";
-            vatStatusEl.style.color = "#4cd137";
-          }
-        }
-        updateRangeTotalMetric(records);
-      }
+      // Execute all isolated KPI cards independently
+      renderBankingKPI(STATE.raw);
+      renderCashCardKPI(records);
+      renderFytdKPI(STATE.raw);
+      renderYtdKPI(STATE.raw);
+      renderMonthCompKPI(STATE.raw);
+      renderMonthTargetKPI(STATE.raw);
+      renderRolling12MonthKPI(STATE.raw);
+      renderActiveDaysKPI(records);
+      renderTopCategoryKPI(records);
+      renderDateRangeTotalKPI(records);
 
       renderBarChart(records);
       renderSalesChart(records);
