@@ -285,14 +285,14 @@
       border-collapse: collapse;
       background: var(--card-bg);
       margin-bottom: 15px;
-      font-size: 12px; /* Reduced font size to fit extra rows comfortably on mobile */
+      font-size: 12px;
     }
 
     table th, table td {
-      padding: 6px 8px; /* Tighter padding to save vertical height */
+      padding: 6px 8px;
       text-align: left;
       border-bottom: 1px solid #333;
-      white-space: nowrap; /* Keeps numbers/text formatted neatly on single lines */
+      white-space: nowrap;
     }
 
     table th {
@@ -566,7 +566,11 @@
       if (el) el.innerText = text;
     };
 
-    const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
+    // Updated formatter with comma separator for thousands (e.g., £1,100.10)
+    const fmt = (cents) => {
+      const val = (Math.round(cents) / 100);
+      return "£" + val.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const toast = (msg) => {
       const t = $("toast");
