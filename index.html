@@ -29,7 +29,7 @@
 
     .hidden { display: none !important; }
 
-    /* Login Form */
+    /* Login Form Styles */
     #login {
       max-width: 320px;
       margin: 100px auto;
@@ -66,7 +66,7 @@
       background: var(--accent-gold);
     }
 
-    /* Navigation */
+    /* Navigation Bar */
     #nav {
       display: flex;
       gap: 10px;
@@ -74,7 +74,7 @@
       flex-wrap: wrap;
     }
 
-    /* KPI Cards Header */
+    /* KPI Summary Cards Grid */
     .kpi-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -110,7 +110,7 @@
     .positive { color: var(--pos-green); }
     .negative { color: var(--neg-red); }
 
-    /* Controls */
+    /* Filter Controls */
     .controls {
       display: flex;
       gap: 10px;
@@ -138,7 +138,7 @@
       margin-right: 15px;
     }
 
-    /* Tabs Slider */
+    /* Tabs Slider Layout */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -156,7 +156,7 @@
       padding-right: 20px;
     }
 
-    /* Data Entry Sheet Form Styles */
+    /* Data Entry Sheet Styling */
     .entry-form-card {
       background: var(--card-bg);
       border: 1px solid var(--primary-gold);
@@ -207,7 +207,7 @@
       outline: none;
     }
 
-    /* Tables & Charts */
+    /* Chart and Table Layouts */
     .chart-container {
       position: relative;
       height: 380px;
@@ -238,7 +238,7 @@
       color: var(--accent-gold);
     }
 
-    /* Loader & Toast */
+    /* Overlay Loader & Toast Messages */
     #loading {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -266,14 +266,14 @@
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
+  <!-- AUTHENTICATION LOGIN SCREEN -->
   <div id="login">
     <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
     <input type="password" id="pass" placeholder="Enter Password">
     <button onclick="App.login()">Login</button>
   </div>
 
-  <!-- NAVIGATION -->
+  <!-- TOP NAVIGATION BAR -->
   <div id="nav" class="hidden">
     <button onclick="App.switchTab(0)">Overview</button>
     <button onclick="App.switchTab(1)">Analytics</button>
@@ -281,12 +281,11 @@
     <button onclick="App.inspectDateRange()" style="background: var(--accent-gold);">Inspect Range</button>
   </div>
 
-  <!-- MAIN APP WRAPPER -->
+  <!-- MAIN APPLICATION CONTAINER -->
   <div id="app" class="hidden">
     
-    <!-- KPI SUMMARY HEADER -->
+    <!-- KPI SUMMARY METRICS HEADER -->
     <div class="kpi-row">
-      <!-- UNBANKED CASH CARD WITH BUILT-IN DATE PICKER -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>UNBANKED CASH (EXCLUDES CARD)</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
@@ -296,11 +295,13 @@
         </div>
       </div>
 
-      <!-- CASH VS CARD SPLIT KPI -->
-      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
-        <h3>CASH VS CARD SPLIT</h3>
-        <div class="val" id="cashCardSplitVal">Syncing...</div>
-        <div class="subtext" id="cashCardSplitSub">Based on Selected Date Range</div>
+      <!-- ISOLATED CASH VS CARD SPLIT KPI CARD -->
+      <div class="kpi-card" style="border-left-color: var(--accent-gold); opacity: 0.85;">
+        <h3>CASH VS CARD SPLIT (ISOLATED)</h3>
+        <div class="val" id="cashCardSplitVal">Sandbox Mode (Isolated)</div>
+        <div class="subtext" id="cashCardSplitSub">
+          <button onclick="App.testIsolatedCashCard()" style="font-size: 10px; padding: 3px 6px; margin-top: 6px; background: #333; color: var(--accent-gold); border: 1px solid var(--primary-gold);">Run Isolated Test</button>
+        </div>
       </div>
 
       <div class="kpi-card">
@@ -343,7 +344,7 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS -->
+    <!-- DATE RANGE & FILTER CONTROLS -->
     <div class="controls">
       <div class="control-group">
         <label style="font-size:13px; color:var(--accent-gold);">From:</label>
@@ -358,7 +359,7 @@
       <button onclick="App.resetView()">Reset All</button>
     </div>
 
-    <!-- TABS SLIDER CONTAINER -->
+    <!-- TABS CONTENT SLIDER -->
     <div id="tabsWrapper">
       <div id="tabs" style="width: 400%;">
         
@@ -447,7 +448,7 @@
           </div>
         </div>
 
-        <!-- Placeholder for structural balance -->
+        <!-- TAB 3: PLACEHOLDER -->
         <div class="tab-content" style="width: 25%;"></div>
 
       </div>
@@ -455,11 +456,11 @@
 
   </div>
 
-  <!-- LOADER & TOAST -->
+  <!-- LOADER & TOAST NOTIFICATION OVERLAYS -->
   <div id="loading" class="hidden">Loading dashboard data...</div>
   <div id="toast"></div>
 
-  <!-- APP LOGIC ENGINE -->
+  <!-- COMPREHENSIVE SCRIPT ENGINE -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec",
@@ -474,12 +475,7 @@
     };
 
     const $ = (id) => document.getElementById(id);
-
-    const safeSet = (id, text) => {
-      const el = $(id);
-      if (el) el.innerText = text;
-    };
-
+    const safeSet = (id, text) => { const el = $(id); if (el) el.innerText = text; };
     const fmt = (cents) => "£" + (Math.round(cents) / 100).toFixed(2);
 
     const toast = (msg) => {
@@ -501,18 +497,14 @@
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
       if (!/\d/.test(str)) return 0;
-
       let isNegative = false;
       if (str.startsWith("-") || (str.includes("-") && str.indexOf("-") < str.search(/\d/))) {
         isNegative = true;
       }
-
       const cleanStr = str.replace(/[^0-9.-]+/g, "");
       if (!cleanStr || cleanStr === "-") return 0;
-
       const num = parseFloat(cleanStr);
       if (isNaN(num)) return 0;
-
       const cents = Math.round(num * 100);
       return isNegative ? -cents : cents;
     };
@@ -520,7 +512,6 @@
     const parseDateString = (dateStr) => {
       if (!dateStr) return null;
       let y, m, d;
-
       if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
         const serial = parseFloat(dateStr);
         const utcDays = Math.floor(serial - 25569);
@@ -552,31 +543,24 @@
           }
         }
       }
-
       if (y < 2000 || y > 2100) return null;
-
       const dateInt = y * 10000 + m * 100 + d;
       const dateObj = new Date(y, m - 1, d, 0, 0, 0);
-
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
     function processRows(rows) {
       if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
-
       const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date")));
       const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
-
       const parsedRecords = [];
-      const maxRowLimit = rows.length;
 
-      for (let i = startIndex; i < maxRowLimit; i++) {
+      for (let i = startIndex; i < rows.length; i++) {
         const row = rows[i];
         if (!row || !Array.isArray(row)) continue;
 
         const dayName = row[0] ? String(row[0]).trim() : "";
         const rawDate = row[1] !== undefined ? row[1] : row[0];
-
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
 
@@ -601,13 +585,7 @@
         if (!validDays.includes(lowerDay)) continue;
 
         const { year, month } = parsedDateInfo;
-
-        let catIceCream = 0;
-        let catCounter = 0;
-        let catKitchen = 0; 
-        let catDrink = 0;
-        let catDeli = 0;
-        let catAlcohol = 0;
+        let catIceCream = 0, catCounter = 0, catKitchen = 0, catDrink = 0, catDeli = 0, catAlcohol = 0;
 
         if (year >= 2026 || year === 2025) {
           catIceCream = cleanCents(row[5]);
@@ -617,41 +595,18 @@
           catDeli     = cleanCents(row[9]);
           catAlcohol  = cleanCents(row[10]);
         } else {
-          const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
-          const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
-          
-          if (isBeforeJune2023) {
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = 0;
-          } else if (isBeforeMarch2024) {
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = cleanCents(row[9]);
-          } else {
-            catIceCream = cleanCents(row[5]);
-            catCounter  = cleanCents(row[6]);
-            catKitchen  = cleanCents(row[7]);
-            catDrink    = cleanCents(row[8]);
-            catDeli     = cleanCents(row[9]);
-            catAlcohol  = cleanCents(row[10]);
-          }
+          catKitchen = cleanCents(row[6]);
+          catDrink   = cleanCents(row[7]);
+          catDeli    = cleanCents(row[8]);
+          catAlcohol = cleanCents(row[9]);
         }
 
         const cashCents = cleanCents(row[2]);
         const cardCents = cleanCents(row[3]);
-        
         let dailyTotalCents = cleanCents(row[4]);
-
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-        if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
-          dailyTotalCents = sumCategoriesCents;
-        }
-
+        if (dailyTotalCents === 0 && sumCategoriesCents > 0) dailyTotalCents = sumCategoriesCents;
         if (dailyTotalCents === 0 && sumCategoriesCents === 0) continue;
-        if (dailyTotalCents === 0 && !dayName) continue;
 
         parsedRecords.push({
           dayName,
@@ -671,102 +626,77 @@
           }
         });
       }
-
       return parsedRecords;
     }
 
-    // Calculates Cash vs Card split for the filtered records including exact pound totals
-    function calculateCashCardSplit(records) {
+    // ISOLATED SANDBOX FUNCTION FOR CASH VS CARD KPI
+    // Runs separately on demand without affecting core dashboard metrics
+    function calculateIsolatedCashCardSplit(records) {
       if (!records || records.length === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
-      
-      let totalCash = 0;
-      let totalCard = 0;
-
+      let totalCash = 0, totalCard = 0;
       records.forEach(r => {
         totalCash += (r.cashCents || 0);
         totalCard += (r.cardCents || 0);
       });
-
       const combined = totalCash + totalCard;
       if (combined === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
-
-      const cashPct = ((totalCash / combined) * 100).toFixed(1);
-      const cardPct = ((totalCard / combined) * 100).toFixed(1);
-
-      return { cashPct, cardPct, cashTotal: totalCash, cardTotal: totalCard };
+      return {
+        cashPct: ((totalCash / combined) * 100).toFixed(1),
+        cardPct: ((totalCard / combined) * 100).toFixed(1),
+        cashTotal: totalCash,
+        cardTotal: totalCard
+      };
     }
 
-    // Strictly tracks unbanked physical cash (excludes card transactions)
     function calculateBankingConsolidation(allRecords) {
       if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
-      
       const lastBankedVal = $("lastBankedDate")?.value;
       if (!lastBankedVal) return { unbankedCash: 0, daysCount: 0 };
-
       const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
       const todayInt = parseInt(formatDateLocal(new Date()).replace(/-/g, ""), 10);
-
-      let unbankedCashCents = 0;
-      let count = 0;
-
+      let unbankedCashCents = 0, count = 0;
       allRecords.forEach(r => {
         if (r.dateInt > lastBankedInt && r.dateInt <= todayInt) {
           unbankedCashCents += (r.cashCents || 0);
           count++;
         }
       });
-
       return { unbankedCash: unbankedCashCents, daysCount: count };
     }
 
     function calculateFYTD(allRecords) {
       if (!allRecords || allRecords.length === 0) return { current: 0, prev: 0 };
-      
       const anchorDate = new Date();
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-      
-      const fyStartInt = fyYear * 10000 + 201; 
+      const fyStartInt = fyYear * 10000 + 201;
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
-      const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
+      const prevFyStartInt = (fyYear - 1) * 10000 + 201;
       const prevTodayInt = (anchorDate.getFullYear() - 1) * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
-      let currentCents = 0;
-      let prevCents = 0;
-
+      let currentCents = 0, prevCents = 0;
       allRecords.forEach(r => {
-        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) {
-          prevCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) prevCents += r.dailyTotalCents;
       });
-
       return { current: currentCents, prev: prevCents };
     }
 
     function calculateYTD(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
-      
       const anchorDate = new Date();
       const currentYear = anchorDate.getFullYear();
-      const ytdStartInt = currentYear * 10000 + 101; 
+      const ytdStartInt = currentYear * 10000 + 101;
       const todayInt = currentYear * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
       let ytdSumCents = 0;
       allRecords.forEach(r => {
-        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) {
-          ytdSumCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) ytdSumCents += r.dailyTotalCents;
       });
       return ytdSumCents;
     }
 
     function calculateMonthKPIs(allRecords) {
       if (!allRecords || allRecords.length === 0) return { current: 0, prevMonthPartial: 0, pctDiff: "0.0", prevMonthTotal: 0, target: 0, remaining: 0 };
-
       const anchorDate = new Date();
       const curYear = anchorDate.getFullYear();
       const curMonth = anchorDate.getMonth() + 1;
@@ -774,34 +704,22 @@
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
-
       const prevYear = curYear - 1;
       const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
       const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
       const targetPrevDay = Math.min(curDay, lastDayPrevMonth);
       const prevMonthPartialEndInt = prevYear * 10000 + curMonth * 100 + targetPrevDay;
-
       const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
 
-      let currentCents = 0;
-      let prevMonthPartialCents = 0;
-      let prevMonthFullCents = 0;
-
+      let currentCents = 0, prevMonthPartialCents = 0, prevMonthFullCents = 0;
       allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) {
-          prevMonthPartialCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
-          prevMonthFullCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) prevMonthPartialCents += r.dailyTotalCents;
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) prevMonthFullCents += r.dailyTotalCents;
       });
 
       const diffCents = currentCents - prevMonthPartialCents;
       const pctVal = prevMonthPartialCents > 0 ? ((diffCents / prevMonthPartialCents) * 100).toFixed(1) : "0.0";
-
       const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingCents = targetCents - currentCents;
 
@@ -818,24 +736,17 @@
 
     function calculateRolling12Month(allRecords) {
       if (!allRecords || allRecords.length === 0) return 0;
-
       const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
       if (validRecords.length === 0) return 0;
-
       const latestRec = validRecords[validRecords.length - 1];
       const anchorDate = new Date(latestRec.parsedDate);
-      
       const startLookback = new Date(anchorDate);
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
       let rollingSumCents = 0;
-      for (let i = 0; i < validRecords.length; i++) {
-        const r = validRecords[i];
-        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
-          rollingSumCents += r.dailyTotalCents;
-        }
-      }
-
+      validRecords.forEach(r => {
+        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) rollingSumCents += r.dailyTotalCents;
+      });
       return rollingSumCents;
     }
 
@@ -851,44 +762,27 @@
         rangeSpanEl.innerText = "Syncing...";
         return;
       }
-
       let periodSumCents = 0;
-      records.forEach(r => {
-        periodSumCents += r.dailyTotalCents;
-      });
-
+      records.forEach(r => { periodSumCents += r.dailyTotalCents; });
       rangeTotalEl.innerText = fmt(periodSumCents);
 
       if (!startVal || !endVal) {
         rangeSpanEl.innerText = "Span: Full Dataset";
         return;
       }
-
       const sDate = new Date(startVal);
       const eDate = new Date(endVal);
       const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-      
       rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
     function renderDashboard(records) {
       const container = $("productTable");
-      const categoryTotalsCents = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
-      };
-
+      const categoryTotalsCents = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
       if (container) container.innerHTML = "";
 
       records.forEach(rec => {
-        Object.keys(rec.categories).forEach(cat => {
-          categoryTotalsCents[cat] += rec.categories[cat];
-        });
-
+        Object.keys(rec.categories).forEach(cat => { categoryTotalsCents[cat] += rec.categories[cat]; });
         if (container) {
           const tr = document.createElement("tr");
           const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
@@ -903,10 +797,8 @@
       });
 
       const vatStatusEl = $("vatStatus");
-
       if (!STATE.isFullLoaded) {
         safeSet("bankingVal", "Syncing...");
-        safeSet("cashCardSplitVal", "Syncing...");
         safeSet("fytdCompVal", "Syncing...");
         safeSet("ytdSales", "Syncing...");
         safeSet("mthPctCompVal", "Syncing...");
@@ -916,21 +808,11 @@
         safeSet("rollingTotal", "Syncing...");
         safeSet("rangeTotalVal", "Syncing...");
         safeSet("rangeSpanSub", "Syncing...");
-        if (vatStatusEl) {
-          vatStatusEl.innerText = "Loading history...";
-          vatStatusEl.style.color = "#aaa";
-        }
       } else {
         const bankingData = calculateBankingConsolidation(STATE.raw);
         const bankingValEl = $("bankingVal");
         if (bankingValEl) {
           bankingValEl.innerHTML = `${fmt(bankingData.unbankedCash)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked cash across ${bankingData.daysCount} days</span>`;
-        }
-
-        const splitData = calculateCashCardSplit(records);
-        const cashCardSplitEl = $("cashCardSplitVal");
-        if (cashCardSplitEl) {
-          cashCardSplitEl.innerHTML = `Cash: ${splitData.cashPct}% | Card: ${splitData.cardPct}%<br><span style="font-size:12px; font-weight:normal; color:#aaa;">Cash: ${fmt(splitData.cashTotal)} | Card: ${fmt(splitData.cardTotal)}</span>`;
         }
 
         const fytdData = calculateFYTD(STATE.raw);
@@ -941,20 +823,16 @@
         if (fytdEl) {
           fytdEl.innerHTML = `${fmt(fytdData.current)} <span style="font-size:11px; font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(fytdData.prev)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
         }
-        safeSet("fytdCompSub", "Since 1st Feb");
 
-        const ytdCents = calculateYTD(STATE.raw);
-        safeSet("ytdSales", fmt(ytdCents));
+        safeSet("ytdSales", fmt(calculateYTD(STATE.raw)));
 
         const mthData = calculateMonthKPIs(STATE.raw);
-        
         const mthPctEl = $("mthPctCompVal");
         if (mthPctEl) {
           const isPos = mthData.diffCents >= 0;
           const signStr = isPos ? "+" : "";
           mthPctEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(mthData.prevMonthPartial)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(mthData.diffCents)} (${signStr}${mthData.pctDiff}%)</span>`;
         }
-        safeSet("mthPctCompSub", "vs Same Period Last Year");
 
         const mthTargetEl = $("mthTargetVal");
         if (mthTargetEl) {
@@ -962,7 +840,6 @@
           const remainingColor = mthData.remaining > 0 ? 'negative' : 'positive';
           mthTargetEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(mthData.target)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
         }
-        safeSet("mthTargetSub", `Prev Full Month: ${fmt(mthData.prevMonthTotal)}`);
 
         safeSet("products", records.length);
 
@@ -1002,9 +879,7 @@
     function renderBarChart(records) {
       const canvas = $("barChart");
       if (!canvas || typeof Chart === "undefined") return;
-
       if (STATE.barChart) STATE.barChart.destroy();
-
       const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
       const data = records.map(r => r.dailyTotalCents / 100);
 
@@ -1012,20 +887,12 @@
         type: "bar",
         data: {
           labels,
-          datasets: [{
-            label: "Daily Revenue (£)",
-            data,
-            backgroundColor: "#D4AF37"
-          }]
+          datasets: [{ label: "Daily Revenue (£)", data, backgroundColor: "#D4AF37" }]
         },
-        options: { 
-          responsive: true, 
+        options: {
+          responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
+          scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 } } }
         }
       });
     }
@@ -1033,9 +900,7 @@
     function renderSalesChart(records) {
       const canvas = $("salesChart");
       if (!canvas || typeof Chart === "undefined") return;
-
       if (STATE.salesChart) STATE.salesChart.destroy();
-
       const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
       const data = records.map(r => r.dailyTotalCents / 100);
 
@@ -1043,30 +908,19 @@
         type: "line",
         data: {
           labels,
-          datasets: [{
-            label: "Sales Trend (£)",
-            data,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212, 175, 55, 0.1)",
-            fill: true
-          }]
+          datasets: [{ label: "Sales Trend (£)", data, borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.1)", fill: true }]
         },
-        options: { 
-          responsive: true, 
+        options: {
+          responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
+          scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 } } }
         }
       });
     }
 
     const App = {
       login: () => {
-        const p = $("pass").value;
-        if (p === CONFIG.PASSWORD) {
+        if ($("pass").value === CONFIG.PASSWORD) {
           $("login").classList.add("hidden");
           $("nav").classList.remove("hidden");
           $("app").classList.remove("hidden");
@@ -1077,35 +931,26 @@
       },
       switchTab: (index) => {
         const tabs = $("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${index * 25}%)`;
-        }
+        if (tabs) tabs.style.transform = `translateX(-${index * 25}%)`;
       },
       setRange: (daysStr) => {
         const days = parseInt(daysStr, 10);
         const endD = new Date();
         const startD = new Date();
         startD.setDate(endD.getDate() - days);
-
-        const sStr = formatDateLocal(startD);
-        const eStr = formatDateLocal(endD);
-
-        if ($("startDate")) $("startDate").value = sStr;
-        if ($("endDate")) $("endDate").value = eStr;
-
+        if ($("startDate")) $("startDate").value = formatDateLocal(startD);
+        if ($("endDate")) $("endDate").value = formatDateLocal(endD);
         App.applyRange();
       },
       applyRange: () => {
         const sVal = $("startDate")?.value;
         const eVal = $("endDate")?.value;
         const lastBankedVal = $("lastBankedDate")?.value;
-
         if (sVal) localStorage.setItem("dash_startDate", sVal);
         if (eVal) localStorage.setItem("dash_endDate", eVal);
         if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
 
         if (!STATE.raw || STATE.raw.length === 0) return;
-
         let filtered = STATE.raw;
         if (sVal && eVal) {
           const sInt = parseInt(sVal.replace(/-/g, ""), 10);
@@ -1121,22 +966,34 @@
         load();
       },
       inspectDateRange: () => {
-        const s = $("startDate")?.value || "Start";
-        const e = $("endDate")?.value || "End";
-        toast(`Inspecting range: ${s} to ${e}`);
+        toast(`Inspecting range: ${$("startDate")?.value || "Start"} to ${$("endDate")?.value || "End"}`);
+      },
+      testIsolatedCashCard: () => {
+        let filtered = STATE.raw;
+        const sVal = $("startDate")?.value;
+        const eVal = $("endDate")?.value;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        const split = calculateIsolatedCashCardSplit(filtered);
+        const splitEl = $("cashCardSplitVal");
+        if (splitEl) {
+          splitEl.innerHTML = `Cash: ${split.cashPct}% | Card: ${split.cardPct}%<br><span style="font-size:12px; font-weight:normal; color:#aaa;">Cash: ${fmt(split.cashTotal)} | Card: ${fmt(split.cardTotal)}</span>`;
+        }
+        toast("Isolated Cash/Card calculation executed successfully!");
       },
       onEntryDateChange: () => {
         const dateInput = $("entryDate");
         const daySelect = $("entryDay");
         if (!dateInput || !daySelect || !dateInput.value) return;
-
         const parts = dateInput.value.split("-");
         if (parts.length === 3) {
           const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
           if (!isNaN(dObj.getTime())) {
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const dayName = days[dObj.getDay()];
-            daySelect.value = dayName;
+            daySelect.value = days[dObj.getDay()];
           }
         }
       },
@@ -1144,7 +1001,6 @@
         e.preventDefault();
         const loader = $("loading");
         if (loader) loader.classList.remove("hidden");
-
         const payload = {
           dayName: $("entryDay").value,
           rawDate: $("entryDate").value,
@@ -1157,15 +1013,10 @@
           catDeli: parseFloat($("catDeli").value) || 0,
           catAlcohol: parseFloat($("catAlcohol").value) || 0
         };
-
         try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify(payload)
-          });
+          const res = await fetch(CONFIG.URL, { method: "POST", body: JSON.stringify(payload) });
           const json = await res.json();
           if (loader) loader.classList.add("hidden");
-
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
@@ -1189,23 +1040,15 @@
     const load = async () => {
       try {
         const loader = $("loading");
-        
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
         const defaultStart = formatDateLocal(firstDayOfMonth);
         const defaultEnd = formatDateLocal(now);
         const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultStart;
 
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultLastBanked;
-        }
-        if ($("startDate") && !$("startDate").value) {
-          $("startDate").value = defaultStart;
-        }
-        if ($("endDate") && !$("endDate").value) {
-          $("endDate").value = defaultEnd;
-        }
+        if ($("lastBankedDate") && !$("lastBankedDate").value) $("lastBankedDate").value = defaultLastBanked;
+        if ($("startDate") && !$("startDate").value) $("startDate").value = defaultStart;
+        if ($("endDate") && !$("endDate").value) $("endDate").value = defaultEnd;
         if ($("entryDate") && !$("entryDate").value) {
           $("entryDate").value = defaultEnd;
           App.onEntryDateChange();
@@ -1215,53 +1058,35 @@
         if (cachedData) {
           try {
             const parsedCache = JSON.parse(cachedData);
-            parsedCache.forEach(r => {
-              if (r.parsedDate) r.parsedDate = new Date(r.parsedDate);
-            });
+            parsedCache.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
             STATE.raw = parsedCache;
             STATE.isFullLoaded = true;
-
             App.applyRange();
             if (loader) loader.classList.add("hidden");
-            toast("Loaded instantly from local cache");
           } catch (cacheErr) {
             console.warn("Cache read failed:", cacheErr);
           }
         }
 
-        if (!STATE.isFullLoaded && loader) {
-          loader.classList.remove("hidden");
-        }
-
+        if (!STATE.isFullLoaded && loader) loader.classList.remove("hidden");
         const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
         const fullJson = await fullRes.json();
-
         let fullRecords = [];
         if (fullJson && fullJson.tabs) {
           Object.keys(fullJson.tabs).forEach(tabName => {
             const tabRows = fullJson.tabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              fullRecords = fullRecords.concat(processRows(tabRows));
-            }
+            if (Array.isArray(tabRows) && tabRows.length > 0) fullRecords = fullRecords.concat(processRows(tabRows));
           });
         }
-
         if (fullRecords.length > 0) {
           fullRecords.sort((a, b) => a.dateInt - b.dateInt);
           STATE.raw = fullRecords;
           STATE.isFullLoaded = true;
-
-          try {
-            localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords));
-          } catch (e) {
-            console.warn("Cache write failed:", e);
-          }
+          try { localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords)); } catch (e) {}
         }
-
         if (loader) loader.classList.add("hidden");
         App.applyRange();
       } catch (err) {
-        console.error("Failed to load dashboard data:", err);
         const loader = $("loading");
         if (loader) loader.classList.add("hidden");
         toast("Failed to load live data. Using offline mode.");
