@@ -286,7 +286,7 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
-      <!-- UNBANKED CASH CARD WITH BUILT-IN DATE PICKER -->
+      <!-- UNBANKED CASH CARD -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>UNBANKED CASH (EXCLUDES CARD)</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
@@ -675,7 +675,7 @@
       return parsedRecords;
     }
 
-    // Calculates Cash vs Card split for the filtered records including exact pound totals
+    // Isolated Cash vs Card Split Function
     function calculateCashCardSplit(records) {
       if (!records || records.length === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
       
@@ -696,7 +696,7 @@
       return { cashPct, cardPct, cashTotal: totalCash, cardTotal: totalCard };
     }
 
-    // Strictly tracks unbanked physical cash (excludes card transactions)
+    // Isolated Unbanked Cash Calculation
     function calculateBankingConsolidation(allRecords) {
       if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
       
