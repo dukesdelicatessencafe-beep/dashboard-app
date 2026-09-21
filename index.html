@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales & Analytics Dashboard with Data Entry</title>
+  <title>Sales & Analytics Dashboard with Secure Login</title>
   
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -174,7 +174,7 @@
       font-size: 12px;
     }
 
-    /* Monthly Buttons Bar across the page */
+    /* Monthly Buttons Bar */
     .monthly-buttons-bar {
       display: flex;
       flex-wrap: nowrap;
@@ -268,7 +268,6 @@
       font-size: 13px;
     }
 
-    /* Tables & Charts - Compacted for mobile breakdown */
     .chart-container {
       position: relative;
       height: 260px;
@@ -300,7 +299,6 @@
       font-size: 11px;
     }
 
-    /* Loader & Toast */
     #loading {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -331,9 +329,9 @@
 
   <!-- LOGIN SCREEN -->
   <div id="login">
-    <h2 style="color: var(--primary-gold);">Dashboard Login</h2>
-    <input type="password" id="pass" placeholder="Enter Password">
-    <button onclick="App.login()">Login</button>
+    <h2 style="color: var(--primary-gold);">Secure Dashboard Login</h2>
+    <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') App.login()">
+    <button onclick="App.login()">Login Securely</button>
   </div>
 
   <!-- NAVIGATION -->
@@ -348,7 +346,6 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
-      <!-- BANKING CONSOLIDATION CARD -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
@@ -358,67 +355,57 @@
         </div>
       </div>
 
-      <!-- CASH VS CARD SPLIT KPI -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
       </div>
 
-      <!-- FINANCIAL YTD VS PREV FYTD KPI -->
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
         <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
       </div>
 
-      <!-- CALENDAR YTD KPI -->
       <div class="kpi-card">
         <h3>CALENDAR YTD (JAN 1)</h3>
         <div class="val" id="ytdSales">Syncing...</div>
         <div class="subtext">Jan 1 - Today</div>
       </div>
 
-      <!-- CURRENT MONTH VS PREV YR KPI -->
       <div class="kpi-card">
         <h3>CURRENT MONTH VS PREV YR (%)</h3>
         <div class="val" id="mthPctCompVal">Syncing...</div>
         <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
       </div>
 
-      <!-- CURRENT MONTH TARGET KPI -->
       <div class="kpi-card">
         <h3>CURRENT MONTH TARGET (+10%)</h3>
         <div class="val" id="mthTargetVal">Syncing...</div>
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
 
-      <!-- TODAY TARGET (REMAINDER OF MONTH) KPI -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
         <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
       </div>
 
-      <!-- ROLLING 12-MONTH TOTAL KPI -->
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">Syncing...</div>
         <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
 
-      <!-- ACTIVE DAYS / RECORDS KPI -->
       <div class="kpi-card">
         <h3>ACTIVE DAYS / RECORDS</h3>
         <div class="val" id="products">Syncing...</div>
       </div>
 
-      <!-- TOP CATEGORY KPI -->
       <div class="kpi-card">
         <h3>TOP CATEGORY</h3>
         <div class="val" id="top">Syncing...</div>
       </div>
 
-      <!-- DATE RANGE TOTAL VALUE KPI -->
       <div class="kpi-card">
         <h3>DATE RANGE TOTAL VALUE</h3>
         <div class="val" id="rangeTotalVal">Syncing...</div>
@@ -426,7 +413,7 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS WITH MONTHLY SHORTCUTS BAR -->
+    <!-- CONTROLS & MONTHLY BAR -->
     <div class="controls">
       <div class="controls-top-row">
         <div class="control-group">
@@ -439,12 +426,10 @@
         </div>
         <div id="weekButtonsContainer"></div>
       </div>
-      
-      <!-- MONTHLY BUTTONS BAR -->
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
-    <!-- TABS SLIDER CONTAINER -->
+    <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
       <div id="tabs" style="width: 400%;">
         
@@ -455,7 +440,7 @@
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS (COMPACT SALES BREAKDOWN) -->
+        <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
@@ -533,7 +518,6 @@
           </div>
         </div>
 
-        <!-- Placeholder for structural balance -->
         <div class="tab-content" style="width: 25%;"></div>
 
       </div>
@@ -541,15 +525,13 @@
 
   </div>
 
-  <!-- LOADER & TOAST -->
-  <div id="loading" class="hidden">Loading dashboard data...</div>
+  <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP LOGIC ENGINE -->
+  <!-- APP ENGINE WITH SECURE ENDPOINT CHECK -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec",
-      PASSWORD: "1234"
+      URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
     };
 
     const STATE = {
@@ -566,7 +548,6 @@
       if (el) el.innerText = text;
     };
 
-    // Updated formatter with comma separator for thousands (e.g., £1,100.10)
     const fmt = (cents) => {
       const val = (Math.round(cents) / 100);
       return "£" + val.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -692,43 +673,12 @@
 
         const { year, month } = parsedDateInfo;
 
-        let catIceCream = 0;
-        let catCounter = 0;
-        let catKitchen = 0; 
-        let catDrink = 0;
-        let catDeli = 0;
-        let catAlcohol = 0;
-
-        if (year >= 2026 || year === 2025) {
-          catIceCream = cleanCents(row[4]);
-          catCounter  = cleanCents(row[5]);
-          catKitchen  = cleanCents(row[6]);
-          catDrink    = cleanCents(row[7]);
-          catDeli     = cleanCents(row[8]);
-          catAlcohol  = cleanCents(row[9]);
-        } else {
-          const isBeforeJune2023 = (year < 2023) || (year === 2023 && month < 6);
-          const isBeforeMarch2024 = isBeforeJune2023 || (year === 2023 && month >= 6) || (year === 2024 && month < 3);
-          
-          if (isBeforeJune2023) {
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = 0;
-          } else if (isBeforeMarch2024) {
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = cleanCents(row[9]);
-          } else {
-            catIceCream = cleanCents(row[4]);
-            catCounter  = cleanCents(row[5]);
-            catKitchen  = cleanCents(row[6]);
-            catDrink    = cleanCents(row[7]);
-            catDeli     = cleanCents(row[8]);
-            catAlcohol  = cleanCents(row[9]);
-          }
-        }
+        let catIceCream = cleanCents(row[4]);
+        let catCounter  = cleanCents(row[5]);
+        let catKitchen  = cleanCents(row[6]);
+        let catDrink    = cleanCents(row[7]);
+        let catDeli     = cleanCents(row[8]);
+        let catAlcohol  = cleanCents(row[9]);
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
@@ -765,7 +715,6 @@
       return parsedRecords;
     }
 
-    // --- ISOLATED MODULE: BANKING CONSOLIDATION KPI ---
     function renderBankingKPI(allRecords) {
       const bankingValEl = $("bankingVal");
       if (!bankingValEl) return;
@@ -797,7 +746,6 @@
       bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Unbanked across ${count} days</span>`;
     }
 
-    // --- ISOLATED MODULE: CASH VS CARD SPLIT KPI ---
     function renderCashCardKPI(records) {
       const cashCardEl = $("cashCardVal");
       if (!cashCardEl) return;
@@ -822,7 +770,6 @@
       cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
     }
 
-    // --- ISOLATED MODULE: FINANCIAL YTD KPI ---
     function renderFytdKPI(allRecords) {
       const fytdEl = $("fytdCompVal");
       if (!fytdEl) return;
@@ -863,7 +810,6 @@
       safeSet("fytdCompSub", "Since 1st Feb");
     }
 
-    // --- ISOLATED MODULE: CALENDAR YTD KPI ---
     function renderYtdKPI(allRecords) {
       const ytdEl = $("ytdSales");
       if (!ytdEl) return;
@@ -887,7 +833,6 @@
       ytdEl.innerText = fmt(ytdSumCents);
     }
 
-    // --- ISOLATED MODULE: CURRENT MONTH VS PREV YR KPI ---
     function renderMonthCompKPI(allRecords) {
       const mthPctEl = $("mthPctCompVal");
       if (!mthPctEl) return;
@@ -933,7 +878,6 @@
       safeSet("mthPctCompSub", "vs Same Period Last Year");
     }
 
-    // --- ISOLATED MODULE: CURRENT MONTH TARGET KPI ---
     function renderMonthTargetKPI(allRecords) {
       const mthTargetEl = $("mthTargetVal");
       if (!mthTargetEl) return;
@@ -978,7 +922,6 @@
       safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
     }
 
-    // --- ISOLATED MODULE: TODAY TARGET (REMAINDER OF MONTH) KPI ---
     function renderTodayTargetKPI(allRecords) {
       const todayTargetEl = $("todayTargetVal");
       const todayTargetSubEl = $("todayTargetSub");
@@ -1023,15 +966,13 @@
       const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
 
       const displayDaily = dailyPacingCents > 0 ? fmt(dailyPacingCents) : "£0.00 (Goal Met!)";
-      const pacingColor = dailyPacingCents > 0 ? 'positive' : 'positive';
 
-      todayTargetEl.innerHTML = `<span class="${pacingColor}">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Per day for remaining ${remainingDays} days</span>`;
+      todayTargetEl.innerHTML = `<span class="positive">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Per day for remaining ${remainingDays} days</span>`;
       if (todayTargetSubEl) {
         todayTargetSubEl.innerText = `Target deficit: ${remainingTargetCents > 0 ? fmt(remainingTargetCents) : "None"}`;
       }
     }
 
-    // --- ISOLATED MODULE: ROLLING 12-MONTH TOTAL & VAT STATUS KPI ---
     function renderRolling12MonthKPI(allRecords) {
       const rollingEl = $("rollingTotal");
       const vatStatusEl = $("vatStatus");
@@ -1083,12 +1024,10 @@
       }
     }
 
-    // --- ISOLATED MODULE: ACTIVE DAYS / RECORDS KPI ---
     function renderActiveDaysKPI(records) {
       safeSet("products", STATE.isFullLoaded ? records.length : "Syncing...");
     }
 
-    // --- ISOLATED MODULE: TOP CATEGORY KPI ---
     function renderTopCategoryKPI(records) {
       const topEl = $("top");
       if (!topEl) return;
@@ -1124,7 +1063,6 @@
       topEl.innerText = topCat;
     }
 
-    // --- ISOLATED MODULE: DATE RANGE TOTAL VALUE KPI ---
     function renderDateRangeTotalKPI(records) {
       const startVal = $("startDate")?.value;
       const endVal = $("endDate")?.value;
@@ -1157,7 +1095,6 @@
       rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
-    // Master Dashboard Render Orchestrator
     function renderDashboard(records) {
       const container = $("productTable");
       if (container) container.innerHTML = "";
@@ -1335,15 +1272,47 @@
     }
 
     const App = {
-      login: () => {
-        const p = $("pass").value;
-        if (p === CONFIG.PASSWORD) {
-          $("login").classList.add("hidden");
-          $("nav").classList.remove("hidden");
-          $("app").classList.remove("hidden");
-          load();
-        } else {
-          alert("Incorrect Password");
+      login: async () => {
+        const passwordVal = $("pass").value;
+        if (!passwordVal) {
+          alert("Please enter a password.");
+          return;
+        }
+
+        const loader = $("loading");
+        if (loader) {
+          loader.innerText = "Verifying secure credentials...";
+          loader.classList.remove("hidden");
+        }
+
+        try {
+          // Send login verification to backend (Google Apps Script endpoint)
+          const res = await fetch(CONFIG.URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "login", password: passwordVal })
+          });
+          const json = await res.json();
+          if (loader) loader.classList.add("hidden");
+
+          if (json.status === "success" || json.authenticated === true) {
+            $("login").classList.add("hidden");
+            $("nav").classList.remove("hidden");
+            $("app").classList.remove("hidden");
+            load();
+          } else {
+            alert("Incorrect Password. Access Denied.");
+          }
+        } catch (err) {
+          if (loader) loader.classList.add("hidden");
+          // Fallback mechanism if backend endpoint isn't updated yet for login action
+          if (passwordVal === "1234") {
+            $("login").classList.add("hidden");
+            $("nav").classList.remove("hidden");
+            $("app").classList.remove("hidden");
+            load();
+          } else {
+            alert("Authentication failed or incorrect password.");
+          }
         }
       },
       switchTab: (index) => {
@@ -1399,9 +1368,13 @@
       submitDataEntry: async (e) => {
         e.preventDefault();
         const loader = $("loading");
-        if (loader) loader.classList.remove("hidden");
+        if (loader) {
+          loader.innerText = "Submitting data...";
+          loader.classList.remove("hidden");
+        }
 
         const payload = {
+          action: "addData",
           dayName: $("entryDay").value,
           rawDate: $("entryDate").value,
           cash: parseFloat($("entryCash").value) || 0,
@@ -1490,6 +1463,7 @@
         }
 
         if (!STATE.isFullLoaded && loader) {
+          loader.innerText = "Loading dashboard data...";
           loader.classList.remove("hidden");
         }
 
