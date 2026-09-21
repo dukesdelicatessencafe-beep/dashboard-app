@@ -389,6 +389,13 @@
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
 
+      <!-- NEW: TODAY TARGET (REMAINDER OF MONTH) KPI -->
+      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+        <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
+        <div class="val" id="todayTargetVal">Syncing...</div>
+        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
+      </div>
+
       <!-- ROLLING 12-MONTH TOTAL KPI -->
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
@@ -964,6 +971,60 @@
       safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
     }
 
+    // --- NEW ISOLATED MODULE: TODAY TARGET (REMAINDER OF MONTH) KPI ---
+    function renderTodayTargetKPI(allRecords) {
+      const todayTargetEl = $("todayTargetVal");
+      const todayTargetSubEl = $("todayTargetSub");
+      if (!todayTargetEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        todayTargetEl.innerText = "Syncing...";
+        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal";
+        return;
+      }
+
+      const anchorDate = new Date();
+      const curYear = anchorDate.getFullYear();
+      const curMonth = anchorDate.getMonth() + 1;
+      const curDay = anchorDate.getDate();
+      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
+
+      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
+      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+
+      const prevYear = curYear - 1;
+      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
+      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
+      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
+
+      let currentCents = 0;
+      let prevMonthFullCents = 0;
+
+      allRecords.forEach(r => {
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
+          currentCents += r.dailyTotalCents;
+        }
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
+          prevMonthFullCents += r.dailyTotalCents;
+        }
+      });
+
+      const targetCents = Math.round(prevMonthFullCents * 1.10);
+      const remainingTargetCents = targetCents - currentCents;
+      
+      // Calculate remaining days including today onwards
+      const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
+      const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
+
+      const displayDaily = dailyPacingCents > 0 ? fmt(dailyPacingCents) : "£0.00 (Goal Met!)";
+      const pacingColor = dailyPacingCents > 0 ? 'positive' : 'positive';
+
+      todayTargetEl.innerHTML = `<span class="${pacingColor}">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:14px;">Per day for remaining ${remainingDays} days</span>`;
+      if (todayTargetSubEl) {
+        todayTargetSubEl.innerText = `Target deficit: ${remainingTargetCents > 0 ? fmt(remainingTargetCents) : "None"}`;
+      }
+    }
+
     // --- ISOLATED MODULE: ROLLING 12-MONTH TOTAL & VAT STATUS KPI ---
     function renderRolling12MonthKPI(allRecords) {
       const rollingEl = $("rollingTotal");
@@ -1116,6 +1177,7 @@
       renderYtdKPI(STATE.raw);
       renderMonthCompKPI(STATE.raw);
       renderMonthTargetKPI(STATE.raw);
+      renderTodayTargetKPI(STATE.raw);
       renderRolling12MonthKPI(STATE.raw);
       renderActiveDaysKPI(records);
       renderTopCategoryKPI(records);
