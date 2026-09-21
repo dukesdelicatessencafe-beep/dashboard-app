@@ -296,6 +296,13 @@
         </div>
       </div>
 
+      <!-- ISOLATED CASH VS CARD SPLIT KPI -->
+      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+        <h3>CASH VS CARD SPLIT</h3>
+        <div class="val" id="cashCardVal">Syncing...</div>
+        <div class="subtext" id="cashCardSub">Percentage Breakdown (Cols C & D)</div>
+      </div>
+
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
@@ -855,7 +862,13 @@
 
       if (container) container.innerHTML = "";
 
+      let periodCashCents = 0;
+      let periodCardCents = 0;
+
       records.forEach(rec => {
+        periodCashCents += (rec.cashCents || 0);
+        periodCardCents += (rec.cardCents || 0);
+
         Object.keys(rec.categories).forEach(cat => {
           categoryTotalsCents[cat] += rec.categories[cat];
         });
@@ -872,6 +885,16 @@
           container.appendChild(tr);
         }
       });
+
+      // Render Isolated Cash vs Card KPI
+      const periodTotalCents = periodCashCents + periodCardCents;
+      const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
+      const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
+
+      const cashCardEl = $("cashCardVal");
+      if (cashCardEl) {
+        cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
+      }
 
       const vatStatusEl = $("vatStatus");
 
