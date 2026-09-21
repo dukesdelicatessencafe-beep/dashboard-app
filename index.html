@@ -129,14 +129,21 @@
     /* Controls */
     .controls {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 15px;
       margin-bottom: 20px;
-      align-items: center;
       background: var(--card-bg);
       padding: 15px;
       border-radius: 8px;
       border: 1px solid #333;
+    }
+
+    .controls-top-row {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
     }
 
     .controls input[type="date"] {
@@ -158,6 +165,36 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+    }
+
+    /* Monthly Buttons Bar across the page */
+    .monthly-buttons-bar {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 8px;
+      width: 100%;
+      padding-top: 5px;
+      border-top: 1px solid #333;
+    }
+
+    .month-btn {
+      background-color: var(--accent-gold);
+      color: #000;
+      border: 1px solid var(--primary-gold);
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+      flex: 1 1 auto;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .month-btn:hover, .month-btn.active {
+      background-color: var(--primary-gold);
+      color: #fff;
     }
 
     /* Tabs Slider */
@@ -379,17 +416,22 @@
       </div>
     </div>
 
-    <!-- FULL RANGE CONTROLS -->
+    <!-- FULL RANGE CONTROLS WITH MONTHLY SHORTCUTS BAR ACROSS THE PAGE -->
     <div class="controls">
-      <div class="control-group">
-        <label style="font-size:13px; color:var(--accent-gold);">From:</label>
-        <input type="date" id="startDate" onchange="App.applyRange()">
+      <div class="controls-top-row">
+        <div class="control-group">
+          <label style="font-size:13px; color:var(--accent-gold);">From:</label>
+          <input type="date" id="startDate" onchange="App.applyRange()">
+        </div>
+        <div class="control-group">
+          <label style="font-size:13px; color:var(--accent-gold);">To:</label>
+          <input type="date" id="endDate" onchange="App.applyRange()">
+        </div>
+        <div id="weekButtonsContainer"></div>
       </div>
-      <div class="control-group">
-        <label style="font-size:13px; color:var(--accent-gold);">To:</label>
-        <input type="date" id="endDate" onchange="App.applyRange()">
-      </div>
-      <div id="weekButtonsContainer"></div>
+      
+      <!-- MONTHLY BUTTONS BAR ACROSS THE PAGE -->
+      <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
     <!-- TABS SLIDER CONTAINER -->
@@ -1181,6 +1223,53 @@
       }
     }
 
+    // Initialize Full 2026 Monthly Shortcut Buttons Across the Page
+    function initMonthlyButtonsBar() {
+      const container = $("monthlyButtonsBar");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const months = [
+        { name: "January", short: "Jan", number: "01" },
+        { name: "February", short: "Feb", number: "02" },
+        { name: "March", short: "Mar", number: "03" },
+        { name: "April", short: "Apr", number: "04" },
+        { name: "May", short: "May", number: "05" },
+        { name: "June", short: "Jun", number: "06" },
+        { name: "July", short: "Jul", number: "07" },
+        { name: "August", short: "Aug", number: "08" },
+        { name: "September", short: "Sep", number: "09" },
+        { name: "October", short: "Oct", number: "10" },
+        { name: "November", short: "Nov", number: "11" },
+        { name: "December", short: "Dec", number: "12" }
+      ];
+
+      const currentYear = 2026;
+
+      months.forEach(m => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'month-btn';
+        btn.innerText = m.name;
+        btn.title = `Filter for all dates in ${m.name} ${currentYear}`;
+        
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const daysInMonth = new Date(currentYear, parseInt(m.number, 10), 0).getDate();
+          const startStr = `${currentYear}-${m.number}-01`;
+          const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
+
+          if ($("startDate")) $("startDate").value = startStr;
+          if ($("endDate")) $("endDate").value = endStr;
+          App.applyRange();
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
     const App = {
       login: () => {
         const p = $("pass").value;
@@ -1316,6 +1405,7 @@
         }
 
         initWeekButtons();
+        initMonthlyButtonsBar();
         App.switchTab(0); // Initialize tab state and highlight
 
         const cachedData = localStorage.getItem("dash_cached_records");
