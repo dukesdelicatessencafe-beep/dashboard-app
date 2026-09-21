@@ -286,7 +286,7 @@
     
     <!-- KPI SUMMARY HEADER -->
     <div class="kpi-row">
-      <!-- UNBANKED CASH CARD -->
+      <!-- UNBANKED CASH CARD WITH BUILT-IN DATE PICKER -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>UNBANKED CASH (EXCLUDES CARD)</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
@@ -462,7 +462,7 @@
   <!-- APP LOGIC ENGINE -->
   <script>
     const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec",
+      URL: "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE",
       PASSWORD: "1234"
     };
 
@@ -675,6 +675,7 @@
       return parsedRecords;
     }
 
+    // Calculates Cash vs Card split for the filtered records including exact pound totals
     function calculateCashCardSplit(records) {
       if (!records || records.length === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
       
@@ -695,6 +696,7 @@
       return { cashPct, cardPct, cashTotal: totalCash, cardTotal: totalCard };
     }
 
+    // Strictly tracks unbanked physical cash (excludes card transactions)
     function calculateBankingConsolidation(allRecords) {
       if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
       
@@ -952,7 +954,7 @@
           const signStr = isPos ? "+" : "";
           mthPctEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(mthData.prevMonthPartial)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(mthData.diffCents)} (${signStr}${mthData.pctDiff}%)</span>`;
         }
-        safeSet("mthPctCompSub", "Same Period Last Year");
+        safeSet("mthPctCompSub", "vs Same Period Last Year");
 
         const mthTargetEl = $("mthTargetVal");
         if (mthTargetEl) {
