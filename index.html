@@ -74,6 +74,17 @@
       flex-wrap: wrap;
     }
 
+    #nav button {
+      background: var(--primary-gold);
+      color: #000;
+    }
+
+    #nav button.active {
+      background: var(--accent-gold);
+      border: 2px solid var(--primary-gold);
+      color: #000;
+    }
+
     /* KPI Cards Header */
     .kpi-row {
       display: grid;
@@ -95,14 +106,19 @@
       color: var(--accent-gold);
     }
 
+    .kpi-card .val, 
+    .kpi-card .subtext, 
+    .kpi-card label, 
+    .kpi-card div {
+      font-size: 14px;
+    }
+
     .kpi-card .val {
-      font-size: 18px;
       font-weight: bold;
       line-height: 1.3;
     }
 
     .kpi-card .subtext {
-      font-size: 11px;
       color: #aaa;
       margin-top: 4px;
     }
@@ -281,10 +297,9 @@
 
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
-    <button onclick="App.switchTab(0)">Overview</button>
-    <button onclick="App.switchTab(1)">Analytics</button>
-    <button onclick="App.switchTab(2)">Data Entry Sheet</button>
-    <button onclick="App.inspectDateRange()" style="background: var(--accent-gold);">Inspect Range</button>
+    <button id="navBtn-0" onclick="App.switchTab(0)">Overview</button>
+    <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
+    <button id="navBtn-2" onclick="App.switchTab(2)">SALES ENTRY SHEET</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -297,8 +312,8 @@
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 6px;">Syncing...</div>
         <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px; border-top: 1px solid #333; padding-top: 8px;">
-          <label for="lastBankedDate" style="font-size: 11px; color: var(--accent-gold); white-space: nowrap;">Last Banked:</label>
-          <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 11px; width: 100%;">
+          <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap;">Last Banked:</label>
+          <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 3px 6px; border-radius: 4px; width: 100%;">
         </div>
       </div>
 
@@ -375,7 +390,6 @@
         <input type="date" id="endDate" onchange="App.applyRange()">
       </div>
       <div id="weekButtonsContainer"></div>
-      <button onclick="App.resetView()">Reset All</button>
     </div>
 
     <!-- TABS SLIDER CONTAINER -->
@@ -407,10 +421,10 @@
           </table>
         </div>
 
-        <!-- TAB 2: DATA ENTRY SHEET -->
+        <!-- TAB 2: SALES ENTRY SHEET -->
         <div class="tab-content" style="width: 25%;">
           <div class="entry-form-card">
-            <h2>Daily Record Data Entry</h2>
+            <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="App.submitDataEntry(event)">
               <div class="form-grid">
                 <div class="form-group">
@@ -724,7 +738,7 @@
         }
       });
 
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="font-size:11px; color:#aaa; font-weight:normal;">Unbanked across ${count} days</span>`;
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal;">Unbanked across ${count} days</span>`;
     }
 
     // --- ISOLATED MODULE: CASH VS CARD SPLIT KPI ---
@@ -749,7 +763,7 @@
       const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
       const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
 
-      cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
+      cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
     }
 
     // --- ISOLATED MODULE: FINANCIAL YTD KPI ---
@@ -789,7 +803,7 @@
       const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
       const fytdSign = fytdDiff >= 0 ? "+" : "";
 
-      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-size:11px; font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-size:16px; font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}" style="font-size:12px;">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
       safeSet("fytdCompSub", "Since 1st Feb");
     }
 
@@ -859,7 +873,7 @@
       const isPos = diffCents >= 0;
       const signStr = isPos ? "+" : "";
 
-      mthPctEl.innerHTML = `${fmt(currentCents)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(prevMonthPartialCents)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(diffCents)} (${signStr}${pctVal}%)</span>`;
+      mthPctEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:#aaa;">Prev Year: ${fmt(prevMonthPartialCents)}</span><br><span class="${isPos ? 'positive' : 'negative'}">${signStr}${fmt(diffCents)} (${signStr}${pctVal}%)</span>`;
       safeSet("mthPctCompSub", "vs Same Period Last Year");
     }
 
@@ -904,7 +918,7 @@
       const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
       const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
 
-      mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-size:14px; font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}" style="font-size:12px;">${remainingText}</span>`;
+      mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
       safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
     }
 
@@ -1184,6 +1198,17 @@
         if (tabs) {
           tabs.style.transform = `translateX(-${index * 25}%)`;
         }
+        // Update active tab button highlight state
+        for (let i = 0; i <= 2; i++) {
+          const btn = $(`navBtn-${i}`);
+          if (btn) {
+            if (i === index) {
+              btn.classList.add("active");
+            } else {
+              btn.classList.remove("active");
+            }
+          }
+        }
       },
       applyRange: () => {
         const sVal = $("startDate")?.value;
@@ -1203,17 +1228,6 @@
           filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         }
         renderDashboard(filtered);
-      },
-      resetView: () => {
-        localStorage.removeItem("dash_startDate");
-        localStorage.removeItem("dash_endDate");
-        localStorage.removeItem("dash_lastBankedDate");
-        load();
-      },
-      inspectDateRange: () => {
-        const s = $("startDate")?.value || "Start";
-        const e = $("endDate")?.value || "End";
-        toast(`Inspecting range: ${s} to ${e}`);
       },
       onEntryDateChange: () => {
         const dateInput = $("entryDate");
@@ -1302,6 +1316,7 @@
         }
 
         initWeekButtons();
+        App.switchTab(0); // Initialize tab state and highlight
 
         const cachedData = localStorage.getItem("dash_cached_records");
         if (cachedData) {
