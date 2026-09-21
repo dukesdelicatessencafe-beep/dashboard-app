@@ -424,6 +424,8 @@
           <label style="font-size:12px; color:var(--accent-gold);">To:</label>
           <input type="date" id="endDate" onchange="App.applyRange()">
         </div>
+        <!-- Reset Button placed directly next to the date picker -->
+        <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
         <div id="weekButtonsContainer"></div>
       </div>
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
@@ -1286,7 +1288,6 @@
         }
 
         try {
-          // Send login verification to backend (Google Apps Script endpoint)
           const res = await fetch(CONFIG.URL, {
             method: "POST",
             body: JSON.stringify({ action: "login", password: passwordVal })
@@ -1304,7 +1305,6 @@
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          // Fallback mechanism if backend endpoint isn't updated yet for login action
           if (passwordVal === "1234") {
             $("login").classList.add("hidden");
             $("nav").classList.remove("hidden");
@@ -1349,6 +1349,21 @@
           filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         }
         renderDashboard(filtered);
+      },
+      resetDateRange: () => {
+        localStorage.removeItem("dash_startDate");
+        localStorage.removeItem("dash_endDate");
+        
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        if ($("startDate")) $("startDate").value = formatDateLocal(firstDayOfMonth);
+        if ($("endDate")) $("endDate").value = formatDateLocal(now);
+        
+        document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+        
+        App.applyRange();
+        toast("Date range reset to current month");
       },
       onEntryDateChange: () => {
         const dateInput = $("entryDate");
@@ -1422,8 +1437,8 @@
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
-        const defaultStart = formatDateLocal(firstDayOfMonth);
-        const defaultEnd = formatDateLocal(now);
+        const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
+        const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
         const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultStart;
 
         if ($("lastBankedDate") && !$("lastBankedDate").value) {
@@ -1436,7 +1451,7 @@
           $("endDate").value = defaultEnd;
         }
         if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = defaultEnd;
+          $("entryDate").value = formatDateLocal(now);
           App.onEntryDateChange();
         }
 
