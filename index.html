@@ -675,7 +675,6 @@
       return parsedRecords;
     }
 
-    // Isolated Cash vs Card Split Function
     function calculateCashCardSplit(records) {
       if (!records || records.length === 0) return { cashPct: "0.0", cardPct: "0.0", cashTotal: 0, cardTotal: 0 };
       
@@ -696,7 +695,6 @@
       return { cashPct, cardPct, cashTotal: totalCash, cardTotal: totalCard };
     }
 
-    // Isolated Unbanked Cash Calculation
     function calculateBankingConsolidation(allRecords) {
       if (!allRecords || allRecords.length === 0) return { unbankedCash: 0, daysCount: 0 };
       
@@ -954,7 +952,7 @@
           const signStr = isPos ? "+" : "";
           mthPctEl.innerHTML = `${fmt(mthData.current)}<br><span style="font-size:14px; font-weight:bold; color:#aaa;">Prev Year: ${fmt(mthData.prevMonthPartial)}</span><br><span class="${isPos ? 'positive' : 'negative'}" style="font-size:12px;">${signStr}${fmt(mthData.diffCents)} (${signStr}${mthData.pctDiff}%)</span>`;
         }
-        safeSet("mthPctCompSub", "vs Same Period Last Year");
+        safeSet("mthPctCompSub", "Same Period Last Year");
 
         const mthTargetEl = $("mthTargetVal");
         if (mthTargetEl) {
