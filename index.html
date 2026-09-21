@@ -102,20 +102,21 @@
 
     .kpi-card h3 {
       margin: 0 0 5px 0;
-      font-size: 12px;
+      font-size: 13px;
       color: var(--accent-gold);
     }
 
-    .kpi-card .val, 
+    /* Increased KPI Font Sizes */
+    .kpi-card .val {
+      font-size: 20px;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+
     .kpi-card .subtext, 
     .kpi-card label, 
     .kpi-card div {
-      font-size: 14px;
-    }
-
-    .kpi-card .val {
-      font-weight: bold;
-      line-height: 1.3;
+      font-size: 15px;
     }
 
     .kpi-card .subtext {
@@ -174,7 +175,7 @@
       overflow-x: auto;
       gap: 8px;
       width: 100%;
-      padding-top: 5px;
+      padding-top: 10px;
       border-top: 1px solid #333;
     }
 
@@ -246,7 +247,7 @@
     }
 
     .form-group label {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--accent-gold);
       margin-bottom: 5px;
       font-weight: bold;
@@ -358,7 +359,6 @@
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
-        <div class="subtext" id="cashCardSub">Percentage Breakdown (Cols C & D)</div>
       </div>
 
       <!-- FINANCIAL YTD VS PREV FYTD KPI -->
@@ -780,7 +780,7 @@
         }
       });
 
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal;">Unbanked across ${count} days</span>`;
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:14px;">Unbanked across ${count} days</span>`;
     }
 
     // --- ISOLATED MODULE: CASH VS CARD SPLIT KPI ---
@@ -845,7 +845,7 @@
       const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
       const fytdSign = fytdDiff >= 0 ? "+" : "";
 
-      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold);">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:14px;">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
       safeSet("fytdCompSub", "Since 1st Feb");
     }
 
@@ -1287,7 +1287,6 @@
         if (tabs) {
           tabs.style.transform = `translateX(-${index * 25}%)`;
         }
-        // Update active tab button highlight state
         for (let i = 0; i <= 2; i++) {
           const btn = $(`navBtn-${i}`);
           if (btn) {
@@ -1406,7 +1405,7 @@
 
         initWeekButtons();
         initMonthlyButtonsBar();
-        App.switchTab(0); // Initialize tab state and highlight
+        App.switchTab(0);
 
         const cachedData = localStorage.getItem("dash_cached_records");
         if (cachedData) {
