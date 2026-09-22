@@ -213,11 +213,11 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 400%;
+      width: 300%;
     }
 
     .tab-content {
-      width: 25%;
+      width: 33.333%;
       box-sizing: border-box;
       padding-right: 10px;
     }
@@ -413,37 +413,37 @@
       </div>
     </div>
 
-    <!-- CONTROLS & MONTHLY BAR -->
-    <div class="controls">
-      <div class="controls-top-row">
-        <div class="control-group">
-          <label style="font-size:12px; color:var(--accent-gold);">From:</label>
-          <input type="date" id="startDate" onchange="App.applyRange()">
-        </div>
-        <div class="control-group">
-          <label style="font-size:12px; color:var(--accent-gold);">To:</label>
-          <input type="date" id="endDate" onchange="App.applyRange()">
-        </div>
-        <!-- Reset Button placed directly next to the date picker -->
-        <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
-        <div id="weekButtonsContainer"></div>
-      </div>
-      <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
-    </div>
-
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 400%;">
+      <div id="tabs" style="width: 300%;">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 33.333%;">
           <div class="chart-container">
             <canvas id="barChart"></canvas>
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 25%;">
+        <!-- TAB 1: ANALYTICS (CONTROLS + CHART + TABLE) -->
+        <div class="tab-content" style="width: 33.333%;">
+          <!-- CONTROLS & MONTHLY BAR -->
+          <div class="controls">
+            <div class="controls-top-row">
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold);">From:</label>
+                <input type="date" id="startDate" onchange="App.applyRange()">
+              </div>
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold);">To:</label>
+                <input type="date" id="endDate" onchange="App.applyRange()">
+              </div>
+              <!-- Reset Button placed directly next to the date picker -->
+              <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
+              <div id="weekButtonsContainer"></div>
+            </div>
+            <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
+          </div>
+
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
@@ -461,7 +461,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 33.333%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="App.submitDataEntry(event)">
@@ -519,8 +519,6 @@
             </form>
           </div>
         </div>
-
-        <div class="tab-content" style="width: 25%;"></div>
 
       </div>
     </div>
@@ -1318,7 +1316,7 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
-          tabs.style.transform = `translateX(-${index * 25}%)`;
+          tabs.style.transform = `translateX(-${index * (100 / 3)}%)`;
         }
         for (let i = 0; i <= 2; i++) {
           const btn = $(`navBtn-${i}`);
