@@ -344,6 +344,23 @@
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
     
+    <!-- CONTROLS & MONTHLY BAR (Shared for Overview & Analytics) -->
+    <div id="sharedControls" class="controls">
+      <div class="controls-top-row">
+        <div class="control-group">
+          <label style="font-size:12px; color:var(--accent-gold);">From:</label>
+          <input type="date" id="startDate" onchange="App.applyRange()">
+        </div>
+        <div class="control-group">
+          <label style="font-size:12px; color:var(--accent-gold);">To:</label>
+          <input type="date" id="endDate" onchange="App.applyRange()">
+        </div>
+        <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
+        <div id="weekButtonsContainer"></div>
+      </div>
+      <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
+    </div>
+
     <!-- KPI SUMMARY HEADER (Only visible on Overview tab) -->
     <div id="kpiSection" class="kpi-row">
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
@@ -424,26 +441,8 @@
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS (CONTROLS + CHART + TABLE) -->
+        <!-- TAB 1: ANALYTICS (CHART + TABLE) -->
         <div class="tab-content" style="width: 33.333%;">
-          <!-- CONTROLS & MONTHLY BAR -->
-          <div class="controls">
-            <div class="controls-top-row">
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold);">From:</label>
-                <input type="date" id="startDate" onchange="App.applyRange()">
-              </div>
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold);">To:</label>
-                <input type="date" id="endDate" onchange="App.applyRange()">
-              </div>
-              <!-- Reset Button placed directly next to the date picker -->
-              <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
-              <div id="weekButtonsContainer"></div>
-            </div>
-            <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
-          </div>
-
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
@@ -1329,13 +1328,23 @@
           }
         }
 
-        // Show KPI header only on Overview tab (index 0), hide on Analytics (1) and Sales Entry (2)
+        // Show KPI header only on Overview tab (index 0)
         const kpiSection = $("kpiSection");
         if (kpiSection) {
           if (index === 0) {
             kpiSection.classList.remove("hidden");
           } else {
             kpiSection.classList.add("hidden");
+          }
+        }
+
+        // Show shared controls (date picker / months) on Overview (0) and Analytics (1), hide on Sales Entry (2)
+        const sharedControls = $("sharedControls");
+        if (sharedControls) {
+          if (index === 0 || index === 1) {
+            sharedControls.classList.remove("hidden");
+          } else {
+            sharedControls.classList.add("hidden");
           }
         }
       },
