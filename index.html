@@ -373,6 +373,12 @@
       </div>
 
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+        <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
+        <div class="val" id="todayTargetVal">Syncing...</div>
+        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
+      </div>
+
+      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
       </div>
@@ -399,12 +405,6 @@
         <h3>CURRENT MONTH TARGET (+10%)</h3>
         <div class="val" id="mthTargetVal">Syncing...</div>
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
-      </div>
-
-      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
-        <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
-        <div class="val" id="todayTargetVal">Syncing...</div>
-        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
       </div>
 
       <div class="kpi-card">
@@ -441,8 +441,13 @@
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS (CHART + TABLE) -->
+        <!-- TAB 1: ANALYTICS (CHART + TABLE + RANGE KPI) -->
         <div class="tab-content" style="width: 33.333%;">
+          <div class="kpi-card" style="margin-bottom: 12px; border-left-color: var(--primary-gold);">
+            <h3>DATE RANGE TOTAL VALUE (ANALYTICS)</h3>
+            <div class="val" id="analyticsRangeTotalVal">Syncing...</div>
+            <div class="subtext" id="analyticsRangeSpanSub">Syncing...</div>
+          </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
@@ -766,7 +771,7 @@
       const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
       const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
 
-      cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
+      cashCardEl.innerHTML = `Total: ${fmt(periodTotalCents)}<br>Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
     }
 
     function renderFytdKPI(allRecords) {
@@ -1067,11 +1072,16 @@
       const endVal = $("endDate")?.value;
       const rangeTotalEl = $("rangeTotalVal");
       const rangeSpanEl = $("rangeSpanSub");
+      const analyticsRangeTotalEl = $("analyticsRangeTotalVal");
+      const analyticsRangeSpanEl = $("analyticsRangeSpanSub");
+      
       if (!rangeTotalEl || !rangeSpanEl) return;
 
       if (!STATE.isFullLoaded) {
         rangeTotalEl.innerText = "Syncing...";
         rangeSpanEl.innerText = "Syncing...";
+        if (analyticsRangeTotalEl) analyticsRangeTotalEl.innerText = "Syncing...";
+        if (analyticsRangeSpanEl) analyticsRangeSpanEl.innerText = "Syncing...";
         return;
       }
 
@@ -1080,18 +1090,20 @@
         periodSumCents += r.dailyTotalCents;
       });
 
-      rangeTotalEl.innerText = fmt(periodSumCents);
+      const formattedTotal = fmt(periodSumCents);
+      rangeTotalEl.innerText = formattedTotal;
+      if (analyticsRangeTotalEl) analyticsRangeTotalEl.innerText = formattedTotal;
 
-      if (!startVal || !endVal) {
-        rangeSpanEl.innerText = "Span: Full Dataset";
-        return;
+      let spanText = "Span: Full Dataset";
+      if (startVal && endVal) {
+        const sDate = new Date(startVal);
+        const eDate = new Date(endVal);
+        const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        spanText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
       }
 
-      const sDate = new Date(startVal);
-      const eDate = new Date(endVal);
-      const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-      
-      rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
+      rangeSpanEl.innerText = spanText;
+      if (analyticsRangeSpanEl) analyticsRangeSpanEl.innerText = spanText;
     }
 
     function renderDashboard(records) {
