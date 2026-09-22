@@ -344,8 +344,8 @@
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
     
-    <!-- KPI SUMMARY HEADER -->
-    <div class="kpi-row">
+    <!-- KPI SUMMARY HEADER (Only visible on Overview tab) -->
+    <div id="kpiSection" class="kpi-row">
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
@@ -1326,6 +1326,16 @@
             } else {
               btn.classList.remove("active");
             }
+          }
+        }
+
+        // Show KPI header only on Overview tab (index 0), hide on Analytics (1) and Sales Entry (2)
+        const kpiSection = $("kpiSection");
+        if (kpiSection) {
+          if (index === 0) {
+            kpiSection.classList.remove("hidden");
+          } else {
+            kpiSection.classList.add("hidden");
           }
         }
       },
