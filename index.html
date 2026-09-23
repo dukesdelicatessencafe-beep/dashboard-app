@@ -392,6 +392,13 @@
       display: none;
       z-index: 1001;
     }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      #nav, .controls, #verifyModal, #loading, #toast, button { display: none !important; }
+      .kpi-card, .chart-container, table { background: #fff !important; color: #000 !important; border: 1px solid #ccc !important; }
+      .kpi-card h3, table th { color: #333 !important; }
+    }
   </style>
 </head>
 <body>
@@ -474,10 +481,16 @@
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
 
-      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+      <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
         <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
+      </div>
+
+      <div class="kpi-card" style="border-left-color: var(--primary-gold);">
+        <h3>ESTIMATED MONTH-END TOTAL</h3>
+        <div class="val" id="projectedMonthVal">Syncing...</div>
+        <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
       </div>
 
       <div class="kpi-card">
@@ -541,8 +554,14 @@
 
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 25%;">
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
+            <button type="button" onclick="App.printReport()" style="padding: 7px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
+          </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
           </div>
           <table>
             <thead>
@@ -689,6 +708,7 @@
       isFullLoaded: false,
       barChart: null,
       salesChart: null,
+      categoryChart: null,
       pendingPayload: null
     };
 
@@ -1070,7 +1090,6 @@
       mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
       safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
 
-      // Progress Bar Update
       const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
       const mthBar = $("mthTargetBar");
       if (mthBar) {
@@ -1130,6 +1149,51 @@
       }
     }
 
+    function renderProjectedMonthKPI(allRecords) {
+      const projectedValEl = $("projectedMonthVal");
+      const projectedSubEl = $("projectedMonthSub");
+      if (!projectedValEl) return;
+
+      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
+        projectedValEl.innerText = "Syncing...";
+        if (projectedSubEl) projectedSubEl.innerText = "Based on current daily pacing";
+        return;
+      }
+
+      const anchorDate = new Date();
+      const curYear = anchorDate.getFullYear();
+      const curMonth = anchorDate.getMonth() + 1;
+      const curDay = anchorDate.getDate();
+      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
+
+      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
+      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+
+      let currentCents = 0;
+      let daysCounted = 0;
+
+      allRecords.forEach(r => {
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
+          currentCents += r.dailyTotalCents;
+          daysCounted++;
+        }
+      });
+
+      if (daysCounted === 0) {
+        projectedValEl.innerText = "£0.00";
+        if (projectedSubEl) projectedSubEl.innerText = "No data recorded this month yet";
+        return;
+      }
+
+      const dailyAverageCents = currentCents / daysCounted;
+      const projectedMonthCents = Math.round(dailyAverageCents * totalDaysInMonth);
+
+      projectedValEl.innerText = fmt(projectedMonthCents);
+      if (projectedSubEl) {
+        projectedSubEl.innerText = `Avg daily run rate: ${fmt(dailyAverageCents)}`;
+      }
+    }
+
     function renderRolling12MonthKPI(allRecords) {
       const rollingEl = $("rollingTotal");
       const vatStatusEl = $("vatStatus");
@@ -1171,16 +1235,25 @@
         if (rollingSumCents >= vatThresholdCents) {
           vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
           vatStatusEl.style.color = "#ff4d4d";
-        } else if (rollingSumCents >= vatThresholdCents * 0.85) {
-          vatStatusEl.innerText = "⚡ Approaching £90k Threshold";
-          vatStatusEl.style.color = "#ffcc00";
         } else {
-          vatStatusEl.innerText = "Safe (Below £90,000)";
-          vatStatusEl.style.color = "#4cd137";
+          // Calculate projected breach date
+          const daysSpan = (anchorDate - startLookback) / (1000 * 60 * 60 * 24);
+          const dailyVelocity = rollingSumCents / Math.max(1, daysSpan);
+          const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
+          
+          if (dailyVelocity > 0) {
+            const daysToBreach = Math.ceil(remainingCentsToThreshold / dailyVelocity);
+            const breachDate = new Date(anchorDate);
+            breachDate.setDate(breachDate.getDate() + daysToBreach);
+            vatStatusEl.innerText = `Est. Breach: ${breachDate.toLocaleDateString("en-GB")}`;
+            vatStatusEl.style.color = "#ffcc00";
+          } else {
+            vatStatusEl.innerText = "Safe (Below £90,000)";
+            vatStatusEl.style.color = "#4cd137";
+          }
         }
       }
 
-      // Progress Bar Update for VAT Threshold
       const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
       const vBar = $("vatBar");
       if (vBar) {
@@ -1326,6 +1399,7 @@
       renderMonthCompKPI(STATE.raw);
       renderMonthTargetKPI(STATE.raw);
       renderTodayTargetKPI(STATE.raw);
+      renderProjectedMonthKPI(STATE.raw);
       renderRolling12MonthKPI(STATE.raw);
       renderActiveDaysKPI(records);
       renderTopCategoryKPI(records);
@@ -1334,6 +1408,7 @@
 
       renderBarChart(records);
       renderSalesChart(records);
+      renderCategoryChart(records);
     }
 
     function renderBarChart(records) {
@@ -1400,6 +1475,47 @@
       });
     }
 
+    function renderCategoryChart(records) {
+      const canvas = $("categoryChart");
+      if (!canvas || typeof Chart === "undefined") return;
+
+      if (STATE.categoryChart) STATE.categoryChart.destroy();
+
+      const categoryTotals = {
+        "ICE CREAM": 0,
+        "COUNTER": 0,
+        "Kitchen": 0,
+        "DRINK": 0,
+        "DELI": 0,
+        "ALCOHOL": 0
+      };
+
+      records.forEach(r => {
+        Object.keys(r.categories).forEach(cat => {
+          categoryTotals[cat] += (r.categories[cat] / 100);
+        });
+      });
+
+      STATE.categoryChart = new Chart(canvas, {
+        type: "doughnut",
+        data: {
+          labels: Object.keys(categoryTotals),
+          datasets: [{
+            data: Object.values(categoryTotals),
+            backgroundColor: ["#D4AF37", "#F9E3B4", "#4cd137", "#00a8ff", "#9c88ff", "#e84118"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: '#fff' } },
+            title: { display: true, text: 'Revenue Split by Category (£)', color: '#F9E3B4', font: { size: 13 } }
+          }
+        }
+      });
+    }
+
     function initWeekButtons() {
       const container = $("weekButtonsContainer");
       if (!container) return;
@@ -1453,7 +1569,7 @@
         { name: "December", number: "12" }
       ];
 
-      const currentYear = 2026;
+      const currentYear = new Date().getFullYear();
 
       months.forEach(m => {
         const btn = document.createElement('button');
@@ -1768,6 +1884,9 @@
         link.click();
         document.body.removeChild(link);
         toast("Accounting CSV downloaded!");
+      },
+      printReport: () => {
+        window.print();
       }
     };
 
