@@ -128,6 +128,32 @@
     .positive { color: var(--pos-green); }
     .negative { color: var(--neg-red); }
 
+    /* Progress Bars for KPIs */
+    .progress-bar-container {
+      background: #2a2a2a;
+      border-radius: 4px;
+      height: 8px;
+      width: 100%;
+      margin-top: 6px;
+      overflow: hidden;
+      border: 1px solid #444;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: var(--primary-gold);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .progress-bar-fill.vat-warning {
+      background-color: var(--neg-red);
+    }
+
+    .progress-bar-fill.success {
+      background-color: var(--pos-green);
+    }
+
     /* Controls */
     .controls {
       display: flex;
@@ -442,6 +468,9 @@
       <div class="kpi-card">
         <h3>CURRENT MONTH TARGET (+10%)</h3>
         <div class="val" id="mthTargetVal">Syncing...</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="mthTargetBar"></div>
+        </div>
         <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
 
@@ -454,6 +483,9 @@
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">Syncing...</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="vatBar"></div>
+        </div>
         <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
 
@@ -480,6 +512,28 @@
         
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" style="width: 25%;">
+          <!-- WEEKLY PERFORMANCE SUMMARY CARD -->
+          <div class="entry-form-card" style="margin-bottom: 15px;">
+            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px;">
+              <span>Weekly Performance Breakdown (Mon - Sun)</span>
+              <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+                <div style="font-size: 11px; color: #aaa;">This Week Total</div>
+                <div id="wkCurrentTotal" style="font-size: 16px; font-weight: bold; color: var(--accent-gold);">£0.00</div>
+              </div>
+              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+                <div style="font-size: 11px; color: #aaa;">Last Week Total</div>
+                <div id="wkPrevTotal" style="font-size: 16px; font-weight: bold; color: #fff;">£0.00</div>
+              </div>
+              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+                <div style="font-size: 11px; color: #aaa;">Week-on-Week Diff</div>
+                <div id="wkDiffTotal" style="font-size: 16px; font-weight: bold;">£0.00</div>
+              </div>
+            </div>
+          </div>
+
           <div class="chart-container">
             <canvas id="barChart"></canvas>
           </div>
@@ -1015,6 +1069,14 @@
 
       mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
       safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
+
+      // Progress Bar Update
+      const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
+      const mthBar = $("mthTargetBar");
+      if (mthBar) {
+        mthBar.style.width = targetProgress + "%";
+        mthBar.className = "progress-bar-fill " + (currentCents >= targetCents ? "success" : "");
+      }
     }
 
     function renderTodayTargetKPI(allRecords) {
@@ -1117,6 +1179,14 @@
           vatStatusEl.style.color = "#4cd137";
         }
       }
+
+      // Progress Bar Update for VAT Threshold
+      const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
+      const vBar = $("vatBar");
+      if (vBar) {
+        vBar.style.width = vatProgress + "%";
+        vBar.className = "progress-bar-fill " + (rollingSumCents >= vatThresholdCents ? "vat-warning" : "");
+      }
     }
 
     function renderActiveDaysKPI(records) {
@@ -1190,6 +1260,47 @@
       rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
+    function renderWeeklySummary(allRecords) {
+      if (!allRecords || allRecords.length === 0) return;
+
+      const now = new Date();
+      const dayOfWeek = now.getDay() || 7; 
+      const currentMonday = new Date(now);
+      currentMonday.setDate(now.getDate() - dayOfWeek + 1);
+      currentMonday.setHours(0,0,0,0);
+
+      const prevMonday = new Date(currentMonday);
+      prevMonday.setDate(prevMonday.getDate() - 7);
+
+      const prevSunday = new Date(currentMonday);
+      prevSunday.setDate(prevSunday.getDate() - 1);
+
+      let curWkCents = 0;
+      let prevWkCents = 0;
+
+      allRecords.forEach(r => {
+        if (!r.parsedDate) return;
+        const d = r.parsedDate;
+        if (d >= currentMonday && d <= now) {
+          curWkCents += r.dailyTotalCents;
+        } else if (d >= prevMonday && d <= prevSunday) {
+          prevWkCents += r.dailyTotalCents;
+        }
+      });
+
+      const diff = curWkCents - prevWkCents;
+      const isPos = diff >= 0;
+
+      safeSet("wkCurrentTotal", fmt(curWkCents));
+      safeSet("wkPrevTotal", fmt(prevWkCents));
+      
+      const diffEl = $("wkDiffTotal");
+      if (diffEl) {
+        diffEl.innerText = (isPos ? "+" : "") + fmt(diff);
+        diffEl.className = isPos ? "positive" : "negative";
+      }
+    }
+
     function renderDashboard(records) {
       const container = $("productTable");
       if (container) container.innerHTML = "";
@@ -1219,6 +1330,7 @@
       renderActiveDaysKPI(records);
       renderTopCategoryKPI(records);
       renderDateRangeTotalKPI(records);
+      renderWeeklySummary(STATE.raw);
 
       renderBarChart(records);
       renderSalesChart(records);
@@ -1517,7 +1629,7 @@
         const cardVal = parseFloat($("entryCard").value) || 0;
         const combinedCents = Math.round((cashVal + cardVal) * 100);
 
-        // Smart Category Validation Safety Net
+        // Smart Category Validation Safety Net (Conditional check for transition phase)
         const catIce = parseFloat($("catIceCream").value) || 0;
         const catCount = parseFloat($("catCounter").value) || 0;
         const catKit = parseFloat($("catKitchen").value) || 0;
@@ -1526,7 +1638,7 @@
         const catAlc = parseFloat($("catAlcohol").value) || 0;
         const sumCategoriesCents = Math.round((catIce + catCount + catKit + catDrk + catDel + catAlc) * 100);
 
-        if (sumCategoriesCents > 0 && sumCategoriesCents !== combinedCents) {
+        if (sumCategoriesCents > 0 && Math.abs(sumCategoriesCents - combinedCents) > 1) {
           alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}). Please adjust.`);
           return;
         }
