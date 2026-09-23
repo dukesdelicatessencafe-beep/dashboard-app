@@ -204,7 +204,7 @@
       color: #fff;
     }
 
-    /* Tabs Slider */
+    /* Tabs Slider (4 Tabs = 400% width, 25% each) */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -213,22 +213,22 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 300%;
+      width: 400%;
     }
 
     .tab-content {
-      width: 33.333%;
+      width: 25%;
       box-sizing: border-box;
       padding-right: 10px;
     }
 
-    /* Data Entry Sheet Form Styles */
+    /* Data Entry Sheet & Accounting Form Styles */
     .entry-form-card {
       background: var(--card-bg);
       border: 1px solid var(--primary-gold);
       border-radius: 8px;
       padding: 15px;
-      max-width: 700px;
+      max-width: 900px;
       margin: 0 auto 15px auto;
     }
 
@@ -382,6 +382,7 @@
     <button id="navBtn-0" onclick="App.switchTab(0)">Overview</button>
     <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
     <button id="navBtn-2" onclick="App.switchTab(2)">SALES ENTRY</button>
+    <button id="navBtn-3" onclick="App.switchTab(3)">Accounting</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -475,17 +476,17 @@
 
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 300%;">
+      <div id="tabs" style="width: 400%;">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 33.333%;">
+        <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="barChart"></canvas>
           </div>
         </div>
 
         <!-- TAB 1: ANALYTICS (CHART + TABLE) -->
-        <div class="tab-content" style="width: 33.333%;">
+        <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
@@ -503,7 +504,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 33.333%;">
+        <div class="tab-content" style="width: 25%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
@@ -559,6 +560,45 @@
               </div>
               <button type="submit" style="width: 100%; padding: 10px; font-size: 14px;">Save & Submit to Spreadsheet</button>
             </form>
+          </div>
+        </div>
+
+        <!-- TAB 3: ACCOUNTING -->
+        <div class="tab-content" style="width: 25%;">
+          <div class="entry-form-card">
+            <h2>Accounting & Financial Year Export</h2>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
+            
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+              <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="accFySelect">Select Financial Year</label>
+                <select id="accFySelect" onchange="App.renderAccountingData()"></select>
+              </div>
+              <div style="display: flex; align-items: flex-end;">
+                <button type="button" onclick="App.exportAccountingCSV()" style="padding: 9px 16px;">Download Accountant CSV</button>
+              </div>
+            </div>
+
+            <div style="max-height: 350px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Cash (£)</th>
+                    <th>Card (£)</th>
+                    <th>Total (£)</th>
+                    <th>Ice Cream</th>
+                    <th>Counter</th>
+                    <th>Kitchen</th>
+                    <th>Drink</th>
+                    <th>Deli</th>
+                    <th>Alcohol</th>
+                  </tr>
+                </thead>
+                <tbody id="accountingTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -1328,6 +1368,22 @@
       });
     }
 
+    function initAccountingFySelect() {
+      const select = $("accFySelect");
+      if (!select) return;
+      select.innerHTML = "";
+
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= currentYear - 3; y--) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
+        select.appendChild(opt);
+      }
+      select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
+      App.renderAccountingData();
+    }
+
     const App = {
       login: async () => {
         const passwordVal = $("pass").value;
@@ -1373,9 +1429,9 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
-          tabs.style.transform = `translateX(-${index * (100 / 3)}%)`;
+          tabs.style.transform = `translateX(-${index * 25}%)`;
         }
-        for (let i = 0; i <= 2; i++) {
+        for (let i = 0; i <= 3; i++) {
           const btn = $(`navBtn-${i}`);
           if (btn) {
             if (i === index) {
@@ -1402,6 +1458,10 @@
           } else {
             sharedControls.classList.add("hidden");
           }
+        }
+
+        if (index === 3) {
+          initAccountingFySelect();
         }
       },
       applyRange: () => {
@@ -1514,6 +1574,77 @@
           alert("Network error during submission: " + err.message);
         }
         STATE.pendingPayload = null;
+      },
+      renderAccountingData: () => {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201; // Feb 1
+        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
+
+        const tbody = $("accountingTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+
+        filtered.forEach(r => {
+          const tr = document.createElement("tr");
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          tr.innerHTML = `
+            <td>${dateStr}</td>
+            <td>${r.dayName}</td>
+            <td>${fmt(r.cashCents)}</td>
+            <td>${fmt(r.cardCents)}</td>
+            <td>${fmt(r.dailyTotalCents)}</td>
+            <td>${fmt(r.categories["ICE CREAM"])}</td>
+            <td>${fmt(r.categories["COUNTER"])}</td>
+            <td>${fmt(r.categories["Kitchen"])}</td>
+            <td>${fmt(r.categories["DRINK"])}</td>
+            <td>${fmt(r.categories["DELI"])}</td>
+            <td>${fmt(r.categories["ALCOHOL"])}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      },
+      exportAccountingCSV: () => {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        if (filtered.length === 0) {
+          alert("No records found for the selected financial year.");
+          return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\r\n";
+
+        filtered.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const row = [
+            dateStr,
+            r.dayName,
+            (r.cashCents / 100).toFixed(2),
+            (r.cardCents / 100).toFixed(2),
+            (r.dailyTotalCents / 100).toFixed(2),
+            (r.categories["ICE CREAM"] / 100).toFixed(2),
+            (r.categories["COUNTER"] / 100).toFixed(2),
+            (r.categories["Kitchen"] / 100).toFixed(2),
+            (r.categories["DRINK"] / 100).toFixed(2),
+            (r.categories["DELI"] / 100).toFixed(2),
+            (r.categories["ALCOHOL"] / 100).toFixed(2)
+          ];
+          csvContent += row.join(",") + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Accountant_Sales_FY_${fyYear}_${fyYear + 1}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("Accounting CSV downloaded!");
       }
     };
 
