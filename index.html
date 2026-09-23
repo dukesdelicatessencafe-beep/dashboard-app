@@ -204,7 +204,7 @@
       color: #fff;
     }
 
-    /* Tabs Slider (4 Tabs = 400% width, 25% each) */
+    /* Tabs Slider */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -388,7 +388,7 @@
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
     
-    <!-- CONTROLS & MONTHLY BAR (Shared for Overview & Analytics) -->
+    <!-- CONTROLS & MONTHLY BAR -->
     <div id="sharedControls" class="controls">
       <div class="controls-top-row">
         <div class="control-group">
@@ -405,7 +405,7 @@
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
-    <!-- KPI SUMMARY HEADER (Only visible on Overview tab) -->
+    <!-- KPI SUMMARY HEADER -->
     <div id="kpiSection" class="kpi-row">
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
@@ -485,7 +485,7 @@
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS (CHART + TABLE) -->
+        <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 25%;">
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
@@ -624,7 +624,7 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE WITH SECURE ENDPOINT CHECK -->
+  <!-- APP ENGINE -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -767,8 +767,6 @@
 
         const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
         if (!validDays.includes(lowerDay)) continue;
-
-        const { year, month } = parsedDateInfo;
 
         let catIceCream = cleanCents(row[4]);
         let catCounter  = cleanCents(row[5]);
@@ -1519,18 +1517,32 @@
         const cardVal = parseFloat($("entryCard").value) || 0;
         const combinedCents = Math.round((cashVal + cardVal) * 100);
 
+        // Smart Category Validation Safety Net
+        const catIce = parseFloat($("catIceCream").value) || 0;
+        const catCount = parseFloat($("catCounter").value) || 0;
+        const catKit = parseFloat($("catKitchen").value) || 0;
+        const catDrk = parseFloat($("catDrink").value) || 0;
+        const catDel = parseFloat($("catDeli").value) || 0;
+        const catAlc = parseFloat($("catAlcohol").value) || 0;
+        const sumCategoriesCents = Math.round((catIce + catCount + catKit + catDrk + catDel + catAlc) * 100);
+
+        if (sumCategoriesCents > 0 && sumCategoriesCents !== combinedCents) {
+          alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}). Please adjust.`);
+          return;
+        }
+
         STATE.pendingPayload = {
           action: "addData",
           dayName: $("entryDay").value,
           rawDate: $("entryDate").value,
           cash: cashVal,
           card: cardVal,
-          catIceCream: parseFloat($("catIceCream").value) || 0,
-          catCounter: parseFloat($("catCounter").value) || 0,
-          catKitchen: parseFloat($("catKitchen").value) || 0,
-          catDrink: parseFloat($("catDrink").value) || 0,
-          catDeli: parseFloat($("catDeli").value) || 0,
-          catAlcohol: parseFloat($("catAlcohol").value) || 0
+          catIceCream: catIce,
+          catCounter: catCount,
+          catKitchen: catKit,
+          catDrink: catDrk,
+          catDeli: catDel,
+          catAlcohol: catAlc
         };
 
         $("modalCombinedTotal").innerText = fmt(combinedCents);
@@ -1577,8 +1589,8 @@
       },
       renderAccountingData: () => {
         const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; // Feb 1
-        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
+        const startInt = fyYear * 10000 + 201; 
+        const endInt = (fyYear + 1) * 10000 + 131; 
 
         const tbody = $("accountingTableBody");
         if (!tbody) return;
