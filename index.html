@@ -622,6 +622,21 @@
             <tbody id="printCategoryTable"></tbody>
           </table>
 
+          <!-- Cash Card Breakdown Summary Table Added Here -->
+          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Category / Description</th>
+                <th style="text-align: right;">Proportion / Split</th>
+                <th style="text-align: right;">Total Amount (£)</th>
+              </tr>
+            </thead>
+            <tbody id="printCashCardTable">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
           <table>
             <thead>
@@ -1475,6 +1490,36 @@
           tr.innerHTML = `<td>${cat}</td><td>${fmt(val)}</td>`;
           printCatContainer.appendChild(tr);
         });
+      }
+
+      // Populate Cash Card Breakdown Summary Table
+      const printCashCardContainer = $("printCashCardTable");
+      if (printCashCardContainer) {
+        printCashCardContainer.innerHTML = "";
+        let totalCashCents = 0;
+        let totalCardCents = 0;
+
+        records.forEach(rec => {
+          totalCashCents += (rec.cashCents || 0);
+          totalCardCents += (rec.cardCents || 0);
+        });
+
+        const combinedTotalCents = totalCashCents + totalCardCents;
+        const cashPct = combinedTotalCents > 0 ? ((totalCashCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
+        const cardPct = combinedTotalCents > 0 ? ((totalCardCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
+
+        const cashTr = document.createElement("tr");
+        cashTr.innerHTML = `<td>Cash Transactions</td><td style="text-align: right;">${cashPct}%</td><td style="text-align: right;">${fmt(totalCashCents)}</td>`;
+        printCashCardContainer.appendChild(cashTr);
+
+        const cardTr = document.createElement("tr");
+        cardTr.innerHTML = `<td>Card Transactions</td><td style="text-align: right;">${cardPct}%</td><td style="text-align: right;">${fmt(totalCardCents)}</td>`;
+        printCashCardContainer.appendChild(cardTr);
+
+        const totalTr = document.createElement("tr");
+        totalTr.style.fontWeight = "bold";
+        totalTr.innerHTML = `<td>Total Cash & Card Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td>`;
+        printCashCardContainer.appendChild(totalTr);
       }
 
       renderBankingKPI(STATE.raw);
