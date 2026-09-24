@@ -491,10 +491,6 @@
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
-            <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Start Date:</label>
-            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
-          </div>
-          <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
             <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
           </div>
@@ -970,27 +966,25 @@
         return;
       }
 
-      const startVal = $("bankingStartDate")?.value;
       const lastBankedVal = $("lastBankedDate")?.value;
-      if (!startVal || !lastBankedVal) {
-        bankingValEl.innerText = "Set Dates";
+      if (!lastBankedVal) {
+        bankingValEl.innerText = "Set Date";
         return;
       }
 
-      const startInt = parseInt(startVal.replace(/-/g, ""), 10);
       const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
 
       let unbankedCashCents = 0;
       let count = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= startInt && r.dateInt <= lastBankedInt) {
+        if (r.dateInt <= lastBankedInt) {
           unbankedCashCents += (r.cashCents || 0);
           count++;
         }
       });
 
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Consolidation across ${count} days</span>`;
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Consolidation up to ${lastBankedVal} (${count} days)</span>`;
     }
 
     function renderCashCardKPI(records) {
@@ -1784,12 +1778,10 @@
       applyRange: () => {
         const sVal = $("startDate")?.value;
         const eVal = $("endDate")?.value;
-        const bankingStartVal = $("bankingStartDate")?.value;
         const lastBankedVal = $("lastBankedDate")?.value;
 
         if (sVal) localStorage.setItem("dash_startDate", sVal);
         if (eVal) localStorage.setItem("dash_endDate", eVal);
-        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
         if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
 
         renderBankingKPI(STATE.raw);
@@ -2041,15 +2033,10 @@
         const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
         const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
         
-        // MODIFIED: Default last banked is today (or stored value), and start date matches last banked date
         const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultEnd;
-        const defaultBankingStart = localStorage.getItem("dash_bankingStartDate") || defaultLastBanked;
 
         if ($("lastBankedDate") && !$("lastBankedDate").value) {
           $("lastBankedDate").value = defaultLastBanked;
-        }
-        if ($("bankingStartDate") && !$("bankingStartDate").value) {
-          $("bankingStartDate").value = defaultBankingStart;
         }
         if ($("startDate") && !$("startDate").value) {
           $("startDate").value = defaultStart;
