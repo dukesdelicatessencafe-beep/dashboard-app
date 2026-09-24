@@ -2041,25 +2041,28 @@
         const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
         const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
         
-        // Default last banked and current day to today if not previously set
+        // Always force fallback or update if not set to ensure current date populates correctly
         const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
         const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
-        if ($("bankingStartDate") && !$("bankingStartDate").value) {
-          $("bankingStartDate").value = defaultLastBanked;
+        if ($("bankingStartDate")) {
+          $("bankingStartDate.value") = $("bankingStartDate").value || defaultLastBanked;
+          if(!$("bankingStartDate").value) $("bankingStartDate").value = defaultLastBanked;
         }
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultCurrentDay;
+        if ($("lastBankedDate")) {
+          if(!$("lastBankedDate").value) $("lastBankedDate").value = defaultCurrentDay;
         }
-        if ($("startDate") && !$("startDate").value) {
-          $("startDate").value = defaultStart;
+        if ($("startDate")) {
+          if(!$("startDate").value) $("startDate").value = defaultStart;
         }
-        if ($("endDate") && !$("endDate").value) {
-          $("endDate").value = defaultEnd;
+        if ($("endDate")) {
+          if(!$("endDate").value) $("endDate").value = defaultEnd;
         }
-        if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = formatDateLocal(now);
-          App.onEntryDateChange();
+        if ($("entryDate")) {
+          if(!$("entryDate").value) {
+            $("entryDate").value = formatDateLocal(now);
+            App.onEntryDateChange();
+          }
         }
 
         initWeekButtons();
