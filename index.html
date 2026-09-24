@@ -1521,7 +1521,7 @@
       renderBankingKPI(STATE.raw);
       renderCashCardKPI(records);
       renderFytdKPI(STATE.raw);
-      renderYtdKPI(records);
+      renderYtdKPI(STATE.raw); // FIXED: Passing STATE.raw instead of filtered records
       renderMonthCompKPI(STATE.raw);
       renderMonthTargetKPI(STATE.raw);
       renderTodayTargetKPI(STATE.raw);
