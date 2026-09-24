@@ -808,6 +808,13 @@
       return `${y}-${m}-${d}`;
     };
 
+    const getLocalTodayString = () => {
+      const now = new Date();
+      return new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
+        .toISOString()
+        .split('T')[0];
+    };
+
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
@@ -969,7 +976,7 @@
       }
 
       const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
-      const todayInt = parseInt(formatDateLocal(new Date()).replace(/-/g, ""), 10);
+      const todayInt = parseInt(getLocalTodayString().replace(/-/g, ""), 10);
 
       let unbankedCashCents = 0;
       let count = 0;
@@ -1797,7 +1804,7 @@
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
         if ($("startDate")) $("startDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("endDate")) $("endDate").value = formatDateLocal(now);
+        if ($("endDate")) $("endDate").value = getLocalTodayString();
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
         
@@ -1878,9 +1885,9 @@
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
-            const todayStr = formatDateLocal(new Date());
+            const localTodayStr = getLocalTodayString();
             if ($("entryDate")) {
-              $("entryDate").value = todayStr;
+              $("entryDate").value = localTodayStr;
               App.onEntryDateChange();
             }
             load();
@@ -2022,9 +2029,10 @@
         
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const localTodayStr = getLocalTodayString();
         
         const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
-        const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
+        const defaultEnd = localStorage.getItem("dash_endDate") || localTodayStr;
         const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultStart;
 
         if ($("lastBankedDate") && !$("lastBankedDate").value) {
@@ -2037,7 +2045,7 @@
           $("endDate").value = defaultEnd;
         }
         if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = formatDateLocal(now);
+          $("entryDate").value = localTodayStr;
           App.onEntryDateChange();
         }
 
