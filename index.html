@@ -610,19 +610,7 @@
             <canvas id="categoryChart"></canvas>
           </div>
 
-          <!-- Category Breakdown Text Table (Visible on Screen & PDF Printout) -->
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Category Name</th>
-                <th>Total Revenue (£)</th>
-              </tr>
-            </thead>
-            <tbody id="printCategoryTable"></tbody>
-          </table>
-
-          <!-- Cash Card Breakdown Summary Table Added Here -->
+          <!-- Cash Card Breakdown Summary Table (Moved Above Category Breakdown) -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
           <table>
             <thead>
@@ -635,6 +623,18 @@
             <tbody id="printCashCardTable">
               <!-- Dynamically populated via JS -->
             </tbody>
+          </table>
+
+          <!-- Category Breakdown Text Table (Visible on Screen & PDF Printout) -->
+          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Total Revenue (£)</th>
+              </tr>
+            </thead>
+            <tbody id="printCategoryTable"></tbody>
           </table>
 
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
@@ -1466,32 +1466,6 @@
         }
       });
 
-      // Populate print/view category breakdown text table
-      const printCatContainer = $("printCategoryTable");
-      if (printCatContainer) {
-        printCatContainer.innerHTML = "";
-        const categoryTotalsCents = {
-          "ICE CREAM": 0,
-          "COUNTER": 0,
-          "Kitchen": 0,
-          "DRINK": 0,
-          "DELI": 0,
-          "ALCOHOL": 0
-        };
-
-        records.forEach(rec => {
-          Object.keys(rec.categories).forEach(cat => {
-            categoryTotalsCents[cat] += rec.categories[cat];
-          });
-        });
-
-        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${cat}</td><td>${fmt(val)}</td>`;
-          printCatContainer.appendChild(tr);
-        });
-      }
-
       // Populate Cash Card Breakdown Summary Table
       const printCashCardContainer = $("printCashCardTable");
       if (printCashCardContainer) {
@@ -1520,6 +1494,32 @@
         totalTr.style.fontWeight = "bold";
         totalTr.innerHTML = `<td>Total Cash & Card Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td>`;
         printCashCardContainer.appendChild(totalTr);
+      }
+
+      // Populate print/view category breakdown text table
+      const printCatContainer = $("printCategoryTable");
+      if (printCatContainer) {
+        printCatContainer.innerHTML = "";
+        const categoryTotalsCents = {
+          "ICE CREAM": 0,
+          "COUNTER": 0,
+          "Kitchen": 0,
+          "DRINK": 0,
+          "DELI": 0,
+          "ALCOHOL": 0
+        };
+
+        records.forEach(rec => {
+          Object.keys(rec.categories).forEach(cat => {
+            categoryTotalsCents[cat] += rec.categories[cat];
+          });
+        });
+
+        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${cat}</td><td>${fmt(val)}</td>`;
+          printCatContainer.appendChild(tr);
+        });
       }
 
       renderBankingKPI(STATE.raw);
