@@ -412,8 +412,7 @@
       /* HIDE ALL CHARTS FROM THE PDF/PRINT EXPORT */
       .chart-container, 
       #barChart, 
-      #salesChart, 
-      #categoryChart {
+      #salesChart {
         display: none !important;
       }
 
@@ -607,11 +606,8 @@
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
-          <div class="chart-container">
-            <canvas id="categoryChart"></canvas>
-          </div>
 
-          <!-- Cash Card Breakdown Summary Table (Moved Above Category Breakdown) -->
+          <!-- Cash Card Breakdown Summary Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
           <table>
             <thead>
@@ -784,7 +780,6 @@
       isFullLoaded: false,
       barChart: null,
       salesChart: null,
-      categoryChart: null,
       pendingPayload: null
     };
 
@@ -1539,7 +1534,6 @@
 
       renderBarChart(records);
       renderSalesChart(records);
-      renderCategoryChart(records);
     }
 
     function renderBarChart(records) {
@@ -1601,47 +1595,6 @@
             x: {
               ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
             }
-          }
-        }
-      });
-    }
-
-    function renderCategoryChart(records) {
-      const canvas = $("categoryChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.categoryChart) STATE.categoryChart.destroy();
-
-      const categoryTotals = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
-      };
-
-      records.forEach(r => {
-        Object.keys(r.categories).forEach(cat => {
-          categoryTotals[cat] += (r.categories[cat] / 100);
-        });
-      });
-
-      STATE.categoryChart = new Chart(canvas, {
-        type: "doughnut",
-        data: {
-          labels: Object.keys(categoryTotals),
-          datasets: [{
-            data: Object.values(categoryTotals),
-            backgroundColor: ["#D4AF37", "#F9E3B4", "#4cd137", "#00a8ff", "#9c88ff", "#e84118"]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: '#333' } },
-            title: { display: true, text: 'Revenue Split by Category (£)', color: '#333', font: { size: 13 } }
           }
         }
       });
