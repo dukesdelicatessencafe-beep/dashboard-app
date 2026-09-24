@@ -409,6 +409,7 @@
         display: none !important;
       }
       
+      /* HIDE ALL CHARTS FROM THE PDF/PRINT EXPORT */
       .chart-container, 
       #barChart, 
       #salesChart {
@@ -488,9 +489,15 @@
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
-        <div style="display: flex; align-items: center; gap: 5px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
-          <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px;">Last Banked:</label>
-          <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Start Date:</label>
+            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
+            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+          </div>
         </div>
       </div>
 
@@ -616,10 +623,12 @@
                 <th style="text-align: right;">Total Amount (£)</th>
               </tr>
             </thead>
-            <tbody id="printCashCardTable"></tbody>
+            <tbody id="printCashCardTable">
+              <!-- Dynamically populated via JS -->
+            </tbody>
           </table>
 
-          <!-- Category Breakdown Text Table -->
+          <!-- Category Breakdown Text Table (Visible on Screen & PDF Printout) -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
           <table>
             <thead>
@@ -649,7 +658,6 @@
         <div class="tab-content" style="width: 25%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
-            <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 12px;">Includes tracking for Prosecco, Baileys Latte, Aperol Spritz, Pimms, and more.</p>
             <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
               <div class="form-grid">
                 <div class="form-group">
@@ -689,7 +697,7 @@
                   <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00">
                 </div>
                 <div class="form-group">
-                  <label for="catDrink">Drink (£ - incl. Baileys Latte)</label>
+                  <label for="catDrink">Drink (£)</label>
                   <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00">
                 </div>
                 <div class="form-group">
@@ -697,7 +705,7 @@
                   <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00">
                 </div>
                 <div class="form-group">
-                  <label for="catAlcohol">Alcohol (£ - Prosecco, Aperol, Pimms)</label>
+                  <label for="catAlcohol">Alcohol (£)</label>
                   <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00">
                 </div>
               </div>
@@ -806,13 +814,6 @@
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
       const d = String(dateObj.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
-    };
-
-    const getLocalTodayString = () => {
-      const now = new Date();
-      return new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
-        .toISOString()
-        .split('T')[0];
     };
 
     const cleanCents = (val) => {
@@ -969,26 +970,27 @@
         return;
       }
 
+      const startVal = $("bankingStartDate")?.value;
       const lastBankedVal = $("lastBankedDate")?.value;
-      if (!lastBankedVal) {
-        bankingValEl.innerText = "Set Date";
+      if (!startVal || !lastBankedVal) {
+        bankingValEl.innerText = "Set Dates";
         return;
       }
 
+      const startInt = parseInt(startVal.replace(/-/g, ""), 10);
       const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
-      const todayInt = parseInt(getLocalTodayString().replace(/-/g, ""), 10);
 
       let unbankedCashCents = 0;
       let count = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt > lastBankedInt && r.dateInt <= todayInt) {
+        if (r.dateInt >= startInt && r.dateInt <= lastBankedInt) {
           unbankedCashCents += (r.cashCents || 0);
           count++;
         }
       });
 
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Unbanked across ${count} days</span>`;
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Consolidation across ${count} days</span>`;
     }
 
     function renderCashCardKPI(records) {
@@ -1467,6 +1469,7 @@
         }
       });
 
+      // Populate Cash Card Breakdown Summary Table
       const printCashCardContainer = $("printCashCardTable");
       if (printCashCardContainer) {
         printCashCardContainer.innerHTML = "";
@@ -1496,6 +1499,7 @@
         printCashCardContainer.appendChild(totalTr);
       }
 
+      // Populate print/view category breakdown text table
       const printCatContainer = $("printCategoryTable");
       if (printCatContainer) {
         printCatContainer.innerHTML = "";
@@ -1780,11 +1784,15 @@
       applyRange: () => {
         const sVal = $("startDate")?.value;
         const eVal = $("endDate")?.value;
+        const bankingStartVal = $("bankingStartDate")?.value;
         const lastBankedVal = $("lastBankedDate")?.value;
 
         if (sVal) localStorage.setItem("dash_startDate", sVal);
         if (eVal) localStorage.setItem("dash_endDate", eVal);
+        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
         if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
+
+        renderBankingKPI(STATE.raw);
 
         if (!STATE.raw || STATE.raw.length === 0) return;
 
@@ -1804,7 +1812,7 @@
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
         if ($("startDate")) $("startDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("endDate")) $("endDate").value = getLocalTodayString();
+        if ($("endDate")) $("endDate").value = formatDateLocal(now);
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
         
@@ -1885,9 +1893,9 @@
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
-            const localTodayStr = getLocalTodayString();
+            const todayStr = formatDateLocal(new Date());
             if ($("entryDate")) {
-              $("entryDate").value = localTodayStr;
+              $("entryDate").value = todayStr;
               App.onEntryDateChange();
             }
             load();
@@ -2029,14 +2037,19 @@
         
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const localTodayStr = getLocalTodayString();
         
         const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
-        const defaultEnd = localStorage.getItem("dash_endDate") || localTodayStr;
-        const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultStart;
+        const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
+        
+        // MODIFIED: Default last banked is today (or stored value), and start date matches last banked date
+        const defaultLastBanked = localStorage.getItem("dash_lastBankedDate") || defaultEnd;
+        const defaultBankingStart = localStorage.getItem("dash_bankingStartDate") || defaultLastBanked;
 
         if ($("lastBankedDate") && !$("lastBankedDate").value) {
           $("lastBankedDate").value = defaultLastBanked;
+        }
+        if ($("bankingStartDate") && !$("bankingStartDate").value) {
+          $("bankingStartDate").value = defaultBankingStart;
         }
         if ($("startDate") && !$("startDate").value) {
           $("startDate").value = defaultStart;
@@ -2045,7 +2058,7 @@
           $("endDate").value = defaultEnd;
         }
         if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = localTodayStr;
+          $("entryDate").value = formatDateLocal(now);
           App.onEntryDateChange();
         }
 
