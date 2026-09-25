@@ -1069,7 +1069,7 @@
       const anchorDate = new Date();
       const currentYear = anchorDate.getFullYear();
       const ytdStartInt = currentYear * 10000 + 101; 
-      const todayInt = currentYear * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
+      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       let ytdSumCents = 0;
       allRecords.forEach(r => {
@@ -1528,7 +1528,7 @@
       renderBankingKPI(STATE.raw);
       renderCashCardKPI(records);
       renderFytdKPI(STATE.raw);
-      renderYtdKPI(records);
+      renderYtdKPI(STATE.raw);
       renderMonthCompKPI(STATE.raw);
       renderMonthTargetKPI(STATE.raw);
       renderTodayTargetKPI(STATE.raw);
