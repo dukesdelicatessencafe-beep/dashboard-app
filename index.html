@@ -230,7 +230,7 @@
       color: #fff;
     }
 
-    /* Tabs Slider */
+    /* Tabs Slider (5 Tabs Total = 500% width) */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -239,11 +239,11 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 400%;
+      width: 500%;
     }
 
     .tab-content {
-      width: 25%;
+      width: 20%;
       box-sizing: border-box;
       padding-right: 10px;
     }
@@ -409,7 +409,6 @@
         display: none !important;
       }
       
-      /* HIDE ALL CHARTS FROM THE PDF/PRINT EXPORT */
       .chart-container, 
       #barChart, 
       #salesChart {
@@ -462,6 +461,7 @@
     <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
     <button id="navBtn-2" onclick="App.switchTab(2)">SALES ENTRY</button>
     <button id="navBtn-3" onclick="App.switchTab(3)">Accounting</button>
+    <button id="navBtn-4" onclick="App.switchTab(4)">Banked</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -574,10 +574,10 @@
 
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 400%;">
+      <div id="tabs" style="width: 500%;">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card" style="margin-bottom: 15px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
@@ -605,7 +605,7 @@
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 20%;">
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
             <button type="button" onclick="App.exportAnalyticsCSV()" style="padding: 7px 14px; font-size: 12px; background: var(--primary-gold); color: #000;">📊 Export CSV Report</button>
             <button type="button" onclick="App.printReport()" style="padding: 7px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
@@ -624,12 +624,10 @@
                 <th style="text-align: right;">Total Amount (£)</th>
               </tr>
             </thead>
-            <tbody id="printCashCardTable">
-              <!-- Dynamically populated via JS -->
-            </tbody>
+            <tbody id="printCashCardTable"></tbody>
           </table>
 
-          <!-- Category Breakdown Text Table (Visible on Screen & PDF Printout) -->
+          <!-- Category Breakdown Text Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
           <table>
             <thead>
@@ -656,7 +654,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
@@ -716,7 +714,7 @@
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 25%;">
+        <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
@@ -754,6 +752,28 @@
           </div>
         </div>
 
+        <!-- TAB 4: BANKED -->
+        <div class="tab-content" style="width: 20%;">
+          <div class="entry-form-card">
+            <h2>Banked Cash Log</h2>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
+            
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Banked Date</th>
+                    <th>Cash Value (£)</th>
+                  </tr>
+                </thead>
+                <tbody id="bankedTableBody">
+                  <tr><td colspan="2" style="text-align: center; color: #aaa;">Loading banked records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -784,6 +804,7 @@
 
     const STATE = {
       raw: [],
+      banked: [],
       isFullLoaded: false,
       barChart: null,
       salesChart: null,
@@ -960,6 +981,54 @@
       }
 
       return parsedRecords;
+    }
+
+    function processBankedRows(rows) {
+      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
+      const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && (String(cell).toLowerCase().includes("date") || String(cell).toLowerCase().includes("cash") || String(cell).toLowerCase().includes("value"))));
+      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
+
+      const records = [];
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !Array.isArray(row)) continue;
+        const rawDate = row[0];
+        const rawValue = row[1] !== undefined ? row[1] : row[2];
+        if (!rawDate && !rawValue) continue;
+
+        const parsedDateInfo = parseDateString(rawDate);
+        const cashCents = cleanCents(rawValue);
+
+        if (cashCents === 0 && !rawDate) continue;
+
+        records.push({
+          rawDate,
+          parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
+          cashCents
+        });
+      }
+      return records;
+    }
+
+    function renderBankedTable() {
+      const tbody = $("bankedTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      if (!STATE.banked || STATE.banked.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #aaa;">No banked records found in sheet.</td></tr>`;
+        return;
+      }
+
+      STATE.banked.forEach(r => {
+        const tr = document.createElement("tr");
+        const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+        tr.innerHTML = `
+          <td>${dateStr}</td>
+          <td>${fmt(r.cashCents)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function renderBankingKPI(allRecords) {
@@ -1470,7 +1539,6 @@
         }
       });
 
-      // Populate Cash Card Breakdown Summary Table
       const printCashCardContainer = $("printCashCardTable");
       if (printCashCardContainer) {
         printCashCardContainer.innerHTML = "";
@@ -1500,7 +1568,6 @@
         printCashCardContainer.appendChild(totalTr);
       }
 
-      // Populate print/view category breakdown text table
       const printCatContainer = $("printCategoryTable");
       if (printCatContainer) {
         printCatContainer.innerHTML = "";
@@ -1542,6 +1609,7 @@
 
       renderBarChart(records);
       renderSalesChart(records);
+      renderBankedTable();
     }
 
     function renderBarChart(records) {
@@ -1747,9 +1815,9 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
-          tabs.style.transform = `translateX(-${index * 25}%)`;
+          tabs.style.transform = `translateX(-${index * 20}%)`;
         }
-        for (let i = 0; i <= 3; i++) {
+        for (let i = 0; i <= 4; i++) {
           const btn = $(`navBtn-${i}`);
           if (btn) {
             if (i === index) {
@@ -1805,13 +1873,51 @@
         }
         renderDashboard(filtered);
       },
-      markAsBanked: () => {
+      markAsBanked: async () => {
         const currentDayEl = $("lastBankedDate");
         const bankingStartEl = $("bankingStartDate");
         if (currentDayEl && bankingStartEl && currentDayEl.value) {
+          const bankedDate = currentDayEl.value;
+          
+          const lastBankedVal = bankingStartEl.value;
+          const currentDayVal = currentDayEl.value;
+          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
+          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10);
+
+          let unbankedCashCents = 0;
+          STATE.raw.forEach(r => {
+            if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
+              unbankedCashCents += (r.cashCents || 0);
+            }
+          });
+          const cashValue = unbankedCashCents / 100;
+
+          const loader = $("loading");
+          if (loader) {
+            loader.innerText = "Writing banked record to Google Sheet...";
+            loader.classList.remove("hidden");
+          }
+
+          try {
+            const res = await fetch(CONFIG.URL, {
+              method: "POST",
+              body: JSON.stringify({ action: "addBanked", date: bankedDate, cash: cashValue })
+            });
+            const json = await res.json();
+            if (loader) loader.classList.add("hidden");
+
+            if (json.status === "success" || json.success) {
+              toast("Banked record successfully saved to Google Sheet!");
+            } else {
+              toast("Marked as banked locally.");
+            }
+          } catch (err) {
+            if (loader) loader.classList.add("hidden");
+            toast("Marked as banked locally.");
+          }
+
           bankingStartEl.value = currentDayEl.value;
           App.applyRange();
-          toast("Last Banked date updated successfully!");
         }
       },
       resetDateRange: () => {
@@ -2048,7 +2154,6 @@
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
-        // Always force month-to-date on login/load, ignoring stale localStorage date ranges
         const defaultStart = formatDateLocal(firstDayOfMonth);
         const defaultEnd = formatDateLocal(now);
         
@@ -2062,7 +2167,6 @@
           $("lastBankedDate").value = defaultCurrentDay;
         }
         
-        // Force reset the main date pickers to current month-to-date
         if ($("startDate")) {
           $("startDate").value = defaultStart;
           localStorage.setItem("dash_startDate", defaultStart);
@@ -2081,25 +2185,7 @@
         initMonthlyButtonsBar();
         App.switchTab(0);
 
-        const cachedData = localStorage.getItem("dash_cached_records");
-        if (cachedData) {
-          try {
-            const parsedCache = JSON.parse(cachedData);
-            parsedCache.forEach(r => {
-              if (r.parsedDate) r.parsedDate = new Date(r.parsedDate);
-            });
-            STATE.raw = parsedCache;
-            STATE.isFullLoaded = true;
-
-            App.applyRange();
-            if (loader) loader.classList.add("hidden");
-            toast("Loaded instantly from local cache");
-          } catch (cacheErr) {
-            console.warn("Cache read failed:", cacheErr);
-          }
-        }
-
-        if (!STATE.isFullLoaded && loader) {
+        if (loader) {
           loader.innerText = "Loading dashboard data...";
           loader.classList.remove("hidden");
         }
@@ -2108,11 +2194,16 @@
         const fullJson = await fullRes.json();
 
         let fullRecords = [];
+        let bankedRecords = [];
         if (fullJson && fullJson.tabs) {
           Object.keys(fullJson.tabs).forEach(tabName => {
             const tabRows = fullJson.tabs[tabName];
             if (Array.isArray(tabRows) && tabRows.length > 0) {
-              fullRecords = fullRecords.concat(processRows(tabRows));
+              if (tabName.toLowerCase() === "banked") {
+                bankedRecords = processBankedRows(tabRows);
+              } else {
+                fullRecords = fullRecords.concat(processRows(tabRows));
+              }
             }
           });
         }
@@ -2120,14 +2211,13 @@
         if (fullRecords.length > 0) {
           fullRecords.sort((a, b) => a.dateInt - b.dateInt);
           STATE.raw = fullRecords;
-          STATE.isFullLoaded = true;
-
-          try {
-            localStorage.setItem("dash_cached_records", JSON.stringify(fullRecords));
-          } catch (e) {
-            console.warn("Cache write failed:", e);
-          }
         }
+
+        if (bankedRecords.length > 0) {
+          STATE.banked = bankedRecords;
+        }
+
+        STATE.isFullLoaded = true;
 
         if (loader) loader.classList.add("hidden");
         App.applyRange();
@@ -2135,7 +2225,7 @@
         console.error("Failed to load dashboard data:", err);
         const loader = $("loading");
         if (loader) loader.classList.add("hidden");
-        toast("Failed to load live data. Using offline mode.");
+        toast("Failed to load live data.");
         App.applyRange();
       }
     };
