@@ -1901,12 +1901,16 @@
           try {
             const res = await fetch(CONFIG.URL, {
               method: "POST",
-              body: JSON.stringify({ action: "addBanked", date: bankedDate, cash: cashValue })
+              body: JSON.stringify({ 
+                type: "banking",
+                rawDate: bankedDate,
+                cashValue: cashValue 
+              })
             });
             const json = await res.json();
             if (loader) loader.classList.add("hidden");
 
-            if (json.status === "success" || json.success) {
+            if (json.status === "success") {
               toast("Banked record successfully saved to Google Sheet!");
             } else {
               toast("Marked as banked locally.");
