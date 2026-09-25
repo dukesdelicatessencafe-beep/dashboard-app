@@ -486,40 +486,45 @@
 
     <!-- KPI SUMMARY HEADER -->
     <div id="kpiSection" class="kpi-row">
+      <!-- 1. BANKING CONSOLIDATION -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The current day to consolidate up to">
           </div>
           <button type="button" onclick="App.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 4px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
         </div>
       </div>
 
+      <!-- 2. DATE RANGE TOTAL VALUE -->
       <div class="kpi-card">
         <h3>DATE RANGE TOTAL VALUE</h3>
         <div class="val" id="rangeTotalVal">Syncing...</div>
         <div class="subtext" id="rangeSpanSub">Syncing...</div>
       </div>
 
+      <!-- 3. TODAY TARGET (REMAINDER OF MONTH) -->
       <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
         <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
       </div>
 
+      <!-- 4. ESTIMATED MONTH-END TOTAL -->
       <div class="kpi-card" style="border-left-color: var(--primary-gold);">
         <h3>ESTIMATED MONTH-END TOTAL</h3>
         <div class="val" id="projectedMonthVal">Syncing...</div>
         <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
       </div>
 
+      <!-- 5. ROLLING 12-MONTH TOTAL -->
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">Syncing...</div>
@@ -529,6 +534,7 @@
         <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
 
+      <!-- Remaining KPIs -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
@@ -614,6 +620,7 @@
             <canvas id="salesChart"></canvas>
           </div>
 
+          <!-- Cash Card Breakdown Summary Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
           <table>
             <thead>
@@ -626,6 +633,7 @@
             <tbody id="printCashCardTable"></tbody>
           </table>
 
+          <!-- Category Breakdown Text Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
           <table>
             <thead>
@@ -2158,59 +2166,85 @@
     };
 
     const load = async () => {
-      const loader = $("loading");
-      if (loader) {
-        loader.innerText = "Syncing dashboard data from Google Sheets...";
-        loader.classList.remove("hidden");
-      }
-
       try {
-        const res = await fetch(CONFIG.URL, { cache: "no-store" });
-        const json = await res.json();
-        if (loader) loader.classList.add("hidden");
+        const loader = $("loading");
+        
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const defaultStart = formatDateLocal(firstDayOfMonth);
+        const defaultEnd = formatDateLocal(now);
+        
+        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
+        const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
-        if (json.status === "success") {
-          let rawRows = json.data || [];
-          STATE.raw = processRows(rawRows);
-          
-          if (json.banked) {
-            STATE.banked = processBankedRows(json.banked);
-          }
-
-          STATE.isFullLoaded = true;
-
-          initWeekButtons();
-          initMonthlyButtonsBar();
-
-          const now = new Date();
-          const savedStart = localStorage.getItem("dash_startDate");
-          const savedEnd = localStorage.getItem("dash_endDate");
-
-          if (savedStart && savedEnd && $("startDate") && $("endDate")) {
-            $("startDate").value = savedStart;
-            $("endDate").value = savedEnd;
-          } else if ($("startDate") && $("endDate")) {
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            $("startDate").value = formatDateLocal(firstDayOfMonth);
-            $("endDate").value = formatDateLocal(now);
-          }
-
-          const savedBankingStart = localStorage.getItem("dash_bankingStartDate");
-          const savedLastBanked = localStorage.getItem("dash_lastBankedDate");
-          if ($("bankingStartDate") && $("lastBankedDate")) {
-            $("bankingStartDate").value = savedBankingStart || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-            $("lastBankedDate").value = savedLastBanked || formatDateLocal(now);
-          }
-
-          App.applyRange();
-          toast("Data successfully synced!");
-        } else {
-          alert("Failed to load dashboard data: " + json.message);
+        if ($("bankingStartDate") && !$("bankingStartDate").value) {
+          $("bankingStartDate").value = defaultLastBanked;
         }
-      } catch (err) {
+        if ($("lastBankedDate") && !$("lastBankedDate").value) {
+          $("lastBankedDate").value = defaultCurrentDay;
+        }
+        
+        if ($("startDate")) {
+          $("startDate").value = defaultStart;
+          localStorage.setItem("dash_startDate", defaultStart);
+        }
+        if ($("endDate")) {
+          $("endDate").value = defaultEnd;
+          localStorage.setItem("dash_endDate", defaultEnd);
+        }
+
+        if ($("entryDate") && !$("entryDate").value) {
+          $("entryDate").value = formatDateLocal(now);
+          App.onEntryDateChange();
+        }
+
+        initWeekButtons();
+        initMonthlyButtonsBar();
+        App.switchTab(0);
+
+        if (loader) {
+          loader.innerText = "Loading dashboard data...";
+          loader.classList.remove("hidden");
+        }
+
+        const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
+        const fullJson = await fullRes.json();
+
+        let fullRecords = [];
+        let bankedRecords = [];
+        if (fullJson && fullJson.tabs) {
+          Object.keys(fullJson.tabs).forEach(tabName => {
+            const tabRows = fullJson.tabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              if (tabName.toLowerCase() === "banked") {
+                bankedRecords = processBankedRows(tabRows);
+              } else {
+                fullRecords = fullRecords.concat(processRows(tabRows));
+              }
+            }
+          });
+        }
+
+        if (fullRecords.length > 0) {
+          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+          STATE.raw = fullRecords;
+        }
+
+        if (bankedRecords.length > 0) {
+          STATE.banked = bankedRecords;
+        }
+
+        STATE.isFullLoaded = true;
+
         if (loader) loader.classList.add("hidden");
-        console.error(err);
-        alert("Network error while connecting to Google Apps Script API.");
+        App.applyRange();
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+        const loader = $("loading");
+        if (loader) loader.classList.add("hidden");
+        toast("Failed to load live data.");
+        App.applyRange();
       }
     };
   </script>
