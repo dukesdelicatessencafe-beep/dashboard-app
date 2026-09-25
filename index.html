@@ -1,3 +1,40 @@
+Skip to content
+dukesdelicatessencafe-beep
+dashboard-app
+Repository navigation
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security and quality
+Insights
+Settings
+Files
+Go to file
+t
+T
+.nojekyll
+335897011_647064280513463_4000488585842029501_n (2).png
+README.md
+icon.png
+index.html
+manifest.json
+sw.js
+dashboard-app
+/index.html
+dukesdelicatessencafe-beep
+dukesdelicatessencafe-beep
+Update index.html
+fe5ade4
+ · 
+13 hours ago
+
+Code
+
+Blame
+2252 lines (1933 loc) · 76.5 KB
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -484,7 +521,7 @@
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
-    <!-- KPI SUMMARY HEADER -->
+    <!-- KPI SUMMARY HEADER (REORDERED AS REQUESTED) -->
     <div id="kpiSection" class="kpi-row">
       <!-- 1. BANKING CONSOLIDATION -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
@@ -493,7 +530,7 @@
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked">
+            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked (inclusive start of unbanked range)">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
@@ -2250,3 +2287,4 @@
   </script>
 </body>
 </html>
+dashboard-app/index.html at fe5ade470a5c9eca55c0d756411bc7c01e8871ee · dukesdelicatessencafe-beep/dashboard-app
