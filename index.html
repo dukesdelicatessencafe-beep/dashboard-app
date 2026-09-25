@@ -2167,8 +2167,6 @@
 
     const load = async () => {
       try {
-        const loader = $("loading");
-        
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
@@ -2203,12 +2201,12 @@
         initMonthlyButtonsBar();
         App.switchTab(0);
 
-        if (loader) {
-          loader.innerText = "Loading dashboard data...";
-          loader.classList.remove("hidden");
+        const loaderEl = $("loading");
+        if (loaderEl) {
+          loaderEl.innerText = "Loading dashboard data...";
+          loaderEl.classList.remove("hidden");
         }
 
-       // Dynamically grab the current year or use a selected year variable from your app state
         const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
         
         const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
@@ -2217,7 +2215,6 @@
         let fullRecords = [];
         let bankedRecords = [];
         
-        // Support both possibilities so it never breaks
         const sourceTabs = fullJson.tabs || fullJson.sheetsData;
 
         if (fullJson && sourceTabs) {
@@ -2244,17 +2241,13 @@
 
         STATE.isFullLoaded = true;
 
-        const loader = $("loading"); // Make sure loader is referenced if not defined globally
-        if (loader) loader.classList.add("hidden");
+        if (loaderEl) loaderEl.classList.add("hidden");
         App.applyRange();
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
-        const loader = $("loading");
-        if (loader) loader.classList.add("hidden");
+        const loaderEl = $("loading");
+        if (loaderEl) loaderEl.classList.add("hidden");
         toast("Failed to load live data.");
         App.applyRange();
       }
     };
-  </script>
-</body>
-</html>
