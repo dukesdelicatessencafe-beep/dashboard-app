@@ -2038,10 +2038,10 @@
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
-        const defaultStart = localStorage.getItem("dash_startDate") || formatDateLocal(firstDayOfMonth);
-        const defaultEnd = localStorage.getItem("dash_endDate") || formatDateLocal(now);
+        // Always force month-to-date on login/load, ignoring stale localStorage date ranges
+        const defaultStart = formatDateLocal(firstDayOfMonth);
+        const defaultEnd = formatDateLocal(now);
         
-        // Default last banked and current day to today if not previously set
         const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
         const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
@@ -2051,12 +2051,17 @@
         if ($("lastBankedDate") && !$("lastBankedDate").value) {
           $("lastBankedDate").value = defaultCurrentDay;
         }
-        if ($("startDate") && !$("startDate").value) {
+        
+        // Force reset the main date pickers to current month-to-date
+        if ($("startDate")) {
           $("startDate").value = defaultStart;
+          localStorage.setItem("dash_startDate", defaultStart);
         }
-        if ($("endDate") && !$("endDate").value) {
+        if ($("endDate")) {
           $("endDate").value = defaultEnd;
+          localStorage.setItem("dash_endDate", defaultEnd);
         }
+
         if ($("entryDate") && !$("entryDate").value) {
           $("entryDate").value = formatDateLocal(now);
           App.onEntryDateChange();
