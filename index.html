@@ -31,6 +31,7 @@
 
     /* Login Form */
     #login {
+      width: 90%;
       max-width: 320px;
       margin: 100px auto;
       padding: 30px;
@@ -38,28 +39,31 @@
       border: 1px solid var(--primary-gold);
       border-radius: 8px;
       text-align: center;
+      box-sizing: border-box;
     }
 
     #login input {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-bottom: 15px;
       box-sizing: border-box;
       background: #2a2a2a;
       border: 1px solid var(--primary-gold);
       color: #fff;
       border-radius: 4px;
+      font-size: 16px; /* Prevents auto-zoom on mobile */
     }
 
     button {
       background: var(--primary-gold);
       color: #000;
       border: none;
-      padding: 10px 16px;
+      padding: 12px 16px;
       font-weight: bold;
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.2s;
+      min-height: 44px; /* Better touch target */
     }
 
     button:hover {
@@ -77,8 +81,10 @@
     #nav button {
       background: var(--primary-gold);
       color: #000;
-      padding: 8px 12px;
+      padding: 10px 14px;
       font-size: 13px;
+      flex: 1;
+      min-width: 70px;
     }
 
     #nav button.active {
@@ -178,26 +184,30 @@
       background: #2a2a2a;
       border: 1px solid var(--primary-gold);
       color: #fff;
-      padding: 6px;
+      padding: 8px;
       border-radius: 4px;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .control-group {
       display: flex;
       align-items: center;
       gap: 5px;
+      flex-wrap: wrap;
     }
 
     #weekButtonsContainer {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+      width: 100%;
     }
 
     #weekButtonsContainer button {
-      padding: 6px 10px;
+      padding: 8px 10px;
       font-size: 12px;
+      flex: 1;
+      min-width: 80px;
     }
 
     /* Monthly Buttons Bar */
@@ -209,19 +219,20 @@
       width: 100%;
       padding-top: 8px;
       border-top: 1px solid #333;
+      -webkit-overflow-scrolling: touch;
     }
 
     .month-btn {
       background-color: var(--accent-gold);
       color: #000;
       border: 1px solid var(--primary-gold);
-      padding: 5px 10px;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
       font-size: 12px;
       white-space: nowrap;
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       text-align: center;
     }
 
@@ -256,6 +267,7 @@
       padding: 15px;
       max-width: 900px;
       margin: 0 auto 15px auto;
+      box-sizing: border-box;
     }
 
     .entry-form-card h2 {
@@ -268,7 +280,7 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 10px;
       margin-bottom: 15px;
     }
@@ -289,9 +301,9 @@
       background: #2a2a2a;
       border: 1px solid #444;
       color: #fff;
-      padding: 8px;
+      padding: 10px;
       border-radius: 4px;
-      font-size: 13px;
+      font-size: 16px; /* Prevents auto-zoom on mobile */
     }
 
     /* Verification Modal Overlay */
@@ -303,6 +315,7 @@
       justify-content: center;
       align-items: center;
       z-index: 1002;
+      padding: 15px;
     }
 
     .modal-card {
@@ -310,8 +323,10 @@
       border: 2px solid var(--primary-gold);
       padding: 25px;
       border-radius: 8px;
-      width: 320px;
+      width: 100%;
+      max-width: 320px;
       text-align: center;
+      box-sizing: border-box;
     }
 
     .modal-card h3 {
@@ -348,24 +363,34 @@
       margin-bottom: 12px;
     }
 
+    /* Scrollable tables wrapper for mobile */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 15px;
+      border: 1px solid #333;
+      border-radius: 4px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: var(--card-bg);
-      margin-bottom: 15px;
       font-size: 12px;
+      white-space: nowrap;
     }
 
     table th, table td {
-      padding: 6px 8px;
+      padding: 8px 10px;
       text-align: left;
       border-bottom: 1px solid #333;
-      white-space: nowrap;
     }
 
     table th {
       color: var(--accent-gold);
       font-size: 11px;
+      background: #222;
     }
 
     #loading {
@@ -378,19 +403,25 @@
       font-size: 18px;
       color: var(--accent-gold);
       z-index: 1000;
+      text-align: center;
+      padding: 20px;
     }
 
     #toast {
       position: fixed;
-      bottom: 15px; right: 15px;
+      bottom: 15px; right: 15px; left: 15px;
+      max-width: 350px;
+      margin: 0 auto;
       background: var(--primary-gold);
       color: #000;
-      padding: 10px 15px;
+      padding: 12px 15px;
       border-radius: 4px;
       font-weight: bold;
       font-size: 13px;
       display: none;
       z-index: 1001;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
 
     /* OPTIMIZED PRINT & PDF EXPORT STYLING */
@@ -403,18 +434,13 @@
         background: #ffffff !important;
         color: #000000 !important;
         font-size: 11pt;
-        zoom: 90%;
       }
       #nav, .controls, #verifyModal, #loading, #toast, button {
         display: none !important;
       }
-      
-      .chart-container, 
-      #barChart, 
-      #salesChart {
+      .chart-container, #barChart, #salesChart {
         display: none !important;
       }
-
       #tabs {
         display: block !important;
         width: 100% !important;
@@ -429,19 +455,18 @@
       .tab-content:not(:nth-child(2)) {
         display: none !important;
       }
+      .table-responsive {
+        overflow: visible !important;
+        border: none !important;
+      }
       table {
         background: #ffffff !important;
         color: #000000 !important;
         border: 1px solid #ccc !important;
-        page-break-inside: auto;
       }
       table th {
         background: #f1f1f1 !important;
         color: #000000 !important;
-        border-bottom: 2px solid #999 !important;
-      }
-      table td {
-        border-bottom: 1px solid #ddd !important;
       }
     }
   </style>
@@ -450,16 +475,16 @@
 
   <!-- LOGIN SCREEN -->
   <div id="login">
-    <h2 style="color: var(--primary-gold);">Secure Dashboard Login</h2>
+    <h2 style="color: var(--primary-gold); margin-top: 0;">Secure Dashboard Login</h2>
     <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') App.login()">
-    <button onclick="App.login()">Login Securely</button>
+    <button onclick="App.login()" style="width: 100%;">Login Securely</button>
   </div>
 
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
     <button id="navBtn-0" onclick="App.switchTab(0)">Overview</button>
     <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
-    <button id="navBtn-2" onclick="App.switchTab(2)">SALES ENTRY</button>
+    <button id="navBtn-2" onclick="App.switchTab(2)">Sales Entry</button>
     <button id="navBtn-3" onclick="App.switchTab(3)">Accounting</button>
     <button id="navBtn-4" onclick="App.switchTab(4)">Banked</button>
   </div>
@@ -478,13 +503,13 @@
           <label style="font-size:12px; color:var(--accent-gold);">To:</label>
           <input type="date" id="endDate" onchange="App.applyRange()">
         </div>
-        <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
+        <button type="button" onclick="App.resetDateRange()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
         <div id="weekButtonsContainer"></div>
       </div>
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
-    <!-- KPI SUMMARY HEADER (REORDERED AS REQUESTED) -->
+    <!-- KPI SUMMARY HEADER -->
     <div id="kpiSection" class="kpi-row">
       <!-- 1. BANKING CONSOLIDATION -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
@@ -493,13 +518,13 @@
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked (inclusive start of unbanked range)">
+            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 12px;">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The current day to consolidate up to">
+            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 12px;">
           </div>
-          <button type="button" onclick="App.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 4px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
+          <button type="button" onclick="App.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 8px; font-size: 12px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
         </div>
       </div>
 
@@ -580,16 +605,16 @@
 
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 500%;">
+      <div id="tabs">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content">
           <div class="entry-form-card" style="margin-bottom: 15px;">
-            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px;">
-              <span>Weekly Performance Breakdown (Mon - Sun)</span>
+            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 5px;">
+              <span>Weekly Performance Breakdown</span>
               <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
             </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
               <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
                 <div style="font-size: 11px; color: #aaa;">This Week Total</div>
                 <div id="wkCurrentTotal" style="font-size: 16px; font-weight: bold; color: var(--accent-gold);">£0.00</div>
@@ -611,56 +636,60 @@
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 20%;">
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
-            <button type="button" onclick="App.exportAnalyticsCSV()" style="padding: 7px 14px; font-size: 12px; background: var(--primary-gold); color: #000;">📊 Export CSV Report</button>
-            <button type="button" onclick="App.printReport()" style="padding: 7px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
+        <div class="tab-content">
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="App.exportAnalyticsCSV()" style="padding: 8px 12px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1; min-width: 130px;">📊 Export CSV</button>
+            <button type="button" onclick="App.printReport()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 130px;">🖨️ Print / PDF</button>
           </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
 
-          <!-- Cash Card Breakdown Summary Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Category / Description</th>
-                <th style="text-align: right;">Proportion / Split</th>
-                <th style="text-align: right;">Total Amount (£)</th>
-              </tr>
-            </thead>
-            <tbody id="printCashCardTable"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category / Description</th>
+                  <th style="text-align: right;">Proportion</th>
+                  <th style="text-align: right;">Total Amount (£)</th>
+                </tr>
+              </thead>
+              <tbody id="printCashCardTable"></tbody>
+            </table>
+          </div>
 
-          <!-- Category Breakdown Text Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Category Name</th>
-                <th>Total Revenue (£)</th>
-              </tr>
-            </thead>
-            <tbody id="printCategoryTable"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category Name</th>
+                  <th>Total Revenue (£)</th>
+                </tr>
+              </thead>
+              <tbody id="printCategoryTable"></tbody>
+            </table>
+          </div>
 
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Date / Entry</th>
-                <th>Cash (£)</th>
-                <th>Card (£)</th>
-                <th>Total (£)</th>
-              </tr>
-            </thead>
-            <tbody id="productTable"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date / Entry</th>
+                  <th>Cash (£)</th>
+                  <th>Card (£)</th>
+                  <th>Total (£)</th>
+                </tr>
+              </thead>
+              <tbody id="productTable"></tbody>
+            </table>
+          </div>
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
@@ -714,28 +743,28 @@
                   <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00">
                 </div>
               </div>
-              <button type="submit" style="width: 100%; padding: 10px; font-size: 14px;">Save & Submit to Spreadsheet</button>
+              <button type="submit" style="width: 100%; padding: 12px; font-size: 14px;">Save & Submit to Spreadsheet</button>
             </form>
           </div>
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st.</p>
             
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 200px;">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+              <div class="form-group" style="flex: 1; min-width: 180px;">
                 <label for="accFySelect">Select Financial Year</label>
                 <select id="accFySelect" onchange="App.renderAccountingData()"></select>
               </div>
-              <div style="display: flex; align-items: flex-end;">
-                <button type="button" onclick="App.exportAccountingCSV()" style="padding: 9px 16px;">Download Accountant CSV</button>
+              <div style="display: flex; align-items: flex-end; width: 100%;">
+                <button type="button" onclick="App.exportAccountingCSV()" style="padding: 10px 16px; width: 100%;">Download Accountant CSV</button>
               </div>
             </div>
 
-            <div style="max-height: 350px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;">
+            <div class="table-responsive" style="max-height: 350px;">
               <table>
                 <thead>
                   <tr>
@@ -759,12 +788,12 @@
         </div>
 
         <!-- TAB 4: BANKED -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
             
-            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;">
+            <div class="table-responsive" style="max-height: 400px;">
               <table>
                 <thead>
                   <tr>
@@ -791,10 +820,10 @@
       <h3>Verify Combined Total</h3>
       <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Combined Cash & Card Total:</div>
       <div class="modal-total-display" id="modalCombinedTotal">£0.00</div>
-      <div style="font-size: 11px; color: #888; margin-bottom: 15px;">If this doesn't match your final total, click Cancel to go back and edit.</div>
+      <div style="font-size: 11px; color: #888; margin-bottom: 15px;">If this doesn't match your final total, click Cancel to edit.</div>
       <div class="modal-buttons">
-        <button type="button" onclick="App.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Cancel</button>
-        <button type="button" onclick="App.confirmAndSubmit()">Sales Verified</button>
+        <button type="button" onclick="App.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); flex: 1;">Cancel</button>
+        <button type="button" onclick="App.confirmAndSubmit()" style="flex: 1;">Verify</button>
       </div>
     </div>
   </div>
@@ -915,9 +944,7 @@
       const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
 
       const parsedRecords = [];
-      const maxRowLimit = rows.length;
-
-      for (let i = startIndex; i < maxRowLimit; i++) {
+      for (let i = startIndex; i < rows.length; i++) {
         const row = rows[i];
         if (!row || !Array.isArray(row)) continue;
 
@@ -965,7 +992,6 @@
         }
 
         if (dailyTotalCents === 0 && sumCategoriesCents === 0) continue;
-        if (dailyTotalCents === 0 && !dayName) continue;
 
         parsedRecords.push({
           dayName,
@@ -1066,7 +1092,7 @@
         }
       });
 
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Consolidation across ${count} days</span>`;
+      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Across ${count} days</span>`;
     }
 
     function renderCashCardKPI(records) {
@@ -1117,12 +1143,8 @@
       let prevCents = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) {
-          prevCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) prevCents += r.dailyTotalCents;
       });
 
       const fytdDiff = currentCents - prevCents;
@@ -1149,9 +1171,7 @@
 
       let ytdSumCents = 0;
       allRecords.forEach(r => {
-        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) {
-          ytdSumCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) ytdSumCents += r.dailyTotalCents;
       });
       ytdEl.innerText = fmt(ytdSumCents);
     }
@@ -1184,12 +1204,8 @@
       let prevMonthPartialCents = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) {
-          prevMonthPartialCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) prevMonthPartialCents += r.dailyTotalCents;
       });
 
       const diffCents = currentCents - prevMonthPartialCents;
@@ -1228,12 +1244,8 @@
       let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
-          prevMonthFullCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) prevMonthFullCents += r.dailyTotalCents;
       });
 
       const targetCents = Math.round(prevMonthFullCents * 1.10);
@@ -1281,20 +1293,14 @@
       let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
-          prevMonthFullCents += r.dailyTotalCents;
-        }
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) currentCents += r.dailyTotalCents;
+        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) prevMonthFullCents += r.dailyTotalCents;
       });
 
       const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingTargetCents = targetCents - currentCents;
-      
       const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
       const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
-
       const displayDaily = dailyPacingCents > 0 ? fmt(dailyPacingCents) : "£0.00 (Goal Met!)";
 
       todayTargetEl.innerHTML = `<span class="positive">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Per day for remaining ${remainingDays} days</span>`;
@@ -1370,7 +1376,6 @@
 
       const latestRec = validRecords[validRecords.length - 1];
       const anchorDate = new Date(latestRec.parsedDate);
-      
       const startLookback = new Date(anchorDate);
       startLookback.setFullYear(anchorDate.getFullYear() - 1);
 
@@ -1428,15 +1433,7 @@
         return;
       }
 
-      const categoryTotalsCents = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
-      };
-
+      const categoryTotalsCents = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
       records.forEach(rec => {
         Object.keys(rec.categories).forEach(cat => {
           categoryTotalsCents[cat] += rec.categories[cat];
@@ -1468,9 +1465,7 @@
       }
 
       let periodSumCents = 0;
-      records.forEach(r => {
-        periodSumCents += r.dailyTotalCents;
-      });
+      records.forEach(r => { periodSumCents += r.dailyTotalCents; });
 
       rangeTotalEl.innerText = fmt(periodSumCents);
 
@@ -1482,7 +1477,6 @@
       const sDate = new Date(startVal);
       const eDate = new Date(endVal);
       const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-      
       rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
     }
 
@@ -1497,7 +1491,6 @@
 
       const prevMonday = new Date(currentMonday);
       prevMonday.setDate(prevMonday.getDate() - 7);
-
       const prevSunday = new Date(currentMonday);
       prevSunday.setDate(prevSunday.getDate() - 1);
 
@@ -1507,11 +1500,8 @@
       allRecords.forEach(r => {
         if (!r.parsedDate) return;
         const d = r.parsedDate;
-        if (d >= currentMonday && d <= now) {
-          curWkCents += r.dailyTotalCents;
-        } else if (d >= prevMonday && d <= prevSunday) {
-          prevWkCents += r.dailyTotalCents;
-        }
+        if (d >= currentMonday && d <= now) curWkCents += r.dailyTotalCents;
+        else if (d >= prevMonday && d <= prevSunday) prevWkCents += r.dailyTotalCents;
       });
 
       const diff = curWkCents - prevWkCents;
@@ -1560,31 +1550,17 @@
         const cashPct = combinedTotalCents > 0 ? ((totalCashCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
         const cardPct = combinedTotalCents > 0 ? ((totalCardCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
 
-        const cashTr = document.createElement("tr");
-        cashTr.innerHTML = `<td>Cash Transactions</td><td style="text-align: right;">${cashPct}%</td><td style="text-align: right;">${fmt(totalCashCents)}</td>`;
-        printCashCardContainer.appendChild(cashTr);
-
-        const cardTr = document.createElement("tr");
-        cardTr.innerHTML = `<td>Card Transactions</td><td style="text-align: right;">${cardPct}%</td><td style="text-align: right;">${fmt(totalCardCents)}</td>`;
-        printCashCardContainer.appendChild(cardTr);
-
-        const totalTr = document.createElement("tr");
-        totalTr.style.fontWeight = "bold";
-        totalTr.innerHTML = `<td>Total Cash & Card Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td>`;
-        printCashCardContainer.appendChild(totalTr);
+        printCashCardContainer.innerHTML = `
+          <tr><td>Cash Transactions</td><td style="text-align: right;">${cashPct}%</td><td style="text-align: right;">${fmt(totalCashCents)}</td></tr>
+          <tr><td>Card Transactions</td><td style="text-align: right;">${cardPct}%</td><td style="text-align: right;">${fmt(totalCardCents)}</td></tr>
+          <tr style="font-weight: bold;"><td>Total Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td></tr>
+        `;
       }
 
       const printCatContainer = $("printCategoryTable");
       if (printCatContainer) {
         printCatContainer.innerHTML = "";
-        const categoryTotalsCents = {
-          "ICE CREAM": 0,
-          "COUNTER": 0,
-          "Kitchen": 0,
-          "DRINK": 0,
-          "DELI": 0,
-          "ALCOHOL": 0
-        };
+        const categoryTotalsCents = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
 
         records.forEach(rec => {
           Object.keys(rec.categories).forEach(cat => {
@@ -1631,20 +1607,12 @@
         type: "bar",
         data: {
           labels,
-          datasets: [{
-            label: "Daily Revenue (£)",
-            data,
-            backgroundColor: "#D4AF37"
-          }]
+          datasets: [{ label: "Daily Revenue (£)", data, backgroundColor: "#D4AF37" }]
         },
         options: { 
           responsive: true, 
           maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
+          scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 } } }
         }
       });
     }
@@ -1662,22 +1630,12 @@
         type: "line",
         data: {
           labels,
-          datasets: [{
-            label: "Sales Trend (£)",
-            data,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212, 175, 55, 0.1)",
-            fill: true
-          }]
+          datasets: [{ label: "Sales Trend (£)", data, borderColor: "#D4AF37", backgroundColor: "rgba(212, 175, 55, 0.1)", fill: true }]
         },
         options: { 
           responsive: true, 
           maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
+          scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 } } }
         }
       });
     }
@@ -1697,7 +1655,6 @@
 
       while (startDay <= lastDay) {
         let endDay = Math.min(startDay + 6, lastDay);
-        
         const sStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
         const eStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
 
@@ -1709,7 +1666,6 @@
           App.applyRange();
         };
         container.appendChild(btn);
-
         startDay = endDay + 1;
         weekNum++;
       }
@@ -1721,18 +1677,10 @@
       container.innerHTML = "";
 
       const months = [
-        { name: "January", number: "01" },
-        { name: "February", number: "02" },
-        { name: "March", number: "03" },
-        { name: "April", number: "04" },
-        { name: "May", number: "05" },
-        { name: "June", number: "06" },
-        { name: "July", number: "07" },
-        { name: "August", number: "08" },
-        { name: "September", number: "09" },
-        { name: "October", number: "10" },
-        { name: "November", number: "11" },
-        { name: "December", number: "12" }
+        { name: "Jan", number: "01" }, { name: "Feb", number: "02" }, { name: "Mar", number: "03" },
+        { name: "Apr", number: "04" }, { name: "May", number: "05" }, { name: "Jun", number: "06" },
+        { name: "Jul", number: "07" }, { name: "Aug", number: "08" }, { name: "Sep", number: "09" },
+        { name: "Oct", number: "10" }, { name: "Nov", number: "11" }, { name: "Dec", number: "12" }
       ];
 
       const currentYear = new Date().getFullYear();
@@ -1769,7 +1717,7 @@
       for (let y = currentYear; y >= currentYear - 3; y--) {
         const opt = document.createElement("option");
         opt.value = y;
-        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
+        opt.innerText = `FY ${y} (Feb ${y} - Jan ${y + 1})`;
         select.appendChild(opt);
       }
       select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
@@ -1820,41 +1768,29 @@
       },
       switchTab: (index) => {
         const tabs = $("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${index * 20}%)`;
-        }
+        if (tabs) tabs.style.transform = `translateX(-${index * 20}%)`;
+        
         for (let i = 0; i <= 4; i++) {
           const btn = $(`navBtn-${i}`);
           if (btn) {
-            if (i === index) {
-              btn.classList.add("active");
-            } else {
-              btn.classList.remove("active");
-            }
+            if (i === index) btn.classList.add("active");
+            else btn.classList.remove("active");
           }
         }
 
         const kpiSection = $("kpiSection");
         if (kpiSection) {
-          if (index === 0) {
-            kpiSection.classList.remove("hidden");
-          } else {
-            kpiSection.classList.add("hidden");
-          }
+          if (index === 0) kpiSection.classList.remove("hidden");
+          else kpiSection.classList.add("hidden");
         }
 
         const sharedControls = $("sharedControls");
         if (sharedControls) {
-          if (index === 0 || index === 1) {
-            sharedControls.classList.remove("hidden");
-          } else {
-            sharedControls.classList.add("hidden");
-          }
+          if (index === 0 || index === 1) sharedControls.classList.remove("hidden");
+          else sharedControls.classList.add("hidden");
         }
 
-        if (index === 3) {
-          initAccountingFySelect();
-        }
+        if (index === 3) initAccountingFySelect();
       },
       applyRange: () => {
         const sVal = $("startDate")?.value;
@@ -1868,7 +1804,6 @@
         if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
 
         renderBankingKPI(STATE.raw);
-
         if (!STATE.raw || STATE.raw.length === 0) return;
 
         let filtered = STATE.raw;
@@ -1884,7 +1819,6 @@
         const bankingStartEl = $("bankingStartDate");
         if (currentDayEl && bankingStartEl && currentDayEl.value) {
           const bankedDate = currentDayEl.value;
-          
           const lastBankedVal = bankingStartEl.value;
           const currentDayVal = currentDayEl.value;
           const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
@@ -1900,18 +1834,14 @@
 
           const loader = $("loading");
           if (loader) {
-            loader.innerText = "Writing banked record to Google Sheet...";
+            loader.innerText = "Writing banked record...";
             loader.classList.remove("hidden");
           }
 
           try {
             const res = await fetch(CONFIG.URL, {
               method: "POST",
-              body: JSON.stringify({ 
-                type: "banking",
-                rawDate: bankedDate,
-                cashValue: cashValue 
-              })
+              body: JSON.stringify({ type: "banking", rawDate: bankedDate, cashValue: cashValue })
             });
             const json = await res.json();
             if (loader) loader.classList.add("hidden");
@@ -1924,8 +1854,7 @@
                 cashCents: Math.round(cashValue * 100)
               });
               renderBankedTable();
-
-              toast("Banked record successfully saved to Google Sheet!");
+              toast("Banked record successfully saved!");
             } else {
               toast("Marked as banked locally.");
             }
@@ -1949,7 +1878,6 @@
         if ($("endDate")) $("endDate").value = formatDateLocal(now);
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-        
         App.applyRange();
         toast("Date range reset to current month");
       },
@@ -1963,8 +1891,7 @@
           const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
           if (!isNaN(dObj.getTime())) {
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const dayName = days[dObj.getDay()];
-            daySelect.value = dayName;
+            daySelect.value = days[dObj.getDay()];
           }
         }
       },
@@ -1983,7 +1910,7 @@
         const sumCategoriesCents = Math.round((catIce + catCount + catKit + catDrk + catDel + catAlc) * 100);
 
         if (sumCategoriesCents > 0 && Math.abs(sumCategoriesCents - combinedCents) > 1) {
-          alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}). Please adjust.`);
+          alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}).`);
           return;
         }
 
@@ -2039,7 +1966,7 @@
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          alert("Network error during submission: " + err.message);
+          alert("Network error during submission.");
         }
         STATE.pendingPayload = null;
       },
@@ -2058,16 +1985,9 @@
           const tr = document.createElement("tr");
           const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           tr.innerHTML = `
-            <td>${dateStr}</td>
-            <td>${r.dayName}</td>
-            <td>${fmt(r.cashCents)}</td>
-            <td>${fmt(r.cardCents)}</td>
-            <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"])}</td>
-            <td>${fmt(r.categories["COUNTER"])}</td>
-            <td>${fmt(r.categories["Kitchen"])}</td>
-            <td>${fmt(r.categories["DRINK"])}</td>
-            <td>${fmt(r.categories["DELI"])}</td>
+            <td>${dateStr}</td><td>${r.dayName}</td><td>${fmt(r.cashCents)}</td><td>${fmt(r.cardCents)}</td>
+            <td>${fmt(r.dailyTotalCents)}</td><td>${fmt(r.categories["ICE CREAM"])}</td><td>${fmt(r.categories["COUNTER"])}</td>
+            <td>${fmt(r.categories["Kitchen"])}</td><td>${fmt(r.categories["DRINK"])}</td><td>${fmt(r.categories["DELI"])}</td>
             <td>${fmt(r.categories["ALCOHOL"])}</td>
           `;
           tbody.appendChild(tr);
@@ -2090,16 +2010,10 @@
         filtered.forEach(r => {
           const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           const row = [
-            dateStr,
-            r.dayName,
-            (r.cashCents / 100).toFixed(2),
-            (r.cardCents / 100).toFixed(2),
-            (r.dailyTotalCents / 100).toFixed(2),
-            (r.categories["ICE CREAM"] / 100).toFixed(2),
-            (r.categories["COUNTER"] / 100).toFixed(2),
-            (r.categories["Kitchen"] / 100).toFixed(2),
-            (r.categories["DRINK"] / 100).toFixed(2),
-            (r.categories["DELI"] / 100).toFixed(2),
+            dateStr, r.dayName, (r.cashCents / 100).toFixed(2), (r.cardCents / 100).toFixed(2),
+            (r.dailyTotalCents / 100).toFixed(2), (r.categories["ICE CREAM"] / 100).toFixed(2),
+            (r.categories["COUNTER"] / 100).toFixed(2), (r.categories["Kitchen"] / 100).toFixed(2),
+            (r.categories["DRINK"] / 100).toFixed(2), (r.categories["DELI"] / 100).toFixed(2),
             (r.categories["ALCOHOL"] / 100).toFixed(2)
           ];
           csvContent += row.join(",") + "\r\n";
@@ -2108,7 +2022,7 @@
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Accountant_Sales_FY_${fyYear}_${fyYear + 1}.csv`);
+        link.setAttribute("download", `Accountant_Sales_FY_${fyYear}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2136,16 +2050,10 @@
         filtered.forEach(r => {
           const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           const row = [
-            dateStr,
-            r.dayName,
-            (r.cashCents / 100).toFixed(2),
-            (r.cardCents / 100).toFixed(2),
-            (r.dailyTotalCents / 100).toFixed(2),
-            (r.categories["ICE CREAM"] / 100).toFixed(2),
-            (r.categories["COUNTER"] / 100).toFixed(2),
-            (r.categories["Kitchen"] / 100).toFixed(2),
-            (r.categories["DRINK"] / 100).toFixed(2),
-            (r.categories["DELI"] / 100).toFixed(2),
+            dateStr, r.dayName, (r.cashCents / 100).toFixed(2), (r.cardCents / 100).toFixed(2),
+            (r.dailyTotalCents / 100).toFixed(2), (r.categories["ICE CREAM"] / 100).toFixed(2),
+            (r.categories["COUNTER"] / 100).toFixed(2), (r.categories["Kitchen"] / 100).toFixed(2),
+            (r.categories["DRINK"] / 100).toFixed(2), (r.categories["DELI"] / 100).toFixed(2),
             (r.categories["ALCOHOL"] / 100).toFixed(2)
           ];
           csvContent += row.join(",") + "\r\n";
@@ -2154,21 +2062,18 @@
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Analytics_Sales_Report_${sVal || 'all'}_to_${eVal || 'all'}.csv`);
+        link.setAttribute("download", `Analytics_Report.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         toast("Analytics CSV downloaded!");
       },
-      printReport: () => {
-        window.print();
-      }
+      printReport: () => { window.print(); }
     };
 
     const load = async () => {
+      const loader = $("loading");
       try {
-        const loader = $("loading");
-        
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
@@ -2178,12 +2083,8 @@
         const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
         const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
-        if ($("bankingStartDate") && !$("bankingStartDate").value) {
-          $("bankingStartDate").value = defaultLastBanked;
-        }
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultCurrentDay;
-        }
+        if ($("bankingStartDate") && !$("bankingStartDate").value) $("bankingStartDate").value = defaultLastBanked;
+        if ($("lastBankedDate") && !$("lastBankedDate").value) $("lastBankedDate").value = defaultCurrentDay;
         
         if ($("startDate")) {
           $("startDate").value = defaultStart;
@@ -2236,15 +2137,14 @@
         }
 
         STATE.isFullLoaded = true;
-
-        if (loader) loader.classList.add("hidden");
         App.applyRange();
       } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-        const loader = $("loading");
-        if (loader) loader.classList.add("hidden");
-        toast("Failed to load live data.");
+        console.error("Failed to load live data:", err);
+        toast("Failed to load live data. Check connection.");
+        STATE.isFullLoaded = true; // Fallback so UI clears "Syncing" state
         App.applyRange();
+      } finally {
+        if (loader) loader.classList.add("hidden");
       }
     };
   </script>
