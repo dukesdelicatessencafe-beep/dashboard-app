@@ -2166,88 +2166,88 @@
     };
 
     const load = async () => {
-      try {
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        const defaultStart = formatDateLocal(firstDayOfMonth);
-        const defaultEnd = formatDateLocal(now);
-        
-        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
-        const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
+  try {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const defaultStart = formatDateLocal(firstDayOfMonth);
+    const defaultEnd = formatDateLocal(now);
+    
+    const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
+    const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
-        if ($("bankingStartDate") && !$("bankingStartDate").value) {
-          $("bankingStartDate").value = defaultLastBanked;
+    if ($("bankingStartDate") && !$("bankingStartDate").value) {
+      $("bankingStartDate").value = defaultLastBanked;
+    }
+    if ($("lastBankedDate") && !$("lastBankedDate").value) {
+      $("lastBankedDate").value = defaultCurrentDay;
+    }
+    
+    if ($("startDate")) {
+      $("startDate").value = defaultStart;
+      localStorage.setItem("dash_startDate", defaultStart);
+    }
+    if ($("endDate")) {
+      $("endDate").value = defaultEnd;
+      localStorage.setItem("dash_endDate", defaultEnd);
+    }
+
+    if ($("entryDate") && !$("entryDate").value) {
+      $("entryDate").value = formatDateLocal(now);
+      App.onEntryDateChange();
+    }
+
+    initWeekButtons();
+    initMonthlyButtonsBar();
+    App.switchTab(0);
+
+    const loaderEl = $("loading");
+    if (loaderEl) {
+      loaderEl.innerText = "Loading dashboard data...";
+      loaderEl.classList.remove("hidden");
+    }
+
+    const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
+    
+    const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
+    const fullJson = await fullRes.json();
+
+    let fullRecords = [];
+    let bankedRecords = [];
+    
+    const sourceTabs = fullJson.tabs || fullJson.sheetsData;
+
+    if (fullJson && sourceTabs) {
+      Object.keys(sourceTabs).forEach(tabName => {
+        const tabRows = sourceTabs[tabName];
+        if (Array.isArray(tabRows) && tabRows.length > 0) {
+          if (tabName.toLowerCase() === "banked") {
+            bankedRecords = processBankedRows(tabRows);
+          } else {
+            fullRecords = fullRecords.concat(processRows(tabRows));
+          }
         }
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultCurrentDay;
-        }
-        
-        if ($("startDate")) {
-          $("startDate").value = defaultStart;
-          localStorage.setItem("dash_startDate", defaultStart);
-        }
-        if ($("endDate")) {
-          $("endDate").value = defaultEnd;
-          localStorage.setItem("dash_endDate", defaultEnd);
-        }
+      });
+    }
 
-        if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = formatDateLocal(now);
-          App.onEntryDateChange();
-        }
+    if (fullRecords.length > 0) {
+      fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+      STATE.raw = fullRecords;
+    }
 
-        initWeekButtons();
-        initMonthlyButtonsBar();
-        App.switchTab(0);
+    if (bankedRecords.length > 0) {
+      STATE.banked = bankedRecords;
+    }
 
-        const loaderEl = $("loading");
-        if (loaderEl) {
-          loaderEl.innerText = "Loading dashboard data...";
-          loaderEl.classList.remove("hidden");
-        }
+    STATE.isFullLoaded = true;
 
-        const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
-        
-        const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
-        const fullJson = await fullRes.json();
-
-        let fullRecords = [];
-        let bankedRecords = [];
-        
-        const sourceTabs = fullJson.tabs || fullJson.sheetsData;
-
-        if (fullJson && sourceTabs) {
-          Object.keys(sourceTabs).forEach(tabName => {
-            const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              if (tabName.toLowerCase() === "banked") {
-                bankedRecords = processBankedRows(tabRows);
-              } else {
-                fullRecords = fullRecords.concat(processRows(tabRows));
-              }
-            }
-          });
-        }
-
-        if (fullRecords.length > 0) {
-          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-          STATE.raw = fullRecords;
-        }
-
-        if (bankedRecords.length > 0) {
-          STATE.banked = bankedRecords;
-        }
-
-        STATE.isFullLoaded = true;
-
-        if (loaderEl) loaderEl.classList.add("hidden");
-        App.applyRange();
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-        const loaderEl = $("loading");
-        if (loaderEl) loaderEl.classList.add("hidden");
-        toast("Failed to load live data.");
-        App.applyRange();
-      }
-    };
+    if (loaderEl) loaderEl.classList.add("hidden");
+    App.applyRange();
+  } catch (err) {
+    console.error("Failed to load dashboard data:", err);
+    const loaderEl = $("loading");
+    if (loaderEl) loaderEl.classList.add("hidden");
+    toast("Failed to load live data.");
+    App.applyRange();
+  }
+};
