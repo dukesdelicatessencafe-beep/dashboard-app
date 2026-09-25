@@ -1911,6 +1911,16 @@
             if (loader) loader.classList.add("hidden");
 
             if (json.status === "success") {
+              // --- FIXED: Push locally and re-render Banked table instantly ---
+              const parsedDateInfo = parseDateString(bankedDate);
+              STATE.banked.push({
+                rawDate: bankedDate,
+                parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
+                cashCents: Math.round(cashValue * 100)
+              });
+              renderBankedTable();
+              // -------------------------------------------------------------
+
               toast("Banked record successfully saved to Google Sheet!");
             } else {
               toast("Marked as banked locally.");
