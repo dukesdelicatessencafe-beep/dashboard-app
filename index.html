@@ -2208,14 +2208,21 @@
           loader.classList.remove("hidden");
         }
 
-        const fullRes = await fetch(CONFIG.URL, { cache: "no-store" });
+       // Dynamically grab the current year or use a selected year variable from your app state
+        const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
+        
+        const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
         const fullJson = await fullRes.json();
 
         let fullRecords = [];
         let bankedRecords = [];
-        if (fullJson && fullJson.tabs) {
-          Object.keys(fullJson.tabs).forEach(tabName => {
-            const tabRows = fullJson.tabs[tabName];
+        
+        // Support both possibilities so it never breaks
+        const sourceTabs = fullJson.tabs || fullJson.sheetsData;
+
+        if (fullJson && sourceTabs) {
+          Object.keys(sourceTabs).forEach(tabName => {
+            const tabRows = sourceTabs[tabName];
             if (Array.isArray(tabRows) && tabRows.length > 0) {
               if (tabName.toLowerCase() === "banked") {
                 bankedRecords = processBankedRows(tabRows);
@@ -2237,6 +2244,7 @@
 
         STATE.isFullLoaded = true;
 
+        const loader = $("loading"); // Make sure loader is referenced if not defined globally
         if (loader) loader.classList.add("hidden");
         App.applyRange();
       } catch (err) {
