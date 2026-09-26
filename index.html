@@ -524,7 +524,7 @@
       <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
-        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
+        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal[cite: 5]</div>
       </div>
 
       <!-- 4. ESTIMATED MONTH-END TOTAL -->
@@ -553,7 +553,7 @@
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
-        <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
+        <div class="subtext" id="fytdCompSub">Since 1st Feb[cite: 5]</div>
       </div>
 
       <div class="kpi-card">
@@ -574,7 +574,7 @@
         <div class="progress-bar-container">
           <div class="progress-bar-fill" id="mthTargetBar"></div>
         </div>
-        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
+        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker[cite: 5]</div>
       </div>
 
       <div class="kpi-card">
@@ -733,7 +733,7 @@
         <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year[cite: 5].</p>
             
             <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
               <div class="form-group" style="flex: 1; min-width: 200px;">
@@ -1106,7 +1106,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         fytdEl.innerText = "Syncing...";
-        safeSet("fytdCompSub", "Since 1st Feb");
+        safeSet("fytdCompSub", "Since 1st Feb[cite: 5]");
         return;
       }
 
@@ -1114,7 +1114,7 @@
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
       
-      const fyStartInt = fyYear * 10000 + 201; 
+      const fyStartInt = fyYear * 10000 + 201; // Feb 1st[cite: 5]
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
@@ -1136,8 +1136,8 @@
       const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
       const fytdSign = fytdDiff >= 0 ? "+" : "";
 
-      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:12px;">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
-      safeSet("fytdCompSub", "Since 1st Feb");
+      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:12px;">(1st Feb)[cite: 5]</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+      safeSet("fytdCompSub", "Since 1st Feb[cite: 5]");
     }
 
     function renderYtdKPI(allRecords) {
@@ -1214,7 +1214,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         mthTargetEl.innerText = "Syncing...";
-        safeSet("mthTargetSub", "10% Growth Goal Tracker");
+        safeSet("mthTargetSub", "10% Growth Goal Tracker[cite: 5]");
         return;
       }
 
@@ -1243,7 +1243,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10);
+      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target[cite: 5]
       const remainingCents = targetCents - currentCents;
       const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
       const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
@@ -1266,7 +1266,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         todayTargetEl.innerText = "Syncing...";
-        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal";
+        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal[cite: 5]";
         return;
       }
 
@@ -1296,7 +1296,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10);
+      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target[cite: 5]
       const remainingTargetCents = targetCents - currentCents;
       
       const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
@@ -1391,10 +1391,10 @@
 
       rollingEl.innerText = fmt(rollingSumCents);
 
-      const vatThresholdCents = 90000 * 100;
+      const vatThresholdCents = 90000 * 100; // £90,000 UK VAT threshold[cite: 5]
       if (vatStatusEl) {
         if (rollingSumCents >= vatThresholdCents) {
-          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
+          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)[cite: 5]";
           vatStatusEl.style.color = "#ff4d4d";
         } else {
           const daysSpan = (anchorDate - startLookback) / (1000 * 60 * 60 * 24);
@@ -1408,7 +1408,7 @@
             vatStatusEl.innerText = `Est. Breach: ${breachDate.toLocaleDateString("en-GB")}`;
             vatStatusEl.style.color = "#ffcc00";
           } else {
-            vatStatusEl.innerText = "Safe (Below £90,000)";
+            vatStatusEl.innerText = "Safe (Below £90,000)[cite: 5]";
             vatStatusEl.style.color = "#4cd137";
           }
         }
@@ -1776,7 +1776,7 @@
       for (let y = currentYear; y >= currentYear - 3; y--) {
         const opt = document.createElement("option");
         opt.value = y;
-        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
+        opt.innerText = `FY ${y} (1st Feb ${y}[cite: 5] - 31st Jan ${y + 1})`;
         select.appendChild(opt);
       }
       select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
@@ -2054,8 +2054,8 @@
       },
       renderAccountingData: () => {
         const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; 
-        const endInt = (fyYear + 1) * 10000 + 131; 
+        const startInt = fyYear * 10000 + 201; // Feb 1[cite: 5]
+        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
 
         const tbody = $("accountingTableBody");
         if (!tbody) return;
@@ -2084,8 +2084,8 @@
       },
       exportAccountingCSV: () => {
         const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201;
-        const endInt = (fyYear + 1) * 10000 + 131;
+        const startInt = fyYear * 10000 + 201; // Feb 1[cite: 5]
+        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
 
         const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
         if (filtered.length === 0) {
