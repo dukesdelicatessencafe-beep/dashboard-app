@@ -7,7 +7,14 @@
   
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script> window.App = window.App || {};</script>
+  <script>
+  window.App = window.App || {
+    login: function() {
+      console.log("App is still loading, please wait...");
+      alert("Dashboard is still loading in the background. Please wait a moment and try again.");
+    }
+  };
+</script>
   <style>
     :root {
       --primary-gold: #D4AF37;
