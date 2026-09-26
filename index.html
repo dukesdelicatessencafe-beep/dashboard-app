@@ -1931,6 +1931,7 @@
                 cashCents: Math.round(cashValue * 100)
               });
               renderBankedTable();
+              localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
 
               toast("Banked record successfully saved to Google Sheet!");
             } else {
@@ -2039,6 +2040,7 @@
               $("entryDate").value = todayStr;
               DashboardApp.onEntryDateChange();
             }
+            localStorage.removeItem("dash_cached_raw"); // invalidate cache on new entry
             load();
             DashboardApp.switchTab(0);
           } else {
@@ -2209,41 +2211,83 @@
         DashboardApp.switchTab(0);
 
         const loaderEl = $("loading");
-        if (loaderEl) {
+
+        // 1. QUICK LOAD FROM CACHE FOR INSTANT RENDER
+        const cachedRaw = localStorage.getItem("dash_cached_raw");
+        const cachedBanked = localStorage.getItem("dash_cached_banked");
+
+        if (cachedRaw) {
+          try {
+            const parsedCache = JSON.parse(cachedRaw);
+            STATE.raw = parsedCache.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
+            if (cachedBanked) {
+              const parsedBanked = JSON.parse(cachedBanked);
+              STATE.banked = parsedBanked.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
+            }
+            STATE.isFullLoaded = true;
+            DashboardApp.applyRange();
+          } catch (e) {
+            console.warn("Cache parse error", e);
+          }
+        }
+
+        if (!STATE.isFullLoaded && loaderEl) {
           loaderEl.innerText = "Loading dashboard data...";
           loaderEl.classList.remove("hidden");
         }
 
-        const selectedYear = STATE.currentYear || new Date().getFullYear();
-        
-        const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
-        const fullJson = await fullRes.json();
+        // 2. BACKGROUND / FRESH FETCH FOR CURRENT & PREVIOUS YEAR (Multi-Year for accurate KPI comparisons)
+        const currentYear = STATE.currentYear || new Date().getFullYear();
+        const prevYear = currentYear - 1;
+
+        const [currRes, prevRes] = await Promise.all([
+          fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" }),
+          fetch(`${CONFIG.URL}?year=${prevYear}`, { cache: "no-store" })
+        ]);
+
+        const currJson = await currRes.json();
+        const prevJson = await prevRes.json();
 
         let fullRecords = [];
         let bankedRecords = [];
-        
-        const sourceTabs = fullJson.tabs || fullJson.sheetsData;
 
-        if (fullJson && sourceTabs) {
-          Object.keys(sourceTabs).forEach(tabName => {
-            const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              if (tabName.toLowerCase() === "banked") {
-                bankedRecords = processBankedRows(tabRows);
-              } else {
-                fullRecords = fullRecords.concat(processRows(tabRows));
+        const processPayloadJson = (jsonObj) => {
+          const sourceTabs = jsonObj.tabs || jsonObj.sheetsData;
+          if (jsonObj && sourceTabs) {
+            Object.keys(sourceTabs).forEach(tabName => {
+              const tabRows = sourceTabs[tabName];
+              if (Array.isArray(tabRows) && tabRows.length > 0) {
+                if (tabName.toLowerCase() === "banked") {
+                  const bRows = processBankedRows(tabRows);
+                  bankedRecords = bankedRecords.concat(bRows);
+                } else {
+                  const sRows = processRows(tabRows);
+                  fullRecords = fullRecords.concat(sRows);
+                }
               }
-            }
-          });
-        }
+            });
+          }
+        };
+
+        processPayloadJson(currJson);
+        processPayloadJson(prevJson);
 
         if (fullRecords.length > 0) {
+          // Deduplicate records by dateInt to prevent duplicates if sheets overlap
+          const uniqueMap = new Map();
+          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
+          fullRecords = Array.from(uniqueMap.values());
+          
           fullRecords.sort((a, b) => a.dateInt - b.dateInt);
           STATE.raw = fullRecords;
+          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
         }
 
         if (bankedRecords.length > 0) {
-          STATE.banked = bankedRecords;
+          const uniqueBankedMap = new Map();
+          bankedRecords.forEach(r => uniqueBankedMap.set(String(r.rawDate), r));
+          STATE.banked = Array.from(uniqueBankedMap.values());
+          localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
         }
 
         STATE.isFullLoaded = true;
@@ -2254,7 +2298,9 @@
         console.error("Failed to load dashboard data:", err);
         const loaderEl = $("loading");
         if (loaderEl) loaderEl.classList.add("hidden");
-        toast("Failed to load live data.");
+        if (!STATE.isFullLoaded) {
+          toast("Failed to load live data.");
+        }
         DashboardApp.applyRange();
       }
     };
