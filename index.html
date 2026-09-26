@@ -2286,24 +2286,24 @@
         if (bankedRecords.length > 0) {
           const uniqueBankedMap = new Map();
           bankedRecords.forEach(r => uniqueBankedMap.set(String(r.rawDate), r));
-          STATE.banked = Array.from(uniqueBankedMap.values());
-          localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
+          bankedRecords = Array.from(uniqueBankedMap.values());
+          STATE.banked = bankedRecords;
+          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
         }
 
         STATE.isFullLoaded = true;
-
         if (loaderEl) loaderEl.classList.add("hidden");
         DashboardApp.applyRange();
       } catch (err) {
-        console.error("Failed to load dashboard data:", err);
+        console.error("Initialization error:", err);
         const loaderEl = $("loading");
         if (loaderEl) loaderEl.classList.add("hidden");
-        if (!STATE.isFullLoaded) {
-          toast("Failed to load live data.");
-        }
+        toast("Loaded from offline cache.");
         DashboardApp.applyRange();
       }
     };
+
+    window.onload = load;
   </script>
 </body>
 </html>
