@@ -814,7 +814,6 @@
 
   <!-- APP ENGINE SCRIPT -->
   <script>
-    // DEFINE CONFIG (Make sure to replace URL with your Google Apps Script Web App Deployment URL)
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
     };
@@ -825,7 +824,8 @@
       isFullLoaded: false,
       barChart: null,
       salesChart: null,
-      pendingPayload: null
+      pendingPayload: null,
+      currentYear: new Date().getFullYear()
     };
 
     const $ = (id) => document.getElementById(id);
@@ -955,9 +955,6 @@
         const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
         if (!parsedDateInfo) continue;
 
-        const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        if (!validDays.includes(lowerDay)) continue;
-
         let catIceCream = cleanCents(row[4]);
         let catCounter  = cleanCents(row[5]);
         let catKitchen  = cleanCents(row[6]);
@@ -976,10 +973,9 @@
         }
 
         if (dailyTotalCents === 0 && sumCategoriesCents === 0) continue;
-        if (dailyTotalCents === 0 && !dayName) continue;
 
         parsedRecords.push({
-          dayName,
+          dayName: dayName || "Unknown",
           rawDate,
           parsedDate: parsedDateInfo.dateObj,
           dateInt: parsedDateInfo.dateInt,
@@ -2218,7 +2214,7 @@
           loaderEl.classList.remove("hidden");
         }
 
-        const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
+        const selectedYear = STATE.currentYear || new Date().getFullYear();
         
         const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
         const fullJson = await fullRes.json();
