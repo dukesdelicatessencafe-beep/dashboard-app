@@ -7,14 +7,17 @@
   
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- EARLY GLOBAL PLACEHOLDER TO PREVENT COLLISION/TIMING ERRORS -->
   <script>
-  window.DashboardApp = window.DashboardApp || {
-    login: function() {
-      console.log("App is still loading, please wait...");
-      alert("Dashboard is still loading in the background. Please wait a moment and try again.");
-    }
-  };
-</script>
+    window.DashboardApp = window.DashboardApp || {
+      login: function() {
+        console.log("Dashboard is still loading, please wait...");
+        alert("Dashboard is still loading in the background. Please wait a moment and try again.");
+      }
+    };
+  </script>
+
   <style>
     :root {
       --primary-gold: #D4AF37;
@@ -458,17 +461,17 @@
   <!-- LOGIN SCREEN -->
   <div id="login">
     <h2 style="color: var(--primary-gold);">Secure Dashboard Login</h2>
-    <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') App.login()">
+    <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') DashboardApp.login()">
     <button onclick="DashboardApp.login()">Login Securely</button>
   </div>
 
   <!-- NAVIGATION -->
   <div id="nav" class="hidden">
-    <button id="navBtn-0" onclick="App.switchTab(0)">Overview</button>
-    <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
-    <button id="navBtn-2" onclick="App.switchTab(2)">SALES ENTRY</button>
-    <button id="navBtn-3" onclick="App.switchTab(3)">Accounting</button>
-    <button id="navBtn-4" onclick="App.switchTab(4)">Banked</button>
+    <button id="navBtn-0" onclick="DashboardApp.switchTab(0)">Overview</button>
+    <button id="navBtn-1" onclick="DashboardApp.switchTab(1)">Analytics</button>
+    <button id="navBtn-2" onclick="DashboardApp.switchTab(2)">SALES ENTRY</button>
+    <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">Accounting</button>
+    <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">Banked</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -479,19 +482,19 @@
       <div class="controls-top-row">
         <div class="control-group">
           <label style="font-size:12px; color:var(--accent-gold);">From:</label>
-          <input type="date" id="startDate" onchange="App.applyRange()">
+          <input type="date" id="startDate" onchange="DashboardApp.applyRange()">
         </div>
         <div class="control-group">
           <label style="font-size:12px; color:var(--accent-gold);">To:</label>
-          <input type="date" id="endDate" onchange="App.applyRange()">
+          <input type="date" id="endDate" onchange="DashboardApp.applyRange()">
         </div>
-        <button type="button" onclick="App.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
+        <button type="button" onclick="DashboardApp.resetDateRange()" style="padding: 6px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Reset Dates</button>
         <div id="weekButtonsContainer"></div>
       </div>
       <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
     </div>
 
-    <!-- KPI SUMMARY HEADER (REORDERED AS REQUESTED) -->
+    <!-- KPI SUMMARY HEADER -->
     <div id="kpiSection" class="kpi-row">
       <!-- 1. BANKING CONSOLIDATION -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
@@ -500,13 +503,13 @@
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked (inclusive start of unbanked range)">
+            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" onchange="App.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The current day to consolidate up to">
+            <input type="date" id="lastBankedDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 2px 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The current day to consolidate up to">
           </div>
-          <button type="button" onclick="App.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 4px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
+          <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 4px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
         </div>
       </div>
 
@@ -517,7 +520,7 @@
         <div class="subtext" id="rangeSpanSub">Syncing...</div>
       </div>
 
-      <!-- 3. TODAY TARGET (REMAINDER OF MONTH) -->
+      <!-- 3. TODAY TARGET -->
       <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
@@ -620,8 +623,8 @@
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 20%;">
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
-            <button type="button" onclick="App.exportAnalyticsCSV()" style="padding: 7px 14px; font-size: 12px; background: var(--primary-gold); color: #000;">📊 Export CSV Report</button>
-            <button type="button" onclick="App.printReport()" style="padding: 7px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
+            <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 7px 14px; font-size: 12px; background: var(--primary-gold); color: #000;">📊 Export CSV Report</button>
+            <button type="button" onclick="DashboardApp.printReport()" style="padding: 7px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
           </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
@@ -670,11 +673,11 @@
         <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
-            <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
+            <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
               <div class="form-grid">
                 <div class="form-group">
                   <label for="entryDate">Entry Date</label>
-                  <input type="date" id="entryDate" onchange="App.onEntryDateChange()" required>
+                  <input type="date" id="entryDate" onchange="DashboardApp.onEntryDateChange()" required>
                 </div>
                 <div class="form-group">
                   <label for="entryDay">Day of Week</label>
@@ -735,10 +738,10 @@
             <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
               <div class="form-group" style="flex: 1; min-width: 200px;">
                 <label for="accFySelect">Select Financial Year</label>
-                <select id="accFySelect" onchange="App.renderAccountingData()"></select>
+                <select id="accFySelect" onchange="DashboardApp.renderAccountingData()"></select>
               </div>
               <div style="display: flex; align-items: flex-end;">
-                <button type="button" onclick="App.exportAccountingCSV()" style="padding: 9px 16px;">Download Accountant CSV</button>
+                <button type="button" onclick="DashboardApp.exportAccountingCSV()" style="padding: 9px 16px;">Download Accountant CSV</button>
               </div>
             </div>
 
@@ -800,8 +803,8 @@
       <div class="modal-total-display" id="modalCombinedTotal">£0.00</div>
       <div style="font-size: 11px; color: #888; margin-bottom: 15px;">If this doesn't match your final total, click Cancel to go back and edit.</div>
       <div class="modal-buttons">
-        <button type="button" onclick="App.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Cancel</button>
-        <button type="button" onclick="App.confirmAndSubmit()">Sales Verified</button>
+        <button type="button" onclick="DashboardApp.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Cancel</button>
+        <button type="button" onclick="DashboardApp.confirmAndSubmit()">Sales Verified</button>
       </div>
     </div>
   </div>
@@ -809,16 +812,12 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE -->
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales & Analytics Dashboard with Secure Login</title>
-  
-  <!-- CHART.JS LIBRARY -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- APP ENGINE SCRIPT -->
+  <script>
+    // DEFINE CONFIG (Make sure to replace URL with your Google Apps Script Web App Deployment URL)
+    const CONFIG = {
+      URL: "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"
+    };
 
     const STATE = {
       raw: [],
@@ -1718,7 +1717,7 @@
         btn.onclick = () => {
           if ($("startDate")) $("startDate").value = sStr;
           if ($("endDate")) $("endDate").value = eStr;
-          App.applyRange();
+          DashboardApp.applyRange();
         };
         container.appendChild(btn);
 
@@ -1765,7 +1764,7 @@
 
           if ($("startDate")) $("startDate").value = startStr;
           if ($("endDate")) $("endDate").value = endStr;
-          App.applyRange();
+          DashboardApp.applyRange();
         });
 
         container.appendChild(btn);
@@ -1785,7 +1784,7 @@
         select.appendChild(opt);
       }
       select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
-      App.renderAccountingData();
+      DashboardApp.renderAccountingData();
     }
 
     const DashboardApp = {
@@ -1947,7 +1946,7 @@
           }
 
           bankingStartEl.value = currentDayEl.value;
-          App.applyRange();
+          DashboardApp.applyRange();
         }
       },
       resetDateRange: () => {
@@ -1962,7 +1961,7 @@
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
         
-        App.applyRange();
+        DashboardApp.applyRange();
         toast("Date range reset to current month");
       },
       onEntryDateChange: () => {
@@ -2042,10 +2041,10 @@
             const todayStr = formatDateLocal(new Date());
             if ($("entryDate")) {
               $("entryDate").value = todayStr;
-              App.onEntryDateChange();
+              DashboardApp.onEntryDateChange();
             }
             load();
-            App.switchTab(0);
+            DashboardApp.switchTab(0);
           } else {
             alert("Submission error: " + (json.message || "Unknown error"));
           }
@@ -2178,88 +2177,91 @@
     };
 
     const load = async () => {
-  try {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const defaultStart = formatDateLocal(firstDayOfMonth);
-    const defaultEnd = formatDateLocal(now);
-    
-    const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
-    const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
+      try {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const defaultStart = formatDateLocal(firstDayOfMonth);
+        const defaultEnd = formatDateLocal(now);
+        
+        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
+        const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
 
-    if ($("bankingStartDate") && !$("bankingStartDate").value) {
-      $("bankingStartDate").value = defaultLastBanked;
-    }
-    if ($("lastBankedDate") && !$("lastBankedDate").value) {
-      $("lastBankedDate").value = defaultCurrentDay;
-    }
-    
-    if ($("startDate")) {
-      $("startDate").value = defaultStart;
-      localStorage.setItem("dash_startDate", defaultStart);
-    }
-    if ($("endDate")) {
-      $("endDate").value = defaultEnd;
-      localStorage.setItem("dash_endDate", defaultEnd);
-    }
-
-    if ($("entryDate") && !$("entryDate").value) {
-      $("entryDate").value = formatDateLocal(now);
-      App.onEntryDateChange();
-    }
-
-    initWeekButtons();
-    initMonthlyButtonsBar();
-    App.switchTab(0);
-
-    const loaderEl = $("loading");
-    if (loaderEl) {
-      loaderEl.innerText = "Loading dashboard data...";
-      loaderEl.classList.remove("hidden");
-    }
-
-    const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
-    
-    const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
-    const fullJson = await fullRes.json();
-
-    let fullRecords = [];
-    let bankedRecords = [];
-    
-    const sourceTabs = fullJson.tabs || fullJson.sheetsData;
-
-    if (fullJson && sourceTabs) {
-      Object.keys(sourceTabs).forEach(tabName => {
-        const tabRows = sourceTabs[tabName];
-        if (Array.isArray(tabRows) && tabRows.length > 0) {
-          if (tabName.toLowerCase() === "banked") {
-            bankedRecords = processBankedRows(tabRows);
-          } else {
-            fullRecords = fullRecords.concat(processRows(tabRows));
-          }
+        if ($("bankingStartDate") && !$("bankingStartDate").value) {
+          $("bankingStartDate").value = defaultLastBanked;
         }
-      });
-    }
+        if ($("lastBankedDate") && !$("lastBankedDate").value) {
+          $("lastBankedDate").value = defaultCurrentDay;
+        }
+        
+        if ($("startDate")) {
+          $("startDate").value = defaultStart;
+          localStorage.setItem("dash_startDate", defaultStart);
+        }
+        if ($("endDate")) {
+          $("endDate").value = defaultEnd;
+          localStorage.setItem("dash_endDate", defaultEnd);
+        }
 
-    if (fullRecords.length > 0) {
-      fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-      STATE.raw = fullRecords;
-    }
+        if ($("entryDate") && !$("entryDate").value) {
+          $("entryDate").value = formatDateLocal(now);
+          DashboardApp.onEntryDateChange();
+        }
 
-    if (bankedRecords.length > 0) {
-      STATE.banked = bankedRecords;
-    }
+        initWeekButtons();
+        initMonthlyButtonsBar();
+        DashboardApp.switchTab(0);
 
-    STATE.isFullLoaded = true;
+        const loaderEl = $("loading");
+        if (loaderEl) {
+          loaderEl.innerText = "Loading dashboard data...";
+          loaderEl.classList.remove("hidden");
+        }
 
-    if (loaderEl) loaderEl.classList.add("hidden");
-    App.applyRange();
-  } catch (err) {
-    console.error("Failed to load dashboard data:", err);
-    const loaderEl = $("loading");
-    if (loaderEl) loaderEl.classList.add("hidden");
-    toast("Failed to load live data.");
-    App.applyRange();
-  }
-};
+        const selectedYear = (typeof STATE !== 'undefined' && STATE.currentYear) ? STATE.currentYear : new Date().getFullYear();
+        
+        const fullRes = await fetch(`${CONFIG.URL}?year=${selectedYear}`, { cache: "no-store" });
+        const fullJson = await fullRes.json();
+
+        let fullRecords = [];
+        let bankedRecords = [];
+        
+        const sourceTabs = fullJson.tabs || fullJson.sheetsData;
+
+        if (fullJson && sourceTabs) {
+          Object.keys(sourceTabs).forEach(tabName => {
+            const tabRows = sourceTabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              if (tabName.toLowerCase() === "banked") {
+                bankedRecords = processBankedRows(tabRows);
+              } else {
+                fullRecords = fullRecords.concat(processRows(tabRows));
+              }
+            }
+          });
+        }
+
+        if (fullRecords.length > 0) {
+          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+          STATE.raw = fullRecords;
+        }
+
+        if (bankedRecords.length > 0) {
+          STATE.banked = bankedRecords;
+        }
+
+        STATE.isFullLoaded = true;
+
+        if (loaderEl) loaderEl.classList.add("hidden");
+        DashboardApp.applyRange();
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+        const loaderEl = $("loading");
+        if (loaderEl) loaderEl.classList.add("hidden");
+        toast("Failed to load live data.");
+        DashboardApp.applyRange();
+      }
+    };
+  </script>
+</body>
+</html>
