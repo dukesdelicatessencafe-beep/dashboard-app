@@ -8,7 +8,7 @@
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  window.App = window.App || {
+  window.DashboardApp = window.DashboardApp || {
     login: function() {
       console.log("App is still loading, please wait...");
       alert("Dashboard is still loading in the background. Please wait a moment and try again.");
@@ -459,7 +459,7 @@
   <div id="login">
     <h2 style="color: var(--primary-gold);">Secure Dashboard Login</h2>
     <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') App.login()">
-    <button onclick="App.login()">Login Securely</button>
+    <button onclick="DashboardApp.login()">Login Securely</button>
   </div>
 
   <!-- NAVIGATION -->
@@ -1788,7 +1788,7 @@
       App.renderAccountingData();
     }
 
-    const App = {
+    const DashboardApp = {
       login: async () => {
         const passwordVal = $("pass").value;
         if (!passwordVal) {
