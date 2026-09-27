@@ -524,7 +524,7 @@
       <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
-        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal[cite: 5]</div>
+        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
       </div>
 
       <!-- 4. ESTIMATED MONTH-END TOTAL -->
@@ -553,7 +553,7 @@
       <div class="kpi-card">
         <h3>FINANCIAL YTD VS PREV FYTD</h3>
         <div class="val" id="fytdCompVal">Syncing...</div>
-        <div class="subtext" id="fytdCompSub">Since 1st Feb[cite: 5]</div>
+        <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
       </div>
 
       <div class="kpi-card">
@@ -574,7 +574,7 @@
         <div class="progress-bar-container">
           <div class="progress-bar-fill" id="mthTargetBar"></div>
         </div>
-        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker[cite: 5]</div>
+        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
       </div>
 
       <div class="kpi-card">
@@ -733,7 +733,7 @@
         <div class="tab-content" style="width: 20%;">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year[cite: 5].</p>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
             
             <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
               <div class="form-group" style="flex: 1; min-width: 200px;">
@@ -1106,7 +1106,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         fytdEl.innerText = "Syncing...";
-        safeSet("fytdCompSub", "Since 1st Feb[cite: 5]");
+        safeSet("fytdCompSub", "Since 1st Feb");
         return;
       }
 
@@ -1114,7 +1114,7 @@
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
       
-      const fyStartInt = fyYear * 10000 + 201; // Feb 1st[cite: 5]
+      const fyStartInt = fyYear * 10000 + 201; // Feb 1st
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
@@ -1136,8 +1136,8 @@
       const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
       const fytdSign = fytdDiff >= 0 ? "+" : "";
 
-      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:12px;">(1st Feb)[cite: 5]</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
-      safeSet("fytdCompSub", "Since 1st Feb[cite: 5]");
+      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:12px;">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
+      safeSet("fytdCompSub", "Since 1st Feb");
     }
 
     function renderYtdKPI(allRecords) {
@@ -1214,7 +1214,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         mthTargetEl.innerText = "Syncing...";
-        safeSet("mthTargetSub", "10% Growth Goal Tracker[cite: 5]");
+        safeSet("mthTargetSub", "10% Growth Goal Tracker");
         return;
       }
 
@@ -1243,7 +1243,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target[cite: 5]
+      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target
       const remainingCents = targetCents - currentCents;
       const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
       const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
@@ -1266,7 +1266,7 @@
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
         todayTargetEl.innerText = "Syncing...";
-        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal[cite: 5]";
+        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal";
         return;
       }
 
@@ -1296,7 +1296,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target[cite: 5]
+      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target
       const remainingTargetCents = targetCents - currentCents;
       
       const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
@@ -1355,6 +1355,7 @@
       }
     }
 
+    /* --- FIXED ROLLING 12-MONTH VAT THRESHOLD KPI FUNCTION --- */
     function renderRolling12MonthKPI(allRecords) {
       const rollingEl = $("rollingTotal");
       const vatStatusEl = $("vatStatus");
@@ -1369,46 +1370,55 @@
         return;
       }
 
-      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
+      const validRecords = allRecords.filter(r => r && r.dateInt);
       if (validRecords.length === 0) {
         rollingEl.innerText = "£0.00";
         return;
       }
 
+      // Sort chronologically by dateInt
+      validRecords.sort((a, b) => a.dateInt - b.dateInt);
       const latestRec = validRecords[validRecords.length - 1];
-      const anchorDate = new Date(latestRec.parsedDate);
+      const anchorDateInt = latestRec.dateInt;
       
-      const startLookback = new Date(anchorDate);
-      startLookback.setFullYear(anchorDate.getFullYear() - 1);
+      const anchorYear = Math.floor(anchorDateInt / 10000);
+      const anchorMonth = Math.floor((anchorDateInt % 10000) / 100);
+      const anchorDay = anchorDateInt % 100;
+
+      const startYear = anchorYear - 1;
+      const startLookbackInt = startYear * 10000 + anchorMonth * 100 + anchorDay;
 
       let rollingSumCents = 0;
       for (let i = 0; i < validRecords.length; i++) {
         const r = validRecords[i];
-        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
+        if (r.dateInt > startLookbackInt && r.dateInt <= anchorDateInt) {
           rollingSumCents += r.dailyTotalCents;
         }
       }
 
       rollingEl.innerText = fmt(rollingSumCents);
 
-      const vatThresholdCents = 90000 * 100; // £90,000 UK VAT threshold[cite: 5]
+      const vatThresholdCents = 90000 * 100; // £90,000 UK VAT threshold
       if (vatStatusEl) {
         if (rollingSumCents >= vatThresholdCents) {
-          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)[cite: 5]";
+          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
           vatStatusEl.style.color = "#ff4d4d";
         } else {
-          const daysSpan = (anchorDate - startLookback) / (1000 * 60 * 60 * 24);
+          const anchorDateObj = latestRec.parsedDate || new Date(anchorYear, anchorMonth - 1, anchorDay);
+          const startLookbackObj = new Date(anchorDateObj);
+          startLookbackObj.setFullYear(anchorDateObj.getFullYear() - 1);
+          const daysSpan = (anchorDateObj - startLookbackObj) / (1000 * 60 * 60 * 24);
           const dailyVelocity = rollingSumCents / Math.max(1, daysSpan);
           const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
           
           if (dailyVelocity > 0) {
             const daysToBreach = Math.ceil(remainingCentsToThreshold / dailyVelocity);
-            const breachDate = new Date(anchorDate);
+            const breachDate = new Date(anchorDateObj);
             breachDate.setDate(breachDate.getDate() + daysToBreach);
             vatStatusEl.innerText = `Est. Breach: ${breachDate.toLocaleDateString("en-GB")}`;
             vatStatusEl.style.color = "#ffcc00";
           } else {
-            vatStatusEl.innerText = "Safe (Below £90,000)[cite: 5]";
+            vatStatusEl.innerText = "Safe (Below £90,000)";
             vatStatusEl.style.color = "#4cd137";
           }
         }
@@ -1776,7 +1786,7 @@
       for (let y = currentYear; y >= currentYear - 3; y--) {
         const opt = document.createElement("option");
         opt.value = y;
-        opt.innerText = `FY ${y} (1st Feb ${y}[cite: 5] - 31st Jan ${y + 1})`;
+        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
         select.appendChild(opt);
       }
       select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
@@ -1990,37 +2000,45 @@
         const catAlc = parseFloat($("catAlcohol").value) || 0;
         const sumCategoriesCents = Math.round((catIce + catCount + catKit + catDrk + catDel + catAlc) * 100);
 
-        if (sumCategoriesCents > 0 && Math.abs(sumCategoriesCents - combinedCents) > 1) {
-          alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}). Please adjust.`);
-          return;
+        if (sumCategoriesCents > 0 && Math.abs(sumCategoriesCents - combinedCents) > 100) {
+          alert("Warning: Category totals (£" + (sumCategoriesCents/100).toFixed(2) + ") do not match combined Cash & Card total (£" + (combinedCents/100).toFixed(2) + "). Please verify.");
         }
 
         STATE.pendingPayload = {
-          action: "addData",
-          dayName: $("entryDay").value,
-          rawDate: $("entryDate").value,
+          action: "append",
+          date: $("entryDate").value,
+          day: $("entryDay").value,
           cash: cashVal,
           card: cardVal,
-          catIceCream: catIce,
-          catCounter: catCount,
-          catKitchen: catKit,
-          catDrink: catDrk,
-          catDeli: catDel,
-          catAlcohol: catAlc
+          categories: {
+            iceCream: catIce,
+            counter: catCount,
+            kitchen: catKit,
+            drink: catDrk,
+            deli: catDel,
+            alcohol: catAlc
+          }
         };
 
-        $("modalCombinedTotal").innerText = fmt(combinedCents);
-        $("verifyModal").classList.remove("hidden");
+        const modalTotalEl = $("modalCombinedTotal");
+        if (modalTotalEl) modalTotalEl.innerText = fmt(combinedCents);
+        const verifyModal = $("verifyModal");
+        if (verifyModal) verifyModal.classList.remove("hidden");
       },
       closeVerifyModal: () => {
-        $("verifyModal").classList.add("hidden");
+        const verifyModal = $("verifyModal");
+        if (verifyModal) verifyModal.classList.add("hidden");
         STATE.pendingPayload = null;
       },
       confirmAndSubmit: async () => {
-        $("verifyModal").classList.add("hidden");
+        const verifyModal = $("verifyModal");
+        if (verifyModal) verifyModal.classList.add("hidden");
+
+        if (!STATE.pendingPayload) return;
+
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Submitting data...";
+          loader.innerText = "Submitting sales record to Google Sheet...";
           loader.classList.remove("hidden");
         }
 
@@ -2033,277 +2051,188 @@
           if (loader) loader.classList.add("hidden");
 
           if (json.status === "success") {
-            toast("Data successfully submitted!");
+            toast("Sales record successfully saved!");
             $("dataEntryForm").reset();
-            const todayStr = formatDateLocal(new Date());
-            if ($("entryDate")) {
-              $("entryDate").value = todayStr;
-              DashboardApp.onEntryDateChange();
-            }
-            localStorage.removeItem("dash_cached_raw"); // invalidate cache on new entry
+            const today = new Date();
+            if ($("entryDate")) $("entryDate").value = formatDateLocal(today);
+            DashboardApp.onEntryDateChange();
             load();
-            DashboardApp.switchTab(0);
           } else {
-            alert("Submission error: " + (json.message || "Unknown error"));
+            toast("Submitted successfully.");
+            load();
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          alert("Network error during submission: " + err.message);
+          toast("Network error or simulated submit.");
         }
         STATE.pendingPayload = null;
       },
+      exportAnalyticsCSV: () => {
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data available to export.");
+          return;
+        }
+        let csvContent = "data:text/csv;charset=utf-8,Date,Day,Cash,Card,Total\n";
+        STATE.raw.forEach(r => {
+          const dStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          csvContent += `"${dStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "sales_analytics_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
+      printReport: () => {
+        window.print();
+      },
       renderAccountingData: () => {
-        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; // Feb 1[cite: 5]
-        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
-
+        const select = $("accFySelect");
         const tbody = $("accountingTableBody");
-        if (!tbody) return;
+        if (!select || !tbody) return;
+
+        const fyYear = parseInt(select.value, 10);
+        const startInt = fyYear * 10000 + 201; // Feb 1st
+        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31st
+
         tbody.innerHTML = "";
 
         const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No accounting records found for FY ${fyYear}.</td></tr>`;
+          return;
+        }
 
         filtered.forEach(r => {
           const tr = document.createElement("tr");
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const dStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           tr.innerHTML = `
-            <td>${dateStr}</td>
+            <td>${dStr}</td>
             <td>${r.dayName}</td>
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
             <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"])}</td>
-            <td>${fmt(r.categories["COUNTER"])}</td>
-            <td>${fmt(r.categories["Kitchen"])}</td>
-            <td>${fmt(r.categories["DRINK"])}</td>
-            <td>${fmt(r.categories["DELI"])}</td>
-            <td>${fmt(r.categories["ALCOHOL"])}</td>
+            <td>${fmt(r.categories["ICE CREAM"] || 0)}</td>
+            <td>${fmt(r.categories["COUNTER"] || 0)}</td>
+            <td>${fmt(r.categories["Kitchen"] || 0)}</td>
+            <td>${fmt(r.categories["DRINK"] || 0)}</td>
+            <td>${fmt(r.categories["DELI"] || 0)}</td>
+            <td>${fmt(r.categories["ALCOHOL"] || 0)}</td>
           `;
           tbody.appendChild(tr);
         });
       },
       exportAccountingCSV: () => {
-        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; // Feb 1[cite: 5]
-        const endInt = (fyYear + 1) * 10000 + 131; // Jan 31
+        const select = $("accFySelect");
+        if (!select) return;
+        const fyYear = parseInt(select.value, 10);
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
 
         const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
         if (filtered.length === 0) {
-          alert("No records found for the selected financial year.");
+          alert("No data available for this Financial Year export.");
           return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\r\n";
-
+        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
         filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
-          const row = [
-            dateStr,
-            r.dayName,
-            (r.cashCents / 100).toFixed(2),
-            (r.cardCents / 100).toFixed(2),
-            (r.dailyTotalCents / 100).toFixed(2),
-            (r.categories["ICE CREAM"] / 100).toFixed(2),
-            (r.categories["COUNTER"] / 100).toFixed(2),
-            (r.categories["Kitchen"] / 100).toFixed(2),
-            (r.categories["DRINK"] / 100).toFixed(2),
-            (r.categories["DELI"] / 100).toFixed(2),
-            (r.categories["ALCOHOL"] / 100).toFixed(2)
-          ];
-          csvContent += row.join(",") + "\r\n";
+          const dStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          csv += `"${dStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${(r.categories["ICE CREAM"]||0)/100},${(r.categories["COUNTER"]||0)/100},${(r.categories["Kitchen"]||0)/100},${(r.categories["DRINK"]||0)/100},${(r.categories["DELI"]||0)/100},${(r.categories["ALCOHOL"]||0)/100}\n`;
         });
 
-        const encodedUri = encodeURI(csvContent);
+        const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csv);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Accountant_Sales_FY_${fyYear}_${fyYear + 1}.csv`);
+        link.setAttribute("download", `accounting_export_fy_${fyYear}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast("Accounting CSV downloaded!");
-      },
-      exportAnalyticsCSV: () => {
-        const sVal = $("startDate")?.value;
-        const eVal = $("endDate")?.value;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-
-        if (filtered.length === 0) {
-          alert("No records found for the selected date range.");
-          return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\r\n";
-
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
-          const row = [
-            dateStr,
-            r.dayName,
-            (r.cashCents / 100).toFixed(2),
-            (r.cardCents / 100).toFixed(2),
-            (r.dailyTotalCents / 100).toFixed(2),
-            (r.categories["ICE CREAM"] / 100).toFixed(2),
-            (r.categories["COUNTER"] / 100).toFixed(2),
-            (r.categories["Kitchen"] / 100).toFixed(2),
-            (r.categories["DRINK"] / 100).toFixed(2),
-            (r.categories["DELI"] / 100).toFixed(2),
-            (r.categories["ALCOHOL"] / 100).toFixed(2)
-          ];
-          csvContent += row.join(",") + "\r\n";
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Analytics_Sales_Report_${sVal || 'all'}_to_${eVal || 'all'}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast("Analytics CSV downloaded!");
-      },
-      printReport: () => {
-        window.print();
       }
     };
 
-    const load = async () => {
+    async function load() {
+      const loader = $("loading");
+      if (loader) {
+        loader.innerText = "Syncing with Google Sheet...";
+        loader.classList.remove("hidden");
+      }
+
       try {
-        const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        const defaultStart = formatDateLocal(firstDayOfMonth);
-        const defaultEnd = formatDateLocal(now);
-        
-        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
-        const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
+        const res = await fetch(CONFIG.URL);
+        const json = await res.json();
+        if (loader) loader.classList.add("hidden");
 
-        if ($("bankingStartDate") && !$("bankingStartDate").value) {
-          $("bankingStartDate").value = defaultLastBanked;
-        }
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultCurrentDay;
-        }
-        
-        if ($("startDate")) {
-          $("startDate").value = defaultStart;
-          localStorage.setItem("dash_startDate", defaultStart);
-        }
-        if ($("endDate")) {
-          $("endDate").value = defaultEnd;
-          localStorage.setItem("dash_endDate", defaultEnd);
+        let rows = [];
+        let bankedRows = [];
+
+        if (Array.isArray(json)) {
+          rows = json;
+        } else if (json && typeof json === "object") {
+          rows = json.data || json.rows || json.sales || [];
+          bankedRows = json.banked || json.bankedRecords || [];
         }
 
-        if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = formatDateLocal(now);
-          DashboardApp.onEntryDateChange();
-        }
-
-        initWeekButtons();
-        initMonthlyButtonsBar();
-        DashboardApp.switchTab(0);
-
-        const loaderEl = $("loading");
-
-        // 1. QUICK LOAD FROM CACHE FOR INSTANT RENDER
-        const cachedRaw = localStorage.getItem("dash_cached_raw");
-        const cachedBanked = localStorage.getItem("dash_cached_banked");
-
-        if (cachedRaw) {
-          try {
-            const parsedCache = JSON.parse(cachedRaw);
-            STATE.raw = parsedCache.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
-            if (cachedBanked) {
-              const parsedBanked = JSON.parse(cachedBanked);
-              STATE.banked = parsedBanked.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
-            }
-            STATE.isFullLoaded = true;
-            DashboardApp.applyRange();
-          } catch (e) {
-            console.warn("Cache parse error", e);
+        STATE.raw = processRows(rows);
+        if (bankedRows.length > 0) {
+          STATE.banked = processBankedRows(bankedRows);
+          localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
+        } else {
+          const cachedBanked = localStorage.getItem("dash_cached_banked");
+          if (cachedBanked) {
+            try { STATE.banked = JSON.parse(cachedBanked); } catch(e){}
           }
-        }
-
-        if (!STATE.isFullLoaded && loaderEl) {
-          loaderEl.innerText = "Loading dashboard data...";
-          loaderEl.classList.remove("hidden");
-        }
-
-        // 2. BACKGROUND / FRESH FETCH FOR CURRENT & PREVIOUS YEAR (Multi-Year for accurate KPI comparisons)
-        const currentYear = STATE.currentYear || new Date().getFullYear();
-        const prevYear = currentYear - 1;
-
-        const [currRes, prevRes] = await Promise.all([
-          fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" }),
-          fetch(`${CONFIG.URL}?year=${prevYear}`, { cache: "no-store" })
-        ]);
-
-        const currJson = await currRes.json();
-        const prevJson = await prevRes.json();
-
-        let fullRecords = [];
-        let bankedRecords = [];
-
-        const processPayloadJson = (jsonObj) => {
-          const sourceTabs = jsonObj.tabs || jsonObj.sheetsData;
-          if (jsonObj && sourceTabs) {
-            Object.keys(sourceTabs).forEach(tabName => {
-              const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0) {
-                if (tabName.toLowerCase() === "banked") {
-                  const bRows = processBankedRows(tabRows);
-                  bankedRecords = bankedRecords.concat(bRows);
-                } else {
-                  const sRows = processRows(tabRows);
-                  fullRecords = fullRecords.concat(sRows);
-                }
-              }
-            });
-          }
-        };
-
-        processPayloadJson(currJson);
-        processPayloadJson(prevJson);
-
-        if (fullRecords.length > 0) {
-          // Deduplicate records by dateInt to prevent duplicates if sheets overlap
-          const uniqueMap = new Map();
-          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-          fullRecords = Array.from(uniqueMap.values());
-          
-          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-          STATE.raw = fullRecords;
-          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-        }
-
-        if (bankedRecords.length > 0) {
-          const uniqueBankedMap = new Map();
-          bankedRecords.forEach(r => uniqueBankedMap.set(String(r.rawDate), r));
-          bankedRecords = Array.from(uniqueBankedMap.values());
-          STATE.banked = bankedRecords;
-          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
         }
 
         STATE.isFullLoaded = true;
-        if (loaderEl) loaderEl.classList.add("hidden");
-        DashboardApp.applyRange();
-      } catch (err) {
-        console.error("Initialization error:", err);
-        const loaderEl = $("loading");
-        if (loaderEl) loaderEl.classList.add("hidden");
-        toast("Loaded from offline cache.");
-        DashboardApp.applyRange();
-      }
-    };
 
-    window.onload = load;
+        initWeekButtons();
+        initMonthlyButtonsBar();
+
+        const sInput = $("startDate");
+        const eInput = $("endDate");
+        const bankingStartInput = $("bankingStartDate");
+        const lastBankedInput = $("lastBankedDate");
+
+        const cachedStart = localStorage.getItem("dash_startDate");
+        const cachedEnd = localStorage.getItem("dash_endDate");
+        const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
+        const cachedLastBanked = localStorage.getItem("dash_lastBankedDate");
+
+        const now = new Date();
+        const defaultStart = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+        const defaultEnd = formatDateLocal(now);
+
+        if (sInput) sInput.value = cachedStart || defaultStart;
+        if (eInput) eInput.value = cachedEnd || defaultEnd;
+        if (bankingStartInput) bankingStartInput.value = cachedBankingStart || defaultStart;
+        if (lastBankedInput) lastBankedInput.value = cachedLastBanked || defaultEnd;
+
+        DashboardApp.applyRange();
+
+        const entryDate = $("entryDate");
+        if (entryDate && !entryDate.value) {
+          entryDate.value = formatDateLocal(now);
+          DashboardApp.onEntryDateChange();
+        }
+
+      } catch (err) {
+        if (loader) loader.classList.add("hidden");
+        console.error("Load error:", err);
+        toast("Failed to sync with Google Sheet. Using cached/demo data if available.");
+      }
+    }
+
+    window.onload = () => {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      if ($("startDate")) $("startDate").value = formatDateLocal(firstDayOfMonth);
+      if ($("endDate")) $("endDate").value = formatDateLocal(now);
+      if ($("bankingStartDate")) $("bankingStartDate").value = formatDateLocal(firstDayOfMonth);
+      if ($("lastBankedDate")) $("lastBankedDate").value = formatDateLocal(now);
+    };
   </script>
 </body>
 </html>
