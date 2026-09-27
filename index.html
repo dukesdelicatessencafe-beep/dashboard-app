@@ -66,7 +66,7 @@
       border: 1px solid var(--primary-gold);
       color: #fff;
       border-radius: 4px;
-      font-size: 16px; /* Prevents iOS zoom on focus */
+      font-size: 16px;
     }
 
     button {
@@ -78,7 +78,7 @@
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.2s;
-      min-height: 40px; /* Touch target optimization */
+      min-height: 40px;
     }
 
     button:hover {
@@ -260,7 +260,6 @@
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
-      transition: height 0.3s ease; /* Smooth height transition when scaling to last UI object */
     }
 
     #tabs {
@@ -447,7 +446,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
-    /* LAPTOP / DESKTOP MEDIA QUERY ENHANCEMENTS (min-width: 1024px) */
     @media (min-width: 1024px) {
       body {
         max-width: 1400px;
@@ -461,12 +459,8 @@
         flex: 0 1 auto;
         padding: 10px 20px;
       }
-      .controls-top-row {
-        width: 100%;
-      }
     }
 
-    /* OPTIMIZED PRINT & PDF EXPORT STYLING */
     @media print {
       @page {
         size: A4 portrait;
@@ -481,13 +475,9 @@
       #nav, .controls, #verifyModal, #loading, #toast, button {
         display: none !important;
       }
-      
-      .chart-container, 
-      #barChart, 
-      #salesChart {
+      .chart-container, #barChart, #salesChart {
         display: none !important;
       }
-
       #tabs {
         display: block !important;
         width: 100% !important;
@@ -501,24 +491,6 @@
       }
       .tab-content:not(:nth-child(2)) {
         display: none !important;
-      }
-      .table-responsive {
-        overflow: visible !important;
-        border: none !important;
-      }
-      table {
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #ccc !important;
-        page-break-inside: auto;
-      }
-      table th {
-        background: #f1f1f1 !important;
-        color: #000000 !important;
-        border-bottom: 2px solid #999 !important;
-      }
-      table td {
-        border-bottom: 1px solid #ddd !important;
       }
     }
   </style>
@@ -564,45 +536,40 @@
 
     <!-- KPI SUMMARY HEADER -->
     <div id="kpiSection" class="kpi-row">
-      <!-- 1. BANKING CONSOLIDATION -->
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
         <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The last day that was banked">
+            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;" title="Current system date (locked to today)">
+            <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
           </div>
           <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
         </div>
       </div>
 
-      <!-- 2. DATE RANGE TOTAL VALUE -->
       <div class="kpi-card">
         <h3>DATE RANGE TOTAL VALUE</h3>
         <div class="val" id="rangeTotalVal">Syncing...</div>
         <div class="subtext" id="rangeSpanSub">Syncing...</div>
       </div>
 
-      <!-- 3. TODAY TARGET -->
       <div class="kpi-card">
         <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
         <div class="val" id="todayTargetVal">Syncing...</div>
         <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
       </div>
 
-      <!-- 4. ESTIMATED MONTH-END TOTAL -->
       <div class="kpi-card" style="border-left-color: var(--primary-gold);">
         <h3>ESTIMATED MONTH-END TOTAL</h3>
         <div class="val" id="projectedMonthVal">Syncing...</div>
         <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
       </div>
 
-      <!-- 5. ROLLING 12-MONTH TOTAL -->
       <div class="kpi-card">
         <h3>ROLLING 12-MONTH TOTAL</h3>
         <div class="val" id="rollingTotal">Syncing...</div>
@@ -612,7 +579,6 @@
         <div class="subtext" id="vatStatus">Loading history...</div>
       </div>
 
-      <!-- Remaining KPIs -->
       <div class="kpi-card" style="border-left-color: var(--accent-gold);">
         <h3>CASH VS CARD SPLIT</h3>
         <div class="val" id="cashCardVal">Syncing...</div>
@@ -698,7 +664,6 @@
             <canvas id="salesChart"></canvas>
           </div>
 
-          <!-- Cash Card Breakdown Summary Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
           <div class="table-responsive">
             <table>
@@ -713,7 +678,6 @@
             </table>
           </div>
 
-          <!-- Category Breakdown Text Table -->
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
           <div class="table-responsive">
             <table>
@@ -1180,7 +1144,7 @@
       const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
       const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
       
-      const fyStartInt = fyYear * 10000 + 201; // Feb 1st
+      const fyStartInt = fyYear * 10000 + 201; 
       const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
 
       const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
@@ -1309,7 +1273,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target
+      const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingCents = targetCents - currentCents;
       const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
       const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
@@ -1362,7 +1326,7 @@
         }
       });
 
-      const targetCents = Math.round(prevMonthFullCents * 1.10); // 10% target
+      const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingTargetCents = targetCents - currentCents;
       
       const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
@@ -1455,7 +1419,7 @@
 
       rollingEl.innerText = fmt(rollingSumCents);
 
-      const vatThresholdCents = 90000 * 100; // £90,000 UK VAT threshold
+      const vatThresholdCents = 90000 * 100;
       if (vatStatusEl) {
         if (rollingSumCents >= vatThresholdCents) {
           vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
@@ -1860,21 +1824,6 @@
     }
 
     const DashboardApp = {
-      scalePageToLastObject: (index) => {
-        const tabs = document.querySelectorAll('.tab-content');
-        if (!tabs[index]) return;
-        const currentTab = tabs[index];
-        // Find children that are not hidden
-        const children = Array.from(currentTab.children).filter(el => !el.classList.contains('hidden'));
-        if (children.length === 0) return;
-        // Find the last UI object in the individual page
-        const lastEl = children[children.length - 1];
-        const lastElBottom = lastEl.offsetTop + lastEl.offsetHeight;
-        const wrapper = document.getElementById('tabsWrapper');
-        if (wrapper) {
-          wrapper.style.height = (lastElBottom + 20) + 'px';
-        }
-      },
       login: async () => {
         const passwordVal = $("pass").value;
         if (!passwordVal) {
@@ -1949,9 +1898,6 @@
             sharedControls.classList.add("hidden");
           }
         }
-
-        // Dynamically scale current page/tab to its last UI object
-        setTimeout(() => DashboardApp.scalePageToLastObject(index), 50);
 
         if (index === 3) {
           initAccountingFySelect();
@@ -2052,7 +1998,6 @@
         if ($("endDate")) $("endDate").value = formatDateLocal(now);
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-        
         initWeekButtons(now.getFullYear(), now.getMonth());
         
         DashboardApp.applyRange();
@@ -2130,55 +2075,45 @@
           if (loader) loader.classList.add("hidden");
 
           if (json.status === "success") {
-            toast("Data successfully added to spreadsheet!");
+            toast("Data successfully submitted!");
             $("dataEntryForm").reset();
-            $("entryCash").value = "0.00";
-            $("entryCard").value = "0.00";
-            ["catIceCream", "catCounter", "catKitchen", "catDrink", "catDeli", "catAlcohol"].forEach(id => {
-              if ($(id))$(id).value = "0.00";
-            });
+            const todayStr = formatDateLocal(new Date());
+            if ($("entryDate")) {
+              $("entryDate").value = todayStr;
+              DashboardApp.onEntryDateChange();
+            }
+            localStorage.removeItem("dash_cached_raw");
             load();
+            DashboardApp.switchTab(0);
           } else {
-            toast("Error submitting data: " + (json.message || "Unknown error"));
+            alert("Submission error: " + (json.message || "Unknown error"));
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          toast("Network error during submission.");
+          alert("Network error during submission: " + err.message);
         }
+        STATE.pendingPayload = null;
       },
       renderAccountingData: () => {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201; 
+        const endInt = (fyYear + 1) * 10000 + 131; 
+
         const tbody = $("accountingTableBody");
         if (!tbody) return;
         tbody.innerHTML = "";
 
-        const select = $("accFySelect");
-        if (!select || !STATE.raw || STATE.raw.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No accounting data available.</td></tr>`;
-          return;
-        }
-
-        const fyYear = parseInt(select.value, 10);
-        const fyStartInt = fyYear * 10000 + 201; // Feb 1st
-        const fyEndInt = (fyYear + 1) * 10000 + 131; // Jan 31st
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-
-        if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear} - ${fyYear + 1}.</td></tr>`;
-          return;
-        }
-
-        filtered.sort((a, b) => a.dateInt - b.dateInt);
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
 
         filtered.forEach(r => {
           const tr = document.createElement("tr");
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           tr.innerHTML = `
             <td>${dateStr}</td>
             <td>${r.dayName}</td>
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
-            <td style="font-weight: bold; color: var(--accent-gold);">${fmt(r.dailyTotalCents)}</td>
+            <td>${fmt(r.dailyTotalCents)}</td>
             <td>${fmt(r.categories["ICE CREAM"])}</td>
             <td>${fmt(r.categories["COUNTER"])}</td>
             <td>${fmt(r.categories["Kitchen"])}</td>
@@ -2190,111 +2125,223 @@
         });
       },
       exportAccountingCSV: () => {
-        const select = $("accFySelect");
-        if (!select || !STATE.raw || STATE.raw.length === 0) {
-          alert("No data available to export.");
-          return;
-        }
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201; 
+        const endInt = (fyYear + 1) * 10000 + 131; 
 
-        const fyYear = parseInt(select.value, 10);
-        const fyStartInt = fyYear * 10000 + 201;
-        const fyEndInt = (fyYear + 1) * 10000 + 131;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
         if (filtered.length === 0) {
           alert("No records found for the selected financial year.");
           return;
         }
 
-        let csv = "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\n";
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\r\n";
+
         filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const row = [
+            dateStr,
+            r.dayName,
+            (r.cashCents / 100).toFixed(2),
+            (r.cardCents / 100).toFixed(2),
+            (r.dailyTotalCents / 100).toFixed(2),
+            (r.categories["ICE CREAM"] / 100).toFixed(2),
+            (r.categories["COUNTER"] / 100).toFixed(2),
+            (r.categories["Kitchen"] / 100).toFixed(2),
+            (r.categories["DRINK"] / 100).toFixed(2),
+            (r.categories["DELI"] / 100).toFixed(2),
+            (r.categories["ALCOHOL"] / 100).toFixed(2)
+          ];
+          csvContent += row.join(",") + "\r\n";
         });
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Accounting_FY_${fyYear}_${fyYear + 1}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast("Accounting CSV successfully downloaded!");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Accountant_Sales_FY_${fyYear}_${fyYear + 1}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("Accounting CSV downloaded!");
       },
       exportAnalyticsCSV: () => {
-        if (!STATE.raw || STATE.raw.length === 0) {
-          alert("No data available to export.");
+        const sVal = $("startDate")?.value;
+        const eVal = $("endDate")?.value;
+
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+
+        if (filtered.length === 0) {
+          alert("No records found for the selected date range.");
           return;
         }
 
-        let csv = "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\n";
-        STATE.raw.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Date,Day,Cash (£),Card (£),Total (£),Ice Cream (£),Counter (£),Kitchen (£),Drink (£),Deli (£),Alcohol (£)\r\n";
+
+        filtered.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const row = [
+            dateStr,
+            r.dayName,
+            (r.cashCents / 100).toFixed(2),
+            (r.cardCents / 100).toFixed(2),
+            (r.dailyTotalCents / 100).toFixed(2),
+            (r.categories["ICE CREAM"] / 100).toFixed(2),
+            (r.categories["COUNTER"] / 100).toFixed(2),
+            (r.categories["Kitchen"] / 100).toFixed(2),
+            (r.categories["DRINK"] / 100).toFixed(2),
+            (r.categories["DELI"] / 100).toFixed(2),
+            (r.categories["ALCOHOL"] / 100).toFixed(2)
+          ];
+          csvContent += row.join(",") + "\r\n";
         });
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Analytics_Full_Dataset.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast("Analytics CSV successfully downloaded!");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Analytics_Sales_Report_${sVal || 'all'}_to_${eVal || 'all'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("Analytics CSV downloaded!");
       },
       printReport: () => {
         window.print();
       }
     };
 
-    async function load() {
-      const loader = $("loading");
-      if (loader) {
-        loader.innerText = "Syncing dataset from Google Sheet...";
-        loader.classList.remove("hidden");
-      }
-
+    const load = async () => {
       try {
-        const res = await fetch(CONFIG.URL + "?action=getData");
-        const json = await res.json();
-        if (loader) loader.classList.add("hidden");
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const defaultStart = formatDateLocal(firstDayOfMonth);
+        const defaultEnd = formatDateLocal(now);
+        const todayStr = formatDateLocal(now);
+        
+        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || todayStr;
 
-        if (json.status === "success" || Array.isArray(json.data) || Array.isArray(json.rows)) {
-          const rows = json.data || json.rows || [];
-          STATE.raw = processRows(rows);
-          STATE.isFullLoaded = true;
-
-          const bankedRows = json.banked || json.bankedRows || [];
-          STATE.banked = processBankedRows(bankedRows);
-          renderBankedTable();
-
-          const now = new Date();
-          const savedStart = localStorage.getItem("dash_startDate");
-          const savedEnd = localStorage.getItem("dash_endDate");
-          const savedBankingStart = localStorage.getItem("dash_bankingStartDate");
-
-          const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-          if ($("startDate")) $("startDate").value = savedStart || formatDateLocal(firstDayOfMonth);
-          if ($("endDate")) $("endDate").value = savedEnd || formatDateLocal(now);
-          if ($("bankingStartDate")) $("bankingStartDate").value = savedBankingStart || formatDateLocal(firstDayOfMonth);
-          if ($("lastBankedDate")) $("lastBankedDate").value = formatDateLocal(now);
-
-          initMonthlyButtonsBar();
-          initWeekButtons(now.getFullYear(), now.getMonth());
-
-          DashboardApp.applyRange();
-          
-          // Initial scale of active tab
-          setTimeout(() => DashboardApp.scalePageToLastObject(0), 100);
-        } else {
-          toast("Failed to load dataset.");
+        if ($("bankingStartDate") && !$("bankingStartDate").value) {
+          $("bankingStartDate").value = defaultLastBanked;
         }
+        if ($("lastBankedDate")) {
+          $("lastBankedDate").value = todayStr;
+        }
+        
+        if ($("startDate")) {
+          $("startDate").value = defaultStart;
+          localStorage.setItem("dash_startDate", defaultStart);
+        }
+        if ($("endDate")) {
+          $("endDate").value = defaultEnd;
+          localStorage.setItem("dash_endDate", defaultEnd);
+        }
+
+        if ($("entryDate") && !$("entryDate").value) {
+          $("entryDate").value = todayStr;
+          DashboardApp.onEntryDateChange();
+        }
+
+        initWeekButtons(now.getFullYear(), now.getMonth());
+        initMonthlyButtonsBar();
+        DashboardApp.switchTab(0);
+
+        const loaderEl = $("loading");
+        const cachedRaw = localStorage.getItem("dash_cached_raw");
+        const cachedBanked = localStorage.getItem("dash_cached_banked");
+
+        if (cachedRaw) {
+          try {
+            const parsedCache = JSON.parse(cachedRaw);
+            STATE.raw = parsedCache.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
+            if (cachedBanked) {
+              const parsedBanked = JSON.parse(cachedBanked);
+              STATE.banked = parsedBanked.map(r => ({ ...r, parsedDate: r.parsedDate ? new Date(r.parsedDate) : null }));
+            }
+            STATE.isFullLoaded = true;
+            DashboardApp.applyRange();
+          } catch (e) {
+            console.warn("Cache parse error", e);
+          }
+        }
+
+        if (!STATE.isFullLoaded && loaderEl) {
+          loaderEl.innerText = "Loading dashboard data...";
+          loaderEl.classList.remove("hidden");
+        }
+
+        const currentYear = STATE.currentYear || new Date().getFullYear();
+        const prevYear = currentYear - 1;
+
+        const [currRes, prevRes] = await Promise.all([
+          fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" }),
+          fetch(`${CONFIG.URL}?year=${prevYear}`, { cache: "no-store" })
+        ]);
+
+        const currJson = await currRes.json();
+        const prevJson = await prevRes.json();
+
+        let fullRecords = [];
+        let bankedRecords = [];
+
+        const processPayloadJson = (jsonObj) => {
+          const sourceTabs = jsonObj.tabs || jsonObj.sheetsData;
+          if (jsonObj && sourceTabs) {
+            Object.keys(sourceTabs).forEach(tabName => {
+              const tabRows = sourceTabs[tabName];
+              if (Array.isArray(tabRows) && tabRows.length > 0) {
+                if (tabName.toLowerCase() === "banked") {
+                  const bRows = processBankedRows(tabRows);
+                  bankedRecords = bankedRecords.concat(bRows);
+                } else {
+                  const sRows = processRows(tabRows);
+                  fullRecords = fullRecords.concat(sRows);
+                }
+              }
+            });
+          }
+        };
+
+        processPayloadJson(currJson);
+        processPayloadJson(prevJson);
+
+        if (fullRecords.length > 0) {
+          const uniqueMap = new Map();
+          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
+          fullRecords = Array.from(uniqueMap.values());
+          
+          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+          STATE.raw = fullRecords;
+          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
+        }
+
+        if (bankedRecords.length > 0) {
+          const uniqueBankedMap = new Map();
+          bankedRecords.forEach(r => uniqueBankedMap.set(String(r.rawDate), r));
+          bankedRecords = Array.from(uniqueBankedMap.values());
+          STATE.banked = bankedRecords;
+          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
+        }
+
+        STATE.isFullLoaded = true;
+        if (loaderEl) loaderEl.classList.add("hidden");
+        DashboardApp.applyRange();
       } catch (err) {
-        if (loader) loader.classList.add("hidden");
-        toast("Network error loading dashboard data.");
+        console.error("Initialization error:", err);
+        const loaderEl = $("loading");
+        if (loaderEl) loaderEl.classList.add("hidden");
+        toast("Loaded from offline cache.");
+        DashboardApp.applyRange();
       }
-    }
+    };
+
+    window.onload = load;
   </script>
 </body>
 </html>
