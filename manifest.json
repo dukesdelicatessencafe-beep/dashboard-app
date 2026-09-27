@@ -6,5 +6,12 @@
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "orientation": "portrait-primary",
-  "scope": "./"
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./Logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
 }
