@@ -1758,22 +1758,22 @@
       });
     }
 
-    function initWeekButtons() {
+    function initWeekButtons(year, month) {
       const container = $("weekButtonsContainer");
       if (!container) return;
       container.innerHTML = "";
 
       const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth(); 
+      const targetYear = year !== undefined ? year : now.getFullYear();
+      const targetMonth = month !== undefined ? month : now.getMonth(); 
 
-      const firstDayOfMonth = new Date(year, month, 1);
-      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
+      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
 
       // Align to Monday-Sunday calendar weeks
       let dayOfWeek = firstDayOfMonth.getDay();
       let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-      let currentWeekStart = new Date(year, month, 1 - diffToMonday);
+      let currentWeekStart = new Date(targetYear, targetMonth, 1 - diffToMonday);
 
       let weekNum = 1;
 
@@ -1823,7 +1823,7 @@
 
       const currentYear = new Date().getFullYear();
 
-      months.forEach(m => {
+      months.forEach((m, idx) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'month-btn';
@@ -1833,12 +1833,15 @@
           document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
 
-          const daysInMonth = new Date(currentYear, parseInt(m.number, 10), 0).getDate();
+          const monthIndex = idx;
+          const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
           const startStr = `${currentYear}-${m.number}-01`;
           const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
 
           if ($("startDate")) $("startDate").value = startStr;
           if ($("endDate")) $("endDate").value = endStr;
+          
+          initWeekButtons(currentYear, monthIndex);
           DashboardApp.applyRange();
         });
 
@@ -2036,6 +2039,8 @@
         if ($("endDate")) $("endDate").value = formatDateLocal(now);
         
         document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+        
+        initWeekButtons(now.getFullYear(), now.getMonth());
         
         DashboardApp.applyRange();
         toast("Date range reset to current month");
@@ -2285,7 +2290,7 @@
           DashboardApp.onEntryDateChange();
         }
 
-        initWeekButtons();
+        initWeekButtons(now.getFullYear(), now.getMonth());
         initMonthlyButtonsBar();
         DashboardApp.switchTab(0);
 
