@@ -572,7 +572,7 @@
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;" title="The current day to consolidate up to">
+            <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;" title="Current system date (locked to today)">
           </div>
           <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ Mark as Banked</button>
         </div>
@@ -1949,12 +1949,14 @@
         const sVal = $("startDate")?.value;
         const eVal = $("endDate")?.value;
         const bankingStartVal = $("bankingStartDate")?.value;
-        const lastBankedVal = $("lastBankedDate")?.value;
+        
+        // Ensure current day is strictly current system date
+        const nowStr = formatDateLocal(new Date());
+        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
 
         if (sVal) localStorage.setItem("dash_startDate", sVal);
         if (eVal) localStorage.setItem("dash_endDate", eVal);
         if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
-        if (lastBankedVal) localStorage.setItem("dash_lastBankedDate", lastBankedVal);
 
         renderBankingKPI(STATE.raw);
 
@@ -2265,15 +2267,15 @@
         
         const defaultStart = formatDateLocal(firstDayOfMonth);
         const defaultEnd = formatDateLocal(now);
+        const todayStr = formatDateLocal(now);
         
-        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || formatDateLocal(now);
-        const defaultCurrentDay = localStorage.getItem("dash_lastBankedDate") || formatDateLocal(now);
+        const defaultLastBanked = localStorage.getItem("dash_bankingStartDate") || todayStr;
 
         if ($("bankingStartDate") && !$("bankingStartDate").value) {
           $("bankingStartDate").value = defaultLastBanked;
         }
-        if ($("lastBankedDate") && !$("lastBankedDate").value) {
-          $("lastBankedDate").value = defaultCurrentDay;
+        if ($("lastBankedDate")) {
+          $("lastBankedDate").value = todayStr; // Strictly locked to current date
         }
         
         if ($("startDate")) {
@@ -2286,7 +2288,7 @@
         }
 
         if ($("entryDate") && !$("entryDate").value) {
-          $("entryDate").value = formatDateLocal(now);
+          $("entryDate").value = todayStr;
           DashboardApp.onEntryDateChange();
         }
 
