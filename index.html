@@ -752,47 +752,39 @@
                 </div>
                 <div class="form-group">
                   <label for="entryDay">Day of Week</label>
-                  <select id="entryDay" required>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Sunday</option>
-                  </select>
+                  <input type="text" id="entryDay" readonly style="background: #2a2a2a; border: 1px solid #444; color: #aaa; cursor: not-allowed;" required>
                 </div>
                 <div class="form-group">
                   <label for="entryCash">Cash Total (£)</label>
-                  <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" required>
+                  <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
                 </div>
                 <div class="form-group">
                   <label for="entryCard">Card Total (£)</label>
-                  <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" required>
+                  <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
                 </div>
                 <div class="form-group">
                   <label for="catIceCream">Ice Cream (£)</label>
-                  <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
                 <div class="form-group">
                   <label for="catCounter">Counter (£)</label>
-                  <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
                 <div class="form-group">
                   <label for="catKitchen">Kitchen (£)</label>
-                  <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
                 <div class="form-group">
                   <label for="catDrink">Drink (£)</label>
-                  <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
                 <div class="form-group">
                   <label for="catDeli">Deli (£)</label>
-                  <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
                 <div class="form-group">
                   <label for="catAlcohol">Alcohol (£)</label>
-                  <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00">
+                  <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
                 </div>
               </div>
               <button type="submit" style="width: 100%; padding: 12px; font-size: 15px; margin-top: 5px;">Save & Submit to Spreadsheet</button>
