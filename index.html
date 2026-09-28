@@ -256,7 +256,7 @@
       color: #fff;
     }
 
-    /* Tabs Slider Container */
+    /* Tabs Slider Container (6 tabs now: 600%) */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -265,11 +265,11 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 500%;
+      width: 600%;
     }
 
     .tab-content {
-      width: 20%;
+      width: 16.6667%;
       box-sizing: border-box;
       padding: 0 2px;
     }
@@ -536,6 +536,7 @@
     <button id="navBtn-2" onclick="DashboardApp.switchTab(2)">SALES ENTRY</button>
     <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
     <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
+    <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -646,12 +647,12 @@
       </div>
     </div>
 
-    <!-- TABS CONTAINER -->
+    <!-- TABS CONTAINER (6 tabs: 600%) -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 500%;">
+      <div id="tabs" style="width: 600%;">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card" style="margin-bottom: 15px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
@@ -679,7 +680,7 @@
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content" style="width: 16.6667%;">
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
             <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
             <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
@@ -732,7 +733,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
@@ -784,7 +785,7 @@
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
@@ -823,7 +824,7 @@
         </div>
 
         <!-- TAB 4: BANKED -->
-        <div class="tab-content" style="width: 20%;">
+        <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
@@ -839,6 +840,52 @@
                 <tbody id="bankedTableBody">
                   <tr><td colspan="2" style="text-align: center; color: #aaa;">Loading banked records...</td></tr>
                 </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: MOM & YOY ANALYTICS -->
+        <div class="tab-content" style="width: 16.6667%;">
+          <div class="entry-form-card">
+            <h2>Month-over-Month & Year-over-Year Analysis</h2>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
+            
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+              <div class="form-group" style="flex: 1; min-width: 220px;">
+                <label for="momYoyYearSelect">Select Analysis Year</label>
+                <select id="momYoyYearSelect" onchange="DashboardApp.renderMomYoyData()"></select>
+              </div>
+            </div>
+
+            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
+            <div class="table-responsive" style="max-height: 380px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th id="yoyHeaderPrev2">Year -2 (£)</th>
+                    <th id="yoyHeaderPrev1">Year -1 (£)</th>
+                    <th id="yoyHeaderCur">Selected Year (£)</th>
+                    <th>YoY Growth (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="yoyTableBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
+            <div class="table-responsive" style="max-height: 380px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Revenue (£)</th>
+                    <th>MoM Change (£)</th>
+                    <th>MoM Growth (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="momTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -866,7 +913,7 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE SCRIPT WITH BACKGROUND POLLING -->
+  <!-- APP ENGINE SCRIPT WITH BACKGROUND POLLING & MOM/YOY CALCULATIONS -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1858,6 +1905,22 @@
       DashboardApp.renderAccountingData();
     }
 
+    function initMomYoyYearSelect() {
+      const select = $("momYoyYearSelect");
+      if (!select) return;
+      select.innerHTML = "";
+
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= currentYear - 3; y--) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.innerText = `Year ${y}`;
+        select.appendChild(opt);
+      }
+      select.value = currentYear;
+      DashboardApp.renderMomYoyData();
+    }
+
     // BACKGROUND POLLING SETUP (Every 5 Minutes)
     function startBackgroundPolling() {
       setInterval(async () => {
@@ -1895,7 +1958,7 @@
         } catch (err) {
           console.warn("Background polling sync failed:", err);
         }
-      }, 5000); // 5000 ms = 5 seconds
+      }, 300000); 
     }
 
     const DashboardApp = {
@@ -1943,9 +2006,10 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
-          tabs.style.transform = `translateX(-${index * 20}%)`;
+          // 6 tabs total, each takes 16.6667% (100 / 6)
+          tabs.style.transform = `translateX(-${index * 16.6667}%)`;
         }
-        for (let i = 0; i <= 4; i++) {
+        for (let i = 0; i <= 5; i++) {
           const btn = $(`navBtn-${i}`);
           if (btn) {
             if (i === index) {
@@ -1976,6 +2040,8 @@
 
         if (index === 3) {
           initAccountingFySelect();
+        } else if (index === 5) {
+          initMomYoyYearSelect();
         }
       },
       applyRange: () => {
@@ -2199,6 +2265,109 @@
           tbody.appendChild(tr);
         });
       },
+      renderMomYoyData: () => {
+        const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        
+        safeSet("yoyHeaderPrev2", `${selectedYear - 2} (£)`);
+        safeSet("yoyHeaderPrev1", `${selectedYear - 1} (£)`);
+        safeSet("yoyHeaderCur", `${selectedYear} (£)`);
+
+        const monthlyData = {};
+        for (let y = selectedYear - 3; y <= selectedYear + 1; y++) {
+          monthlyData[y] = Array(12).fill(0);
+        }
+
+        if (STATE.raw && STATE.raw.length > 0) {
+          STATE.raw.forEach(r => {
+            if (r.parsedDate) {
+              const y = r.parsedDate.getFullYear();
+              const m = r.parsedDate.getMonth();
+              if (!monthlyData[y]) monthlyData[y] = Array(12).fill(0);
+              monthlyData[y][m] += r.dailyTotalCents;
+            }
+          });
+        }
+
+        // YoY Table Render
+        const yoyBody = $("yoyTableBody");
+        if (yoyBody) {
+          yoyBody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          const yearsToCompare = [selectedYear - 2, selectedYear - 1, selectedYear];
+          
+          monthNames.forEach((mName, mIdx) => {
+            const tr = document.createElement("tr");
+            let rowHtml = `<td>${mName}</td>`;
+            
+            yearsToCompare.forEach(y => {
+              const rev = monthlyData[y] ? monthlyData[y][mIdx] : 0;
+              rowHtml += `<td>${fmt(rev)}</td>`;
+            });
+
+            const curRev = monthlyData[selectedYear] ? monthlyData[selectedYear][mIdx] : 0;
+            const prevRev = monthlyData[selectedYear - 1] ? monthlyData[selectedYear - 1][mIdx] : 0;
+            let growthStr = "-";
+            let growthClass = "";
+            if (prevRev > 0) {
+              const diff = curRev - prevRev;
+              const pct = ((diff / prevRev) * 100).toFixed(1);
+              const sign = diff >= 0 ? "+" : "";
+              growthStr = `${sign}${pct}% (${sign}${fmt(diff)})`;
+              growthClass = diff >= 0 ? "positive" : "negative";
+            } else if (curRev > 0) {
+              growthStr = "+100% (New)";
+              growthClass = "positive";
+            }
+
+            rowHtml += `<td class="${growthClass}">${growthStr}</td>`;
+            tr.innerHTML = rowHtml;
+            yoyBody.appendChild(tr);
+          });
+        }
+
+        // MoM Table Render
+        const momBody = $("momTableBody");
+        if (momBody) {
+          momBody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          const curYearData = monthlyData[selectedYear] || Array(12).fill(0);
+
+          for (let i = 0; i < 12; i++) {
+            const tr = document.createElement("tr");
+            const rev = curYearData[i];
+            let momDiffStr = "-";
+            let momPctStr = "-";
+            let momClass = "";
+
+            if (i > 0) {
+              const prevRev = curYearData[i - 1];
+              if (prevRev > 0) {
+                const diff = rev - prevRev;
+                const pct = ((diff / prevRev) * 100).toFixed(1);
+                const sign = diff >= 0 ? "+" : "";
+                momDiffStr = `${sign}${fmt(diff)}`;
+                momPctStr = `${sign}${pct}%`;
+                momClass = diff >= 0 ? "positive" : "negative";
+              } else if (rev > 0) {
+                momDiffStr = fmt(rev);
+                momPctStr = "+100%";
+                momClass = "positive";
+              } else {
+                momDiffStr = "£0.00";
+                momPctStr = "0.0%";
+              }
+            }
+
+            tr.innerHTML = `
+              <td>${monthNames[i]}</td>
+              <td>${fmt(rev)}</td>
+              <td class="${momClass}">${momDiffStr}</td>
+              <td class="${momClass}">${momPctStr}</td>
+            `;
+            momBody.appendChild(tr);
+          }
+        }
+      },
       exportAccountingCSV: () => {
         const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
         const startInt = fyYear * 10000 + 201; 
@@ -2408,7 +2577,6 @@
         if (loaderEl) loaderEl.classList.add("hidden");
         DashboardApp.applyRange();
         
-        // Start background polling after initial load
         startBackgroundPolling();
       } catch (err) {
         console.error("Initialization error:", err);
