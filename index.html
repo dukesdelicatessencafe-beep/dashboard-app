@@ -9,6 +9,9 @@
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
+  <!-- HTML2PDF LIBRARY FOR SEAMLESS PDF EXPORT -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <!-- EARLY GLOBAL PLACEHOLDER TO PREVENT COLLISION/TIMING ERRORS -->
   <script>
     window.DashboardApp = window.DashboardApp || {
@@ -683,7 +686,8 @@
         <div class="tab-content" style="width: 16.6667%;">
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
             <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
-            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
+            <button type="button" onclick="DashboardApp.exportPDF()" style="padding: 8px 14px; font-size: 12px; background: var(--accent-gold); color: #000; flex: 1 1 auto;">📥 Download PDF Report</button>
+            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print Report</button>
           </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
@@ -2454,6 +2458,31 @@
         link.click();
         document.body.removeChild(link);
         toast("Analytics CSV downloaded!");
+      },
+      exportPDF: () => {
+        const element = $("app");
+        const opt = {
+          margin:       10,
+          filename:     'Sales_Analytics_Report.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const loader = $("loading");
+        if (loader) {
+          loader.innerText = "Generating PDF Report...";
+          loader.classList.remove("hidden");
+        }
+
+        html2pdf().from(element).set(opt).save().then(() => {
+          if (loader) loader.classList.add("hidden");
+          toast("PDF Report downloaded successfully!");
+        }).catch(err => {
+          if (loader) loader.classList.add("hidden");
+          console.error("PDF generation error:", err);
+          window.print();
+        });
       },
       printReport: () => {
         window.print();
