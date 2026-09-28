@@ -470,7 +470,6 @@
         background: #ffffff !important;
         color: #000000 !important;
         font-size: 11pt;
-        zoom: 90%;
       }
       #nav, .controls, #verifyModal, #loading, #toast, button {
         display: none !important;
@@ -487,10 +486,35 @@
         width: 100% !important;
         display: block !important;
         padding: 0 !important;
-        page-break-inside: avoid;
       }
       .tab-content:not(:nth-child(2)) {
         display: none !important;
+      }
+      
+      /* FORCE CLEAN PAGE CUTS & PREVENT MID-COMPONENT SPLITTING */
+      .entry-form-card, 
+      .table-responsive, 
+      table, 
+      tr, 
+      td, 
+      th {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      
+      .entry-form-card {
+        border: 1px solid #000 !important;
+        margin-bottom: 20px !important;
+        page-break-after: auto;
+      }
+
+      .table-responsive {
+        border: 1px solid #000 !important;
+      }
+
+      table th {
+        background: #e0e0e0 !important;
+        color: #000 !important;
       }
     }
   </style>
@@ -1305,9 +1329,10 @@
       const curMonth = anchorDate.getMonth() + 1;
       const curDay = anchorDate.getDate();
       const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
+      const todayInt = curYear * 10000 + curMonth * 100 + curDay;
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+      const curMonthEndInt = todayInt;
 
       const prevYear = curYear - 1;
       const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
@@ -1316,10 +1341,14 @@
 
       let currentCents = 0;
       let prevMonthFullCents = 0;
+      let hasTodayRecord = false;
 
       allRecords.forEach(r => {
         if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
           currentCents += r.dailyTotalCents;
+          if (r.dateInt === todayInt) {
+            hasTodayRecord = true;
+          }
         }
         if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
           prevMonthFullCents += r.dailyTotalCents;
@@ -1329,14 +1358,21 @@
       const targetCents = Math.round(prevMonthFullCents * 1.10);
       const remainingTargetCents = targetCents - currentCents;
       
-      const remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
-      const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
+      // Amended: If today's sales are posted, exclude today from remaining days denominator.
+      let remainingDays;
+      if (hasTodayRecord) {
+        remainingDays = Math.max(1, totalDaysInMonth - curDay);
+      } else {
+        remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
+      }
 
+      const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
       const displayDaily = dailyPacingCents > 0 ? fmt(dailyPacingCents) : "£0.00 (Goal Met!)";
 
       todayTargetEl.innerHTML = `<span class="positive">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Per day for remaining ${remainingDays} days</span>`;
       if (todayTargetSubEl) {
-        todayTargetSubEl.innerText = `Target deficit: ${remainingTargetCents > 0 ? fmt(remainingTargetCents) : "None"}`;
+        const deficitText = remainingTargetCents > 0 ? fmt(remainingTargetCents) : "None";
+        todayTargetSubEl.innerText = `Target deficit: ${deficitText}`;
       }
     }
 
