@@ -9,9 +9,6 @@
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <!-- HTML2PDF LIBRARY FOR SEAMLESS PDF EXPORT -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
   <!-- EARLY GLOBAL PLACEHOLDER TO PREVENT COLLISION/TIMING ERRORS -->
   <script>
     window.DashboardApp = window.DashboardApp || {
@@ -490,7 +487,8 @@
         display: block !important;
         padding: 0 !important;
       }
-      .tab-content:not(:nth-child(2)) {
+      /* Allow printing Analytics (nth-child(2)) or MOM & YOY (nth-child(6)) */
+      .tab-content:not(:nth-child(2)):not(:nth-child(6)) {
         display: none !important;
       }
       
@@ -686,8 +684,7 @@
         <div class="tab-content" style="width: 16.6667%;">
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
             <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
-            <button type="button" onclick="DashboardApp.exportPDF()" style="padding: 8px 14px; font-size: 12px; background: var(--accent-gold); color: #000; flex: 1 1 auto;">📥 Download PDF Report</button>
-            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print Report</button>
+            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
           </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
@@ -855,10 +852,14 @@
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
             
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; justify-content: space-between;">
               <div class="form-group" style="flex: 1; min-width: 220px;">
                 <label for="momYoyYearSelect">Select Analysis Year</label>
                 <select id="momYoyYearSelect" onchange="DashboardApp.renderMomYoyData()"></select>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                <button type="button" onclick="DashboardApp.exportMomYoyCSV()" style="padding: 10px 14px; font-size: 12px; background: var(--primary-gold); color: #000;">📊 Export CSV Report</button>
+                <button type="button" onclick="DashboardApp.printReport()" style="padding: 10px 14px; font-size: 12px;">🖨️ Print / Export PDF Report</button>
               </div>
             </div>
 
@@ -2459,30 +2460,78 @@
         document.body.removeChild(link);
         toast("Analytics CSV downloaded!");
       },
-      exportPDF: () => {
-        const element = $("app");
-        const opt = {
-          margin:       10,
-          filename:     'Sales_Analytics_Report.pdf',
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2, useCORS: true },
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Generating PDF Report...";
-          loader.classList.remove("hidden");
+      exportMomYoyCSV: () => {
+        const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        
+        const monthlyData = {};
+        for (let y = selectedYear - 3; y <= selectedYear + 1; y++) {
+          monthlyData[y] = Array(12).fill(0);
         }
 
-        html2pdf().from(element).set(opt).save().then(() => {
-          if (loader) loader.classList.add("hidden");
-          toast("PDF Report downloaded successfully!");
-        }).catch(err => {
-          if (loader) loader.classList.add("hidden");
-          console.error("PDF generation error:", err);
-          window.print();
+        if (STATE.raw && STATE.raw.length > 0) {
+          STATE.raw.forEach(r => {
+            if (r.parsedDate) {
+              const y = r.parsedDate.getFullYear();
+              const m = r.parsedDate.getMonth();
+              if (!monthlyData[y]) monthlyData[y] = Array(12).fill(0);
+              monthlyData[y][m] += r.dailyTotalCents;
+            }
+          });
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += `=== YEAR-OVER-YEAR (YoY) MONTHLY COMPARISON (${selectedYear}) ===\r\n`;
+        csvContent += `Month,${selectedYear - 2} (£),${selectedYear - 1} (£),${selectedYear} (£),YoY Growth (%)\r\n`;
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const yearsToCompare = [selectedYear - 2, selectedYear - 1, selectedYear];
+
+        monthNames.forEach((mName, mIdx) => {
+          const rowVals = yearsToCompare.map(y => (monthlyData[y] ? monthlyData[y][mIdx] / 100 : 0).toFixed(2));
+          const curRev = monthlyData[selectedYear] ? monthlyData[selectedYear][mIdx] : 0;
+          const prevRev = monthlyData[selectedYear - 1] ? monthlyData[selectedYear - 1][mIdx] : 0;
+          let growthStr = "0.0%";
+          if (prevRev > 0) {
+            const diff = curRev - prevRev;
+            const pct = ((diff / prevRev) * 100).toFixed(1);
+            const sign = diff >= 0 ? "+" : "";
+            growthStr = `${sign}${pct}%`;
+          } else if (curRev > 0) {
+            growthStr = "+100%";
+          }
+          csvContent += `"${mName}",${rowVals.join(",")},"${growthStr}"\r\n`;
         });
+
+        csvContent += `\r\n=== MONTH-OVER-MONTH (MoM) SEQUENTIAL PERFORMANCE (${selectedYear}) ===\r\n`;
+        csvContent += `Month,Revenue (£),MoM Change (£),MoM Growth (%)\r\n`;
+
+        const curYearData = monthlyData[selectedYear] || Array(12).fill(0);
+        for (let i = 0; i < 12; i++) {
+          const rev = curYearData[i] / 100;
+          let momDiff = 0;
+          let momPct = "0.0%";
+          if (i > 0) {
+            const prevRev = curYearData[i - 1];
+            if (prevRev > 0) {
+              const diff = curYearData[i] - prevRev;
+              momDiff = diff / 100;
+              momPct = ((diff / prevRev) * 100).toFixed(1) + "%";
+            } else if (curYearData[i] > 0) {
+              momDiff = curYearData[i] / 100;
+              momPct = "+100%";
+            }
+          }
+          csvContent += `"${monthNames[i]}",${rev.toFixed(2)},${momDiff.toFixed(2)},"${momPct}"\r\n`;
+        }
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `MoM_YoY_Analysis_Report_${selectedYear}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("MoM & YoY CSV downloaded!");
       },
       printReport: () => {
         window.print();
