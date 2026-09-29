@@ -415,25 +415,6 @@
       top: 0;
     }
 
-    /* MOM YOY Report Component Styles from snippet */
-    .mom-yoy-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #ccc;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        color: #333;
-    }
-    .mom-yoy-row {
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
-    }
-    .mom-yoy-row:last-child {
-        border-bottom: none;
-    }
-
     #loading {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -510,23 +491,6 @@
         display: none !important;
       }
       
-      /* Print and PDF export overrides from snippet and dashboard */
-      .mom-yoy-container, 
-      .scrollable-entries-wrapper {
-          overflow: visible !important;
-          height: auto !important;
-          max-height: none !important;
-          position: static !important;
-          border: none !important;
-          padding: 0 !important;
-      }
-
-      .mom-yoy-row, 
-      .entry-card {
-          break-inside: avoid;
-          page-break-inside: avoid;
-      }
-
       /* FORCE CLEAN PAGE CUTS & PREVENT MID-COMPONENT SPLITTING */
       .entry-form-card, 
       .table-responsive, 
@@ -899,7 +863,7 @@
             </div>
 
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
-            <div class="table-responsive mom-yoy-container scrollable-entries-wrapper" style="max-height: 380px;">
+            <div class="table-responsive" style="max-height: 380px;">
               <table>
                 <thead>
                   <tr>
@@ -915,7 +879,7 @@
             </div>
 
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
-            <div class="table-responsive mom-yoy-container scrollable-entries-wrapper" style="max-height: 380px;">
+            <div class="table-responsive" style="max-height: 380px;">
               <table>
                 <thead>
                   <tr>
@@ -2046,6 +2010,7 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
+          // 6 tabs total, each takes 16.6667% (100 / 6)
           tabs.style.transform = `translateX(-${index * 16.6667}%)`;
         }
         for (let i = 0; i <= 5; i++) {
@@ -2336,7 +2301,6 @@
           
           monthNames.forEach((mName, mIdx) => {
             const tr = document.createElement("tr");
-            tr.className = "mom-yoy-row entry-card";
             let rowHtml = `<td>${mName}</td>`;
             
             yearsToCompare.forEach(y => {
@@ -2374,7 +2338,6 @@
 
           for (let i = 0; i < 12; i++) {
             const tr = document.createElement("tr");
-            tr.className = "mom-yoy-row entry-card";
             const rev = curYearData[i];
             let momDiffStr = "-";
             let momPctStr = "-";
