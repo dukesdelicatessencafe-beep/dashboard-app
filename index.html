@@ -485,7 +485,6 @@
         height: auto !important;
       }
 
-      /* Dedicated Print State Isolation Rules */
       body.printing-analytics .tab-content:not(:nth-child(2)) {
         display: none !important;
       }
@@ -640,7 +639,6 @@
         
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" style="width: 16.6667%;">
-          <!-- INDEPENDENT OVERVIEW CONTROLS -->
           <div class="controls">
             <div class="controls-top-row">
               <div class="control-group">
@@ -685,7 +683,6 @@
 
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 16.6667%;">
-          <!-- INDEPENDENT ANALYTICS CONTROLS -->
           <div class="controls">
             <div class="controls-top-row">
               <div class="control-group">
@@ -2078,7 +2075,7 @@
 
     // INSTANT LOCAL LOAD & BACKGROUND STALE-WHILE-REVALIDATE SYNCING
     async function load() {
-      const now = new Date();
+      const now = getUKTime();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
@@ -2087,6 +2084,12 @@
 
       if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
       if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
+
+      // Always show current date on sales entry date picker
+      if ($("entryDate")) {
+        $("entryDate").value = formatDateLocal(now);
+        DashboardApp.onEntryDateChange();
+      }
 
       initOverviewWeekButtons(now.getFullYear(), now.getMonth());
       initOverviewMonthlyButtonsBar();
@@ -2282,7 +2285,14 @@
           }
         }
 
-        if (index === 3) {
+        if (index === 2) {
+          // Always ensure current date is shown when switching to Sales Entry
+          const todayStr = formatDateLocal(getUKTime());
+          if ($("entryDate")) {
+            $("entryDate").value = todayStr;
+            DashboardApp.onEntryDateChange();
+          }
+        } else if (index === 3) {
           initAccountingFySelect();
         } else if (index === 5) {
           initMomYoyYearSelect();
@@ -2293,7 +2303,7 @@
         const eVal = $("overviewEndDate")?.value;
         const bankingStartVal = $("bankingStartDate")?.value;
         
-        const nowStr = formatDateLocal(new Date());
+        const nowStr = formatDateLocal(getUKTime());
         if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
 
         if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
@@ -2333,7 +2343,7 @@
         const currentDayEl = $("lastBankedDate");
         const bankingStartEl = $("bankingStartDate");
         if (currentDayEl && bankingStartEl) {
-          const currentSystemDateStr = formatDateLocal(new Date());
+          const currentSystemDateStr = formatDateLocal(getUKTime());
           const bankedDate = currentDayEl.value || currentSystemDateStr;
           
           const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
@@ -2395,7 +2405,7 @@
         localStorage.removeItem("dash_overviewStartDate");
         localStorage.removeItem("dash_overviewEndDate");
         
-        const now = new Date();
+        const now = getUKTime();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         
@@ -2413,7 +2423,7 @@
         localStorage.removeItem("dash_analyticsStartDate");
         localStorage.removeItem("dash_analyticsEndDate");
         
-        const now = new Date();
+        const now = getUKTime();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
         if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
@@ -2500,7 +2510,7 @@
           if (json.status === "success") {
             toast("Data successfully submitted!");
             $("dataEntryForm").reset();
-            const todayStr = formatDateLocal(new Date());
+            const todayStr = formatDateLocal(getUKTime());
             if ($("entryDate")) {
               $("entryDate").value = todayStr;
               DashboardApp.onEntryDateChange();
@@ -2654,81 +2664,89 @@
           }
         }
       },
-      exportMomYoyCSV: () => {
-        const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
-        let csv = `MoM & YoY Analysis for Year ${selectedYear}\n\nYear-over-Year Monthly Comparison\nMonth,Year ${selectedYear-2},Year ${selectedYear-1},Year ${selectedYear},Growth (%)\n`;
-        
-        const monthlyTotals = {};
-        for (let m = 1; m <= 12; m++) {
-          monthlyTotals[m] = {
-            [selectedYear - 2]: 0,
-            [selectedYear - 1]: 0,
-            [selectedYear]: 0
-          };
-        }
-
+      exportMomYoyPDF: () => {
+        document.body.classList.add("printing-momyoy");
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing-momyoy");
+        }, 1000);
+      },
+      exportAnalyticsCSV: () => {
+        let csv = "Date,Day,Cash,Card,Total\n";
         STATE.raw.forEach(r => {
-          if (!r.parsedDate) return;
-          const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth() + 1;
-          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
-            monthlyTotals[m][y] += r.dailyTotalCents;
-          }
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
         });
-
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
-        for (let m = 1; m <= 12; m++) {
-          const curVal = monthlyTotals[m][selectedYear] / 100;
-          const prevVal = monthlyTotals[m][selectedYear - 1] / 100;
-          const prev2Val = monthlyTotals[m][selectedYear - 2] / 100;
-          const diff = curVal - prevVal;
-          const pct = prevVal > 0 ? ((diff / prevVal) * 100).toFixed(1) : "0.0";
-          csv += `"${monthNames[m-1]}",${prev2Val},${prevVal},${curVal},"${pct}%"\n`;
-        }
-
-        csv += `\nMonth-over-Month Sequential Performance\nMonth,Revenue,MoM Change,MoM Growth (%)\n`;
-        let prevMonthVal = 0;
-        for (let m = 1; m <= 12; m++) {
-          const curVal = monthlyTotals[m][selectedYear] / 100;
-          const diff = m === 1 ? 0 : curVal - prevMonthVal;
-          const pct = (m === 1 || prevMonthVal === 0) ? "0.0" : ((diff / prevMonthVal) * 100).toFixed(1);
-          csv += `"${monthNames[m-1]}",${curVal},${m === 1 ? 0 : diff},"${pct}%"\n`;
-          prevMonthVal = curVal;
-        }
-
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `MoM_YoY_Analysis_${selectedYear}.csv`;
+        a.download = "Sales_Analytics_Export.csv";
         a.click();
         URL.revokeObjectURL(url);
       },
-      exportMomYoyPDF: () => {
-        const scrollableElements = document.querySelectorAll('.mom-container, .yoy-container, .table-responsive');
-        
-        scrollableElements.forEach(el => {
-          el.dataset.oldOverflow = el.style.overflow;
-          el.dataset.oldMaxHeight = el.style.maxHeight;
-          el.style.overflow = 'visible';
-          el.style.maxHeight = 'none';
-          el.style.height = 'auto';
-        });
-
-        document.body.classList.add('printing-momyoy');
+      printReport: () => {
+        document.body.classList.add("printing-analytics");
         window.print();
-
         setTimeout(() => {
-          scrollableElements.forEach(el => {
-            el.style.overflow = el.dataset.oldOverflow;
-            el.style.maxHeight = el.dataset.oldMaxHeight;
-            el.style.height = '';
-          });
-          document.body.classList.remove('printing-momyoy');
+          document.body.classList.remove("printing-analytics");
         }, 1000);
       }
     };
+
+    DashboardApp.exportMomYoyCSV = () => {
+      const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+      let csv = `MoM & YoY Analysis for Year ${selectedYear}\n\nYear-over-Year Monthly Comparison\nMonth,Year ${selectedYear-2},Year ${selectedYear-1},Year ${selectedYear},Growth (%)\n`;
+      
+      const monthlyTotals = {};
+      for (let m = 1; m <= 12; m++) {
+        monthlyTotals[m] = {
+          [selectedYear - 2]: 0,
+          [selectedYear - 1]: 0,
+          [selectedYear]: 0
+        };
+      }
+
+      STATE.raw.forEach(r => {
+        if (!r.parsedDate) return;
+        const y = r.parsedDate.getFullYear();
+        const m = r.parsedDate.getMonth() + 1;
+        if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+          monthlyTotals[m][y] += r.dailyTotalCents;
+        }
+      });
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      
+      for (let m = 1; m <= 12; m++) {
+        const curVal = monthlyTotals[m][selectedYear] / 100;
+        const prevVal = monthlyTotals[m][selectedYear - 1] / 100;
+        const prev2Val = monthlyTotals[m][selectedYear - 2] / 100;
+        const diff = curVal - prevVal;
+        const pct = prevVal > 0 ? ((diff / prevVal) * 100).toFixed(1) : "0.0";
+        csv += `"${monthNames[m-1]}",${prev2Val},${prevVal},${curVal},"${pct}%"\n`;
+      }
+
+      csv += `\nMonth-over-Month Sequential Performance\nMonth,Revenue,MoM Change,MoM Growth (%)\n`;
+      let prevMonthVal = 0;
+      for (let m = 1; m <= 12; m++) {
+        const curVal = monthlyTotals[m][selectedYear] / 100;
+        const diff = m === 1 ? 0 : curVal - prevMonthVal;
+        const pct = (m === 1 || prevMonthVal === 0) ? "0.0" : ((diff / prevMonthVal) * 100).toFixed(1);
+        csv += `"${monthNames[m-1]}",${curVal},${m === 1 ? 0 : diff},"${pct}%"\n`;
+        prevMonthVal = curVal;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `MoM_YoY_Analysis_${selectedYear}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    window.onload = () => {};
   </script>
 </body>
 </html>
