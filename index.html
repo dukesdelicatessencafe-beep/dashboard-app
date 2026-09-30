@@ -1338,7 +1338,8 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
       
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const isMonthCompleted = hasLastDayRecord;
+      // Strictly completed on the final day of the month until the next day starts
+      const isMonthCompleted = (curDay === totalDaysInMonth) && hasLastDayRecord;
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const queryEndInt = isMonthCompleted ? lastDayInt : (curYear * 10000 + curMonth * 100 + curDay);
@@ -1414,7 +1415,8 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
 
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const isMonthCompleted = hasLastDayRecord;
+      // Strictly completed on the final day of the month until the next day starts
+      const isMonthCompleted = (curDay === totalDaysInMonth) && hasLastDayRecord;
 
       if (isMonthCompleted) {
         const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
