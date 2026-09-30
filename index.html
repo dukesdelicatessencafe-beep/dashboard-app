@@ -475,7 +475,15 @@
         display: block !important;
         padding: 0 !important;
       }
-      .tab-content:not(:nth-child(2)):not(:nth-child(6)) {
+      
+      /* Dedicated Print State Isolation Rules */
+      body.printing-analytics .tab-content:not(:nth-child(2)) {
+        display: none !important;
+      }
+      body.printing-momyoy .tab-content:not(:nth-child(6)) {
+        display: none !important;
+      }
+      body:not(.printing-analytics):not(.printing-momyoy) .tab-content:not(:nth-child(2)):not(:nth-child(6)) {
         display: none !important;
       }
       
@@ -491,7 +499,7 @@
       
       .entry-form-card {
         border: 1px solid #000 !important;
-        margin-bottom: 20px !important;
+        margin-bottom: 20mm !important;
         page-break-after: auto;
       }
 
@@ -2065,11 +2073,9 @@
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-      // Initialize Overview Date Pickers (1st of month to end of current month)
       if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
       if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
 
-      // Initialize Analytics Date Pickers (1st of month to current date)
       if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
       if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
 
@@ -2078,7 +2084,6 @@
       initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
       initAnalyticsMonthlyButtonsBar();
 
-      // Frozen Date Last Banked Initialization
       const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
       if (cachedBankingStart && $("bankingStartDate")) {
         $("bankingStartDate").value = cachedBankingStart;
@@ -2088,7 +2093,6 @@
         localStorage.setItem("dash_bankingStartDate", todayStr);
       }
 
-      // Load instantly from localStorage if cached
       const cachedRaw = localStorage.getItem("dash_cached_raw");
       const cachedBanked = localStorage.getItem("dash_cached_banked");
 
@@ -2108,13 +2112,11 @@
         } catch(e) {}
       }
 
-      // If we have cached data, render immediately for an instantaneous UI experience
       if (STATE.isFullLoaded) {
         DashboardApp.applyOverviewRange();
         DashboardApp.applyAnalyticsRange();
       }
 
-      // Perform background network fetch (Stale-While-Revalidate)
       try {
         const currentYear = new Date().getFullYear();
         STATE.currentYear = currentYear;
@@ -2163,7 +2165,6 @@
       }
     }
 
-    // BACKGROUND POLLING SETUP (Every 5 Minutes)
     function startBackgroundPolling() {
       setInterval(async () => {
         try {
@@ -2376,7 +2377,6 @@
             toast("Marked as banked locally.");
           }
 
-          // Overwrite Date Last Banked with current system date timestamp and hold static until next press
           bankingStartEl.value = currentSystemDateStr;
           localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
           DashboardApp.applyOverviewRange();
@@ -2672,6 +2672,16 @@
           csv += `"${monthNames[m-1]}",${p2},${p1},${cur},"${pct}%"\n`;
         }
 
+        csv += `\nMonth-over-Month Sequential Performance\nMonth,Revenue,MoM Change,MoM Growth (%)\n`;
+        let prevVal = 0;
+        for (let m = 1; m <= 12; m++) {
+          const cur = monthlyTotals[m][selectedYear] / 100;
+          const diff = m === 1 ? 0 : cur - prevVal;
+          const pct = (m === 1 || prevVal === 0) ? "0.0" : ((diff / prevVal) * 100).toFixed(1);
+          csv += `"${monthNames[m-1]}",${cur},${m === 1 ? 0 : diff},"${pct}%"\n`;
+          prevVal = cur;
+        }
+
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -2680,46 +2690,46 @@
         a.click();
         URL.revokeObjectURL(url);
       },
-      exportMomYoyPDF: () => {
-        window.print();
-      },
       exportAnalyticsCSV: () => {
         const sVal = $("analyticsStartDate")?.value;
         const eVal = $("analyticsEndDate")?.value;
-
-        if (!STATE.raw || STATE.raw.length === 0) {
-          alert("No data to export.");
-          return;
-        }
-
         let filtered = STATE.raw;
         if (sVal && eVal) {
           const sInt = parseInt(sVal.replace(/-/g, ""), 10);
           const eInt = parseInt(eVal.replace(/-/g, ""), 10);
           filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         }
-
         if (filtered.length === 0) {
-          alert("No records found in selected date range for export.");
+          alert("No data to export for selected Analytics range.");
           return;
         }
-
-        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        let csv = "Date,Day,Cash,Card,Total\n";
         filtered.forEach(r => {
           const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
         });
-
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Analytics_Sales_Report_${sVal || 'start'}_to_${eVal || 'end'}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const a = URL.createObjectURL(blob);
+        const aEl = document.createElement("a");
+        aEl.href = a;
+        aEl.download = `Analytics_Report_${sVal || 'all'}_to_${eVal || 'all'}.csv`;
+        aEl.click();
+        URL.revokeObjectURL(a);
       },
       printReport: () => {
+        document.body.classList.add("printing-analytics");
         window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing-analytics");
+        }, 500);
+      },
+      exportMomYoyPDF: () => {
+        document.body.classList.add("printing-momyoy");
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing-momyoy");
+        }, 500);
       }
     };
   </script>
