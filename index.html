@@ -476,6 +476,15 @@
         padding: 0 !important;
       }
       
+      .mom-container, 
+      .yoy-container, 
+      .scrollable-stats-wrapper,
+      .table-responsive {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+      }
+
       /* Dedicated Print State Isolation Rules */
       body.printing-analytics .tab-content:not(:nth-child(2)) {
         display: none !important;
@@ -875,7 +884,7 @@
             </div>
 
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
-            <div class="table-responsive" style="max-height: 380px;">
+            <div class="table-responsive yoy-container" style="max-height: 380px;">
               <table>
                 <thead>
                   <tr>
@@ -891,7 +900,7 @@
             </div>
 
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
-            <div class="table-responsive" style="max-height: 380px;">
+            <div class="table-responsive mom-container" style="max-height: 380px;">
               <table>
                 <thead>
                   <tr>
@@ -2651,8 +2660,13 @@
         
         const monthlyTotals = {};
         for (let m = 1; m <= 12; m++) {
-          monthlyTotals[m] = { [selectedYear - 2]: 0, [selectedYear - 1]: 0, [selectedYear]: 0 };
+          monthlyTotals[m] = {
+            [selectedYear - 2]: 0,
+            [selectedYear - 1]: 0,
+            [selectedYear]: 0
+          };
         }
+
         STATE.raw.forEach(r => {
           if (!r.parsedDate) return;
           const y = r.parsedDate.getFullYear();
@@ -2663,23 +2677,24 @@
         });
 
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
         for (let m = 1; m <= 12; m++) {
-          const cur = monthlyTotals[m][selectedYear] / 100;
-          const p1 = monthlyTotals[m][selectedYear - 1] / 100;
-          const p2 = monthlyTotals[m][selectedYear - 2] / 100;
-          const diff = cur - p1;
-          const pct = p1 > 0 ? ((diff / p1) * 100).toFixed(1) : "0.0";
-          csv += `"${monthNames[m-1]}",${p2},${p1},${cur},"${pct}%"\n`;
+          const curVal = monthlyTotals[m][selectedYear] / 100;
+          const prevVal = monthlyTotals[m][selectedYear - 1] / 100;
+          const prev2Val = monthlyTotals[m][selectedYear - 2] / 100;
+          const diff = curVal - prevVal;
+          const pct = prevVal > 0 ? ((diff / prevVal) * 100).toFixed(1) : "0.0";
+          csv += `"${monthNames[m-1]}",${prev2Val},${prevVal},${curVal},"${pct}%"\n`;
         }
 
         csv += `\nMonth-over-Month Sequential Performance\nMonth,Revenue,MoM Change,MoM Growth (%)\n`;
-        let prevVal = 0;
+        let prevMonthVal = 0;
         for (let m = 1; m <= 12; m++) {
-          const cur = monthlyTotals[m][selectedYear] / 100;
-          const diff = m === 1 ? 0 : cur - prevVal;
-          const pct = (m === 1 || prevVal === 0) ? "0.0" : ((diff / prevVal) * 100).toFixed(1);
-          csv += `"${monthNames[m-1]}",${cur},${m === 1 ? 0 : diff},"${pct}%"\n`;
-          prevVal = cur;
+          const curVal = monthlyTotals[m][selectedYear] / 100;
+          const diff = m === 1 ? 0 : curVal - prevMonthVal;
+          const pct = (m === 1 || prevMonthVal === 0) ? "0.0" : ((diff / prevMonthVal) * 100).toFixed(1);
+          csv += `"${monthNames[m-1]}",${curVal},${m === 1 ? 0 : diff},"${pct}%"\n`;
+          prevMonthVal = curVal;
         }
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -2690,46 +2705,28 @@
         a.click();
         URL.revokeObjectURL(url);
       },
-      exportAnalyticsCSV: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        if (filtered.length === 0) {
-          alert("No data to export for selected Analytics range.");
-          return;
-        }
-        let csv = "Date,Day,Cash,Card,Total\n";
-        filtered.forEach(r => {
-          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = URL.createObjectURL(blob);
-        const aEl = document.createElement("a");
-        aEl.href = a;
-        aEl.download = `Analytics_Report_${sVal || 'all'}_to_${eVal || 'all'}.csv`;
-        aEl.click();
-        URL.revokeObjectURL(a);
-      },
-      printReport: () => {
-        document.body.classList.add("printing-analytics");
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove("printing-analytics");
-        }, 500);
-      },
       exportMomYoyPDF: () => {
-        document.body.classList.add("printing-momyoy");
+        const scrollableElements = document.querySelectorAll('.mom-container, .yoy-container, .table-responsive');
+        
+        scrollableElements.forEach(el => {
+          el.dataset.oldOverflow = el.style.overflow;
+          el.dataset.oldMaxHeight = el.style.maxHeight;
+          el.style.overflow = 'visible';
+          el.style.maxHeight = 'none';
+          el.style.height = 'auto';
+        });
+
+        document.body.classList.add('printing-momyoy');
         window.print();
+
         setTimeout(() => {
-          document.body.classList.remove("printing-momyoy");
-        }, 500);
+          scrollableElements.forEach(el => {
+            el.style.overflow = el.dataset.oldOverflow;
+            el.style.maxHeight = el.dataset.oldMaxHeight;
+            el.style.height = '';
+          });
+          document.body.classList.remove('printing-momyoy');
+        }, 1000);
       }
     };
   </script>
