@@ -2071,12 +2071,22 @@
 
       // Initialize Analytics Date Pickers (1st of month to current date)
       if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
-      if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now); // To date auto picks current date
+      if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
 
       initOverviewWeekButtons(now.getFullYear(), now.getMonth());
       initOverviewMonthlyButtonsBar();
       initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
       initAnalyticsMonthlyButtonsBar();
+
+      // Frozen Date Last Banked Initialization
+      const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
+      if (cachedBankingStart && $("bankingStartDate")) {
+        $("bankingStartDate").value = cachedBankingStart;
+      } else if ($("bankingStartDate")) {
+        const todayStr = formatDateLocal(now);
+        $("bankingStartDate").value = todayStr;
+        localStorage.setItem("dash_bankingStartDate", todayStr);
+      }
 
       // Load instantly from localStorage if cached
       const cachedRaw = localStorage.getItem("dash_cached_raw");
@@ -2312,13 +2322,14 @@
       markAsBanked: async () => {
         const currentDayEl = $("lastBankedDate");
         const bankingStartEl = $("bankingStartDate");
-        if (currentDayEl && bankingStartEl && currentDayEl.value) {
-          const bankedDate = currentDayEl.value;
+        if (currentDayEl && bankingStartEl) {
+          const currentSystemDateStr = formatDateLocal(new Date());
+          const bankedDate = currentDayEl.value || currentSystemDateStr;
           
-          const lastBankedVal = bankingStartEl.value;
-          const currentDayVal = currentDayEl.value;
-          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
-          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10);
+          const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
+          const currentDayVal = currentDayEl.value || currentSystemDateStr;
+          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10) || 0;
+          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10) || 0;
 
           let unbankedCashCents = 0;
           STATE.raw.forEach(r => {
@@ -2365,7 +2376,9 @@
             toast("Marked as banked locally.");
           }
 
-          bankingStartEl.value = currentDayEl.value;
+          // Overwrite Date Last Banked with current system date timestamp and hold static until next press
+          bankingStartEl.value = currentSystemDateStr;
+          localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
           DashboardApp.applyOverviewRange();
         }
       },
@@ -2673,6 +2686,12 @@
       exportAnalyticsCSV: () => {
         const sVal = $("analyticsStartDate")?.value;
         const eVal = $("analyticsEndDate")?.value;
+
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data to export.");
+          return;
+        }
+
         let filtered = STATE.raw;
         if (sVal && eVal) {
           const sInt = parseInt(sVal.replace(/-/g, ""), 10);
@@ -2681,21 +2700,21 @@
         }
 
         if (filtered.length === 0) {
-          alert("No data to export for selected analytics date range.");
+          alert("No records found in selected date range for export.");
           return;
         }
 
-        let csv = "Date,Day,Cash,Card,Total\n";
+        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
         filtered.forEach(r => {
           const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
+          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
         });
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `Analytics_Sales_Report_${sVal}_to_${eVal}.csv`;
+        a.download = `Analytics_Sales_Report_${sVal || 'start'}_to_${eVal || 'end'}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       },
