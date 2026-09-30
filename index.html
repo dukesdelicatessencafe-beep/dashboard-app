@@ -1338,9 +1338,7 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
       
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const nextMonthStart = new Date(curYear, curMonth, 1);
-      const isNextDayStarted = ukNow >= nextMonthStart;
-      const isMonthCompleted = hasLastDayRecord && isNextDayStarted;
+      const isMonthCompleted = hasLastDayRecord;
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const queryEndInt = isMonthCompleted ? lastDayInt : (curYear * 10000 + curMonth * 100 + curDay);
@@ -1416,9 +1414,7 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
 
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const nextMonthStart = new Date(curYear, curMonth, 1);
-      const isNextDayStarted = ukNow >= nextMonthStart;
-      const isMonthCompleted = hasLastDayRecord && isNextDayStarted;
+      const isMonthCompleted = hasLastDayRecord;
 
       if (isMonthCompleted) {
         const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
@@ -2492,39 +2488,26 @@
         } catch(e) {}
       }
 
-      if (STATE.raw.length > 0) {
-        if (loader) loader.classList.add("hidden");
-        initMonthlyButtonsBar();
-        const now = new Date();
-        initWeekButtons(now.getFullYear(), now.getMonth());
-        
-        // Automatically default to the first date of the month for From and current date for To
-        const sVal = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-        const eVal = formatDateLocal(now);
-        const bankingStartVal = localStorage.getItem("dash_bankingStartDate") || sVal;
-
-        if ($("startDate")) $("startDate").value = sVal;
-        if ($("endDate")) $("endDate").value = eVal;
-        if ($("bankingStartDate")) $("bankingStartDate").value = bankingStartVal;
-
-        DashboardApp.applyRange();
-        renderBankedTable();
-      }
-
       try {
         const currentYear = new Date().getFullYear();
         STATE.currentYear = currentYear;
         const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
         const json = await res.json();
-
+        
         let fullRecords = [];
+        let bankedRecords = [];
         const sourceTabs = json.tabs || json.sheetsData;
+
         if (json && sourceTabs) {
           Object.keys(sourceTabs).forEach(tabName => {
             const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0 && tabName.toLowerCase() !== "banked") {
-              const sRows = processRows(tabRows);
-              fullRecords = fullRecords.concat(sRows);
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              if (tabName.toLowerCase() === "banked") {
+                bankedRecords = processBankedRows(tabRows);
+              } else {
+                const sRows = processRows(tabRows);
+                fullRecords = fullRecords.concat(sRows);
+              }
             }
           });
         }
@@ -2534,56 +2517,52 @@
           fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
           fullRecords = Array.from(uniqueMap.values());
           fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
+          
           STATE.raw = fullRecords;
           localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
         }
 
-        if (json.bankedRecords && Array.isArray(json.bankedRecords)) {
-          STATE.banked = processBankedRows(json.bankedRecords);
-          localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-        } else if (sourceTabs && sourceTabs["Banked"]) {
-          STATE.banked = processBankedRows(sourceTabs["Banked"]);
-          localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
+        if (bankedRecords.length > 0) {
+          STATE.banked = bankedRecords;
+          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
         }
 
         STATE.isFullLoaded = true;
-        if (loader) loader.classList.add("hidden");
-
-        initMonthlyButtonsBar();
-        const now = new Date();
-        initWeekButtons(now.getFullYear(), now.getMonth());
-
-        // Always force default to first date of the month and current date on load
-        $("startDate").value = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-        $("endDate").value = formatDateLocal(now);
-        
-        if (!$("bankingStartDate").value) {
-          $("bankingStartDate").value = $("startDate").value;
-        }
-
-        DashboardApp.applyRange();
-        renderBankedTable();
-        startBackgroundPolling();
-
       } catch (err) {
-        if (loader) loader.classList.add("hidden");
-        if (STATE.raw.length === 0) {
-          alert("Failed to connect to Google Sheets backend. Please verify deployment URL.");
-        } else {
-          STATE.isFullLoaded = true;
-          DashboardApp.applyRange();
-        }
+        console.warn("Live fetch failed, using cached data if available:", err);
       }
+
+      if (loader) loader.classList.add("hidden");
+
+      const now = new Date();
+      const cachedStart = localStorage.getItem("dash_startDate");
+      const cachedEnd = localStorage.getItem("dash_endDate");
+      const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
+
+      if ($("startDate")) {
+        $("startDate").value = cachedStart || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+      }
+      if ($("endDate")) {
+        $("endDate").value = cachedEnd || formatDateLocal(now);
+      }
+      if ($("bankingStartDate")) {
+        $("bankingStartDate").value = cachedBankingStart || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+      }
+
+      initWeekButtons(now.getFullYear(), now.getMonth());
+      initMonthlyButtonsBar();
+      initAccountingFySelect();
+      initMomYoyYearSelect();
+      startBackgroundPolling();
+
+      DashboardApp.applyRange();
     }
 
-    window.onload = () => {
-      const todayStr = formatDateLocal(new Date());
-      if ($("entryDate")) {
-        $("entryDate").value = todayStr;
-        DashboardApp.onEntryDateChange();
-      }
-    };
+    const todayStr = formatDateLocal(new Date());
+    if ($("entryDate")) {
+      $("entryDate").value = todayStr;
+      DashboardApp.onEntryDateChange();
+    }
   </script>
 </body>
 </html>
