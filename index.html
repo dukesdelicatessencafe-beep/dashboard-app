@@ -2498,8 +2498,9 @@
         const now = new Date();
         initWeekButtons(now.getFullYear(), now.getMonth());
         
-        const sVal = localStorage.getItem("dash_startDate") || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-        const eVal = localStorage.getItem("dash_endDate") || formatDateLocal(now);
+        // Automatically default to the first date of the month for From and current date for To
+        const sVal = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+        const eVal = formatDateLocal(now);
         const bankingStartVal = localStorage.getItem("dash_bankingStartDate") || sVal;
 
         if ($("startDate")) $("startDate").value = sVal;
@@ -2553,12 +2554,10 @@
         const now = new Date();
         initWeekButtons(now.getFullYear(), now.getMonth());
 
-        if (!$("startDate").value) {
-          $("startDate").value = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-        }
-        if (!$("endDate").value) {
-          $("endDate").value = formatDateLocal(now);
-        }
+        // Always force default to first date of the month and current date on load
+        $("startDate").value = formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+        $("endDate").value = formatDateLocal(now);
+        
         if (!$("bankingStartDate").value) {
           $("bankingStartDate").value = $("startDate").value;
         }
