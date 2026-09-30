@@ -960,6 +960,12 @@
       return `${y}-${m}-${d}`;
     };
 
+    const getUKTime = () => {
+      const now = new Date();
+      const ukDateStr = now.toLocaleString("en-US", { timeZone: "Europe/London" });
+      return new Date(ukDateStr);
+    };
+
     const cleanCents = (val) => {
       if (val === null || val === undefined || val === "") return 0;
       let str = String(val).trim();
@@ -1323,13 +1329,21 @@
         return;
       }
 
-      const anchorDate = new Date();
-      const curYear = anchorDate.getFullYear();
-      const curMonth = anchorDate.getMonth() + 1;
-      const curDay = anchorDate.getDate();
+      const ukNow = getUKTime();
+      const curYear = ukNow.getFullYear();
+      const curMonth = ukNow.getMonth() + 1;
+      const curDay = ukNow.getDate();
+
+      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
+      const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
+      
+      const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
+      const nextMonthStart = new Date(curYear, curMonth, 1);
+      const isNextDayStarted = ukNow >= nextMonthStart;
+      const isMonthCompleted = hasLastDayRecord && isNextDayStarted;
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
+      const queryEndInt = isMonthCompleted ? lastDayInt : (curYear * 10000 + curMonth * 100 + curDay);
 
       const prevYear = curYear - 1;
       const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
@@ -1340,7 +1354,7 @@
       let prevMonthFullCents = 0;
 
       allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
+        if (r.dateInt >= curMonthStartInt && r.dateInt <= queryEndInt) {
           currentCents += r.dailyTotalCents;
         }
         if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
@@ -1349,18 +1363,37 @@
       });
 
       const targetCents = Math.round(prevMonthFullCents * 1.10);
-      const remainingCents = targetCents - currentCents;
-      const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
-      const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
 
-      mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
-      safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
+      if (isMonthCompleted) {
+        const diffCents = currentCents - targetCents;
+        const diffPct = targetCents > 0 ? ((diffCents / targetCents) * 100).toFixed(1) : "0.0";
+        const isSuccess = currentCents >= targetCents;
+        const resultText = isSuccess ? `Target Achieved! 🎉 (+${diffPct}%)` : `Target Missed (${diffPct}%)`;
+        const resultColor = isSuccess ? 'positive' : 'negative';
 
-      const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
-      const mthBar = $("mthTargetBar");
-      if (mthBar) {
-        mthBar.style.width = targetProgress + "%";
-        mthBar.className = "progress-bar-fill " + (currentCents >= targetCents ? "success" : "");
+        mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Final Target (+10%): ${fmt(targetCents)}</span><br><span class="${resultColor}">${resultText}</span>`;
+        safeSet("mthTargetSub", `Month Completed (Prev Full: ${fmt(prevMonthFullCents)})`);
+
+        const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
+        const mthBar = $("mthTargetBar");
+        if (mthBar) {
+          mthBar.style.width = targetProgress + "%";
+          mthBar.className = "progress-bar-fill " + (isSuccess ? "success" : "vat-warning");
+        }
+      } else {
+        const remainingCents = targetCents - currentCents;
+        const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
+        const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
+
+        mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
+        safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
+
+        const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
+        const mthBar = $("mthTargetBar");
+        if (mthBar) {
+          mthBar.style.width = targetProgress + "%";
+          mthBar.className = "progress-bar-fill " + (currentCents >= targetCents ? "success" : "");
+        }
       }
     }
 
@@ -1375,13 +1408,36 @@
         return;
       }
 
-      const anchorDate = new Date();
-      const curYear = anchorDate.getFullYear();
-      const curMonth = anchorDate.getMonth() + 1;
-      const curDay = anchorDate.getDate();
+      const ukNow = getUKTime();
+      const curYear = ukNow.getFullYear();
+      const curMonth = ukNow.getMonth() + 1;
+      const curDay = ukNow.getDate();
       const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
-      const todayInt = curYear * 10000 + curMonth * 100 + curDay;
+      const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
 
+      const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
+      const nextMonthStart = new Date(curYear, curMonth, 1);
+      const isNextDayStarted = ukNow >= nextMonthStart;
+      const isMonthCompleted = hasLastDayRecord && isNextDayStarted;
+
+      if (isMonthCompleted) {
+        const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
+        let monthTotalCents = 0;
+        allRecords.forEach(r => {
+          if (r.dateInt >= curMonthStartInt && r.dateInt <= lastDayInt) {
+            monthTotalCents += r.dailyTotalCents;
+          }
+        });
+        const finalDailyAvg = Math.round(monthTotalCents / totalDaysInMonth);
+
+        todayTargetEl.innerHTML = `<span style="color:var(--accent-gold);">${fmt(finalDailyAvg)}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Final Daily Average (${totalDaysInMonth} days)</span>`;
+        if (todayTargetSubEl) {
+          todayTargetSubEl.innerText = `Month completed successfully`;
+        }
+        return;
+      }
+
+      const todayInt = curYear * 10000 + curMonth * 100 + curDay;
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const curMonthEndInt = todayInt;
 
@@ -2010,7 +2066,6 @@
       switchTab: (index) => {
         const tabs = $("tabs");
         if (tabs) {
-          // 6 tabs total, each takes 16.6667% (100 / 6)
           tabs.style.transform = `translateX(-${index * 16.6667}%)`;
         }
         for (let i = 0; i <= 5; i++) {
@@ -2292,7 +2347,6 @@
           });
         }
 
-        // YoY Table Render
         const yoyBody = $("yoyTableBody");
         if (yoyBody) {
           yoyBody.innerHTML = "";
@@ -2329,7 +2383,6 @@
           });
         }
 
-        // MoM Table Render
         const momBody = $("momTableBody");
         if (momBody) {
           momBody.innerHTML = "";
