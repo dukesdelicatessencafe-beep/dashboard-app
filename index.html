@@ -30,7 +30,6 @@
       --neg-red: #ff4d4d;
     }
 
-    /* GLOBAL RESET & BOX SIZING FOR SEAMLESS ADAPTATION */
     * {
       box-sizing: border-box;
     }
@@ -46,7 +45,6 @@
 
     .hidden { display: none !important; }
 
-    /* Login Form - Responsive Mobile & Laptop Centering */
     #login {
       max-width: 360px;
       width: 100%;
@@ -85,7 +83,6 @@
       background: var(--accent-gold);
     }
 
-    /* Navigation - Seamless Flex Wrap for Mobile / Laptop */
     #nav {
       display: flex;
       gap: 8px;
@@ -108,7 +105,6 @@
       color: #000;
     }
 
-    /* KPI Cards Header - Fluid Grid for Mobile & Laptops */
     .kpi-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -150,7 +146,6 @@
     .positive { color: var(--pos-green); }
     .negative { color: var(--neg-red); }
 
-    /* Progress Bars for KPIs */
     .progress-bar-container {
       background: #2a2a2a;
       border-radius: 4px;
@@ -176,7 +171,6 @@
       background-color: var(--pos-green);
     }
 
-    /* Controls - Responsive Layout */
     .controls {
       display: flex;
       flex-direction: column;
@@ -212,20 +206,19 @@
       flex: 1 1 auto;
     }
 
-    #weekButtonsContainer {
+    .week-buttons-container {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
       width: 100%;
     }
 
-    #weekButtonsContainer button {
+    .week-buttons-container button {
       padding: 8px 10px;
       font-size: 12px;
       flex: 1 1 auto;
     }
 
-    /* Monthly Buttons Bar - Horizontal Scroll on Mobile */
     .monthly-buttons-bar {
       display: flex;
       flex-wrap: nowrap;
@@ -256,7 +249,6 @@
       color: #fff;
     }
 
-    /* Tabs Slider Container (6 tabs now: 600%) */
     #tabsWrapper {
       overflow: hidden;
       width: 100%;
@@ -274,7 +266,6 @@
       padding: 0 2px;
     }
 
-    /* Data Entry Sheet & Accounting Form Styles */
     .entry-form-card {
       background: var(--card-bg);
       border: 1px solid var(--primary-gold);
@@ -321,7 +312,6 @@
       width: 100%;
     }
 
-    /* Verification Modal Overlay */
     #verifyModal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -370,7 +360,6 @@
       flex: 1;
     }
 
-    /* Chart Containers Responsive Sizing */
     .chart-container {
       position: relative;
       height: 280px;
@@ -382,7 +371,6 @@
       margin-bottom: 15px;
     }
 
-    /* Seamless Scrollable Tables for Mobile & Laptops */
     .table-responsive {
       width: 100%;
       overflow-x: auto;
@@ -491,7 +479,6 @@
         display: none !important;
       }
       
-      /* FORCE CLEAN PAGE CUTS & PREVENT MID-COMPONENT SPLITTING */
       .entry-form-card, 
       .table-responsive, 
       table, 
@@ -541,25 +528,8 @@
 
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
-    
-    <!-- CONTROLS & MONTHLY BAR -->
-    <div id="sharedControls" class="controls">
-      <div class="controls-top-row">
-        <div class="control-group">
-          <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
-          <input type="date" id="startDate" onchange="DashboardApp.applyRange()" style="width: 100%;">
-        </div>
-        <div class="control-group">
-          <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
-          <input type="date" id="endDate" onchange="DashboardApp.applyRange()" style="width: 100%;">
-        </div>
-        <button type="button" onclick="DashboardApp.resetDateRange()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
-        <div id="weekButtonsContainer"></div>
-      </div>
-      <div class="monthly-buttons-bar" id="monthlyButtonsBar"></div>
-    </div>
 
-    <!-- KPI SUMMARY HEADER -->
+    <!-- KPI SUMMARY HEADER (Overview Tab Only) -->
     <div id="kpiSection" class="kpi-row">
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
@@ -567,7 +537,7 @@
         <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
           </div>
           <div style="display: flex; align-items: center; gap: 5px;">
             <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
@@ -653,6 +623,23 @@
         
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" style="width: 16.6667%;">
+          <!-- INDEPENDENT OVERVIEW CONTROLS -->
+          <div class="controls">
+            <div class="controls-top-row">
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
+                <input type="date" id="overviewStartDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
+              </div>
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
+                <input type="date" id="overviewEndDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
+              </div>
+              <button type="button" onclick="DashboardApp.resetOverviewDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
+              <div class="week-buttons-container" id="overviewWeekButtonsContainer"></div>
+            </div>
+            <div class="monthly-buttons-bar" id="overviewMonthlyButtonsBar"></div>
+          </div>
+
           <div class="entry-form-card" style="margin-bottom: 15px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
@@ -681,6 +668,23 @@
 
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 16.6667%;">
+          <!-- INDEPENDENT ANALYTICS CONTROLS -->
+          <div class="controls">
+            <div class="controls-top-row">
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
+                <input type="date" id="analyticsStartDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
+              </div>
+              <div class="control-group">
+                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
+                <input type="date" id="analyticsEndDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
+              </div>
+              <button type="button" onclick="DashboardApp.resetAnalyticsDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
+              <div class="week-buttons-container" id="analyticsWeekButtonsContainer"></div>
+            </div>
+            <div class="monthly-buttons-bar" id="analyticsMonthlyButtonsBar"></div>
+          </div>
+
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
             <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
             <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
@@ -1338,8 +1342,7 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
       
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      // Strictly completed on the final day of the month until the next day starts
-      const isMonthCompleted = (curDay === totalDaysInMonth) && hasLastDayRecord;
+      const isMonthCompleted = hasLastDayRecord;
 
       const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
       const queryEndInt = isMonthCompleted ? lastDayInt : (curYear * 10000 + curMonth * 100 + curDay);
@@ -1415,8 +1418,7 @@
       const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
 
       const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      // Strictly completed on the final day of the month until the next day starts
-      const isMonthCompleted = (curDay === totalDaysInMonth) && hasLastDayRecord;
+      const isMonthCompleted = hasLastDayRecord;
 
       if (isMonthCompleted) {
         const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
@@ -1629,9 +1631,9 @@
       topEl.innerText = topCat;
     }
 
-    function renderDateRangeTotalKPI(records) {
-      const startVal = $("startDate")?.value;
-      const endVal = $("endDate")?.value;
+    function renderOverviewDateRangeTotalKPI(records) {
+      const startVal = $("overviewStartDate")?.value;
+      const endVal = $("overviewEndDate")?.value;
       const rangeTotalEl = $("rangeTotalVal");
       const rangeSpanEl = $("rangeSpanSub");
       if (!rangeTotalEl || !rangeSpanEl) return;
@@ -1702,7 +1704,25 @@
       }
     }
 
-    function renderDashboard(records) {
+    function renderOverviewDashboard(records) {
+      renderBankingKPI(STATE.raw);
+      renderCashCardKPI(records);
+      renderFytdKPI(STATE.raw);
+      renderYtdKPI(STATE.raw);
+      renderMonthCompKPI(STATE.raw);
+      renderMonthTargetKPI(STATE.raw);
+      renderTodayTargetKPI(STATE.raw);
+      renderProjectedMonthKPI(STATE.raw);
+      renderRolling12MonthKPI(STATE.raw);
+      renderActiveDaysKPI(records);
+      renderTopCategoryKPI(records);
+      renderOverviewDateRangeTotalKPI(records);
+      renderWeeklySummary(STATE.raw);
+      renderBarChart(records);
+      renderBankedTable();
+    }
+
+    function renderAnalyticsDashboard(records) {
       const container = $("productTable");
       if (container) container.innerHTML = "";
 
@@ -1774,23 +1794,7 @@
         });
       }
 
-      renderBankingKPI(STATE.raw);
-      renderCashCardKPI(records);
-      renderFytdKPI(STATE.raw);
-      renderYtdKPI(STATE.raw);
-      renderMonthCompKPI(STATE.raw);
-      renderMonthTargetKPI(STATE.raw);
-      renderTodayTargetKPI(STATE.raw);
-      renderProjectedMonthKPI(STATE.raw);
-      renderRolling12MonthKPI(STATE.raw);
-      renderActiveDaysKPI(records);
-      renderTopCategoryKPI(records);
-      renderDateRangeTotalKPI(records);
-      renderWeeklySummary(STATE.raw);
-
-      renderBarChart(records);
       renderSalesChart(records);
-      renderBankedTable();
     }
 
     function renderBarChart(records) {
@@ -1857,8 +1861,8 @@
       });
     }
 
-    function initWeekButtons(year, month) {
-      const container = $("weekButtonsContainer");
+    function initOverviewWeekButtons(year, month) {
+      const container = $("overviewWeekButtonsContainer");
       if (!container) return;
       container.innerHTML = "";
 
@@ -1888,9 +1892,9 @@
         const btn = document.createElement("button");
         btn.innerText = `Wk ${weekNum} (${startDayNum} - ${endDayNum})`;
         btn.onclick = () => {
-          if ($("startDate")) $("startDate").value = sStr;
-          if ($("endDate")) $("endDate").value = eStr;
-          DashboardApp.applyRange();
+          if ($("overviewStartDate")) $("overviewStartDate").value = sStr;
+          if ($("overviewEndDate")) $("overviewEndDate").value = eStr;
+          DashboardApp.applyOverviewRange();
         };
         container.appendChild(btn);
 
@@ -1899,24 +1903,60 @@
       }
     }
 
-    function initMonthlyButtonsBar() {
-      const container = $("monthlyButtonsBar");
+    function initAnalyticsWeekButtons(year, month) {
+      const container = $("analyticsWeekButtonsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const now = new Date();
+      const targetYear = year !== undefined ? year : now.getFullYear();
+      const targetMonth = month !== undefined ? month : now.getMonth(); 
+
+      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
+      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
+
+      let dayOfWeek = firstDayOfMonth.getDay();
+      let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+      let currentWeekStart = new Date(targetYear, targetMonth, 1 - diffToMonday);
+
+      let weekNum = 1;
+
+      while (currentWeekStart <= lastDayOfMonth) {
+        let currentWeekEnd = new Date(currentWeekStart);
+        currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+
+        const sStr = formatDateLocal(currentWeekStart);
+        const eStr = formatDateLocal(currentWeekEnd);
+
+        const startDayNum = currentWeekStart.getDate();
+        const endDayNum = currentWeekEnd.getDate();
+
+        const btn = document.createElement("button");
+        btn.innerText = `Wk ${weekNum} (${startDayNum} - ${endDayNum})`;
+        btn.onclick = () => {
+          if ($("analyticsStartDate")) $("analyticsStartDate").value = sStr;
+          if ($("analyticsEndDate")) $("analyticsEndDate").value = eStr;
+          DashboardApp.applyAnalyticsRange();
+        };
+        container.appendChild(btn);
+
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        weekNum++;
+      }
+    }
+
+    function initOverviewMonthlyButtonsBar() {
+      const container = $("overviewMonthlyButtonsBar");
       if (!container) return;
       container.innerHTML = "";
 
       const months = [
-        { name: "January", number: "01" },
-        { name: "February", number: "02" },
-        { name: "March", number: "03" },
-        { name: "April", number: "04" },
-        { name: "May", number: "05" },
-        { name: "June", number: "06" },
-        { name: "July", number: "07" },
-        { name: "August", number: "08" },
-        { name: "September", number: "09" },
-        { name: "October", number: "10" },
-        { name: "November", number: "11" },
-        { name: "December", number: "12" }
+        { name: "January", number: "01" }, { name: "February", number: "02" },
+        { name: "March", number: "03" }, { name: "April", number: "04" },
+        { name: "May", number: "05" }, { name: "June", number: "06" },
+        { name: "July", number: "07" }, { name: "August", number: "08" },
+        { name: "September", number: "09" }, { name: "October", number: "10" },
+        { name: "November", number: "11" }, { name: "December", number: "12" }
       ];
 
       const currentYear = new Date().getFullYear();
@@ -1928,19 +1968,59 @@
         btn.innerText = m.name;
         
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+          container.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
 
-          const monthIndex = idx;
-          const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+          const daysInMonth = new Date(currentYear, idx + 1, 0).getDate();
           const startStr = `${currentYear}-${m.number}-01`;
           const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
 
-          if ($("startDate")) $("startDate").value = startStr;
-          if ($("endDate")) $("endDate").value = endStr;
+          if ($("overviewStartDate")) $("overviewStartDate").value = startStr;
+          if ($("overviewEndDate")) $("overviewEndDate").value = endStr;
           
-          initWeekButtons(currentYear, monthIndex);
-          DashboardApp.applyRange();
+          initOverviewWeekButtons(currentYear, idx);
+          DashboardApp.applyOverviewRange();
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    function initAnalyticsMonthlyButtonsBar() {
+      const container = $("analyticsMonthlyButtonsBar");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const months = [
+        { name: "January", number: "01" }, { name: "February", number: "02" },
+        { name: "March", number: "03" }, { name: "April", number: "04" },
+        { name: "May", number: "05" }, { name: "June", number: "06" },
+        { name: "July", number: "07" }, { name: "August", number: "08" },
+        { name: "September", number: "09" }, { name: "October", number: "10" },
+        { name: "November", number: "11" }, { name: "December", number: "12" }
+      ];
+
+      const currentYear = new Date().getFullYear();
+
+      months.forEach((m, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'month-btn';
+        btn.innerText = m.name;
+        
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const daysInMonth = new Date(currentYear, idx + 1, 0).getDate();
+          const startStr = `${currentYear}-${m.number}-01`;
+          const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
+
+          if ($("analyticsStartDate")) $("analyticsStartDate").value = startStr;
+          if ($("analyticsEndDate")) $("analyticsEndDate").value = endStr;
+          
+          initAnalyticsWeekButtons(currentYear, idx);
+          DashboardApp.applyAnalyticsRange();
         });
 
         container.appendChild(btn);
@@ -1979,10 +2059,103 @@
       DashboardApp.renderMomYoyData();
     }
 
+    // INSTANT LOCAL LOAD & BACKGROUND STALE-WHILE-REVALIDATE SYNCING
+    async function load() {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      // Initialize Overview Date Pickers (1st of month to end of current month)
+      if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
+      if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
+
+      // Initialize Analytics Date Pickers (1st of month to current date)
+      if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
+      if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now); // To date auto picks current date
+
+      initOverviewWeekButtons(now.getFullYear(), now.getMonth());
+      initOverviewMonthlyButtonsBar();
+      initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
+      initAnalyticsMonthlyButtonsBar();
+
+      // Load instantly from localStorage if cached
+      const cachedRaw = localStorage.getItem("dash_cached_raw");
+      const cachedBanked = localStorage.getItem("dash_cached_banked");
+
+      if (cachedRaw) {
+        try {
+          STATE.raw = JSON.parse(cachedRaw);
+          STATE.raw.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
+          STATE.isFullLoaded = true;
+        } catch(e) {}
+      }
+
+      if (cachedBanked) {
+        try {
+          STATE.banked = JSON.parse(cachedBanked);
+          STATE.banked.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
+          renderBankedTable();
+        } catch(e) {}
+      }
+
+      // If we have cached data, render immediately for an instantaneous UI experience
+      if (STATE.isFullLoaded) {
+        DashboardApp.applyOverviewRange();
+        DashboardApp.applyAnalyticsRange();
+      }
+
+      // Perform background network fetch (Stale-While-Revalidate)
+      try {
+        const currentYear = new Date().getFullYear();
+        STATE.currentYear = currentYear;
+        const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
+        const json = await res.json();
+        
+        let fullRecords = [];
+        let bankedRecords = [];
+        const sourceTabs = json.tabs || json.sheetsData;
+
+        if (json && sourceTabs) {
+          Object.keys(sourceTabs).forEach(tabName => {
+            const tabRows = sourceTabs[tabName];
+            if (Array.isArray(tabRows) && tabRows.length > 0) {
+              if (tabName.toLowerCase().includes("banked")) {
+                bankedRecords = processBankedRows(tabRows);
+              } else {
+                const sRows = processRows(tabRows);
+                fullRecords = fullRecords.concat(sRows);
+              }
+            }
+          });
+        }
+
+        if (fullRecords.length > 0) {
+          const uniqueMap = new Map();
+          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
+          fullRecords = Array.from(uniqueMap.values());
+          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+
+          STATE.raw = fullRecords;
+          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
+        }
+
+        if (bankedRecords.length > 0) {
+          STATE.banked = bankedRecords;
+          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
+          renderBankedTable();
+        }
+
+        STATE.isFullLoaded = true;
+        DashboardApp.applyOverviewRange();
+        DashboardApp.applyAnalyticsRange();
+      } catch (err) {
+        console.warn("Background fetch failed, using local cache:", err);
+      }
+    }
+
     // BACKGROUND POLLING SETUP (Every 5 Minutes)
     function startBackgroundPolling() {
       setInterval(async () => {
-        if (!STATE.isFullLoaded) return;
         try {
           const currentYear = STATE.currentYear || new Date().getFullYear();
           const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
@@ -1993,7 +2166,7 @@
           if (currJson && sourceTabs) {
             Object.keys(sourceTabs).forEach(tabName => {
               const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0 && tabName.toLowerCase() !== "banked") {
+              if (Array.isArray(tabRows) && tabRows.length > 0 && !tabName.toLowerCase().includes("banked")) {
                 const sRows = processRows(tabRows);
                 fullRecords = fullRecords.concat(sRows);
               }
@@ -2009,7 +2182,8 @@
             if (fullRecords.length !== STATE.raw.length) {
               STATE.raw = fullRecords;
               localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-              DashboardApp.applyRange();
+              DashboardApp.applyOverviewRange();
+              DashboardApp.applyAnalyticsRange();
               toast("Dashboard auto-refreshed with new backend data!");
             }
           }
@@ -2046,6 +2220,7 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
+            startBackgroundPolling();
           } else {
             alert("Incorrect Password. Access Denied.");
           }
@@ -2056,6 +2231,7 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
+            startBackgroundPolling();
           } else {
             alert("Authentication failed or incorrect password.");
           }
@@ -2086,31 +2262,22 @@
           }
         }
 
-        const sharedControls = $("sharedControls");
-        if (sharedControls) {
-          if (index === 0 || index === 1) {
-            sharedControls.classList.remove("hidden");
-          } else {
-            sharedControls.classList.add("hidden");
-          }
-        }
-
         if (index === 3) {
           initAccountingFySelect();
         } else if (index === 5) {
           initMomYoyYearSelect();
         }
       },
-      applyRange: () => {
-        const sVal = $("startDate")?.value;
-        const eVal = $("endDate")?.value;
+      applyOverviewRange: () => {
+        const sVal = $("overviewStartDate")?.value;
+        const eVal = $("overviewEndDate")?.value;
         const bankingStartVal = $("bankingStartDate")?.value;
         
         const nowStr = formatDateLocal(new Date());
         if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
 
-        if (sVal) localStorage.setItem("dash_startDate", sVal);
-        if (eVal) localStorage.setItem("dash_endDate", eVal);
+        if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
+        if (eVal) localStorage.setItem("dash_overviewEndDate", eVal);
         if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
 
         renderBankingKPI(STATE.raw);
@@ -2123,7 +2290,24 @@
           const eInt = parseInt(eVal.replace(/-/g, ""), 10);
           filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
         }
-        renderDashboard(filtered);
+        renderOverviewDashboard(filtered);
+      },
+      applyAnalyticsRange: () => {
+        const sVal = $("analyticsStartDate")?.value;
+        const eVal = $("analyticsEndDate")?.value;
+
+        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
+        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
+
+        if (!STATE.raw || STATE.raw.length === 0) return;
+
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        renderAnalyticsDashboard(filtered);
       },
       markAsBanked: async () => {
         const currentDayEl = $("lastBankedDate");
@@ -2182,24 +2366,43 @@
           }
 
           bankingStartEl.value = currentDayEl.value;
-          DashboardApp.applyRange();
+          DashboardApp.applyOverviewRange();
         }
       },
-      resetDateRange: () => {
-        localStorage.removeItem("dash_startDate");
-        localStorage.removeItem("dash_endDate");
+      resetOverviewDates: () => {
+        localStorage.removeItem("dash_overviewStartDate");
+        localStorage.removeItem("dash_overviewEndDate");
+        
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
+        if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
+        
+        const barContainer = $("overviewMonthlyButtonsBar");
+        if (barContainer) barContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+        initOverviewWeekButtons(now.getFullYear(), now.getMonth());
+        
+        DashboardApp.applyOverviewRange();
+        toast("Overview date range reset");
+      },
+      resetAnalyticsDates: () => {
+        localStorage.removeItem("dash_analyticsStartDate");
+        localStorage.removeItem("dash_analyticsEndDate");
         
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         
-        if ($("startDate")) $("startDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("endDate")) $("endDate").value = formatDateLocal(now);
+        if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
+        if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
         
-        document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-        initWeekButtons(now.getFullYear(), now.getMonth());
+        const barContainer = $("analyticsMonthlyButtonsBar");
+        if (barContainer) barContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+        initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
         
-        DashboardApp.applyRange();
-        toast("Date range reset to current month");
+        DashboardApp.applyAnalyticsRange();
+        toast("Analytics date range reset");
       },
       onEntryDateChange: () => {
         const dateInput = $("entryDate");
@@ -2302,12 +2505,16 @@
         tbody.innerHTML = "";
 
         const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}</td></tr>`;
+          return;
+        }
 
         filtered.forEach(r => {
           const tr = document.createElement("tr");
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
           tr.innerHTML = `
-            <td>${dateStr}</td>
+            <td>${displayDateStr}</td>
             <td>${r.dayName}</td>
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
@@ -2322,249 +2529,180 @@
           tbody.appendChild(tr);
         });
       },
+      exportAccountingCSV: () => {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201; 
+        const endInt = (fyYear + 1) * 10000 + 131; 
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        if (filtered.length === 0) {
+          alert("No data to export for selected Financial Year.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        filtered.forEach(r => {
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Accounting_FY_${fyYear}_${fyYear+1}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
       renderMomYoyData: () => {
         const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
         
-        safeSet("yoyHeaderPrev2", `${selectedYear - 2} (£)`);
-        safeSet("yoyHeaderPrev1", `${selectedYear - 1} (£)`);
-        safeSet("yoyHeaderCur", `${selectedYear} (£)`);
+        const yoyHeaderPrev2 = $("yoyHeaderPrev2");
+        const yoyHeaderPrev1 = $("yoyHeaderPrev1");
+        const yoyHeaderCur = $("yoyHeaderCur");
+        
+        if (yoyHeaderPrev2) yoyHeaderPrev2.innerText = `Year ${selectedYear - 2} (£)`;
+        if (yoyHeaderPrev1) yoyHeaderPrev1.innerText = `Year ${selectedYear - 1} (£)`;
+        if (yoyHeaderCur) yoyHeaderCur.innerText = `Year ${selectedYear} (£)`;
 
-        const monthlyData = {};
-        for (let y = selectedYear - 3; y <= selectedYear + 1; y++) {
-          monthlyData[y] = Array(12).fill(0);
+        const monthlyTotals = {};
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = {
+            [selectedYear - 2]: 0,
+            [selectedYear - 1]: 0,
+            [selectedYear]: 0
+          };
         }
 
-        if (STATE.raw && STATE.raw.length > 0) {
-          STATE.raw.forEach(r => {
-            if (r.parsedDate) {
-              const y = r.parsedDate.getFullYear();
-              const m = r.parsedDate.getMonth();
-              if (!monthlyData[y]) monthlyData[y] = Array(12).fill(0);
-              monthlyData[y][m] += r.dailyTotalCents;
-            }
-          });
-        }
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
+          }
+        });
 
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
         const yoyBody = $("yoyTableBody");
         if (yoyBody) {
           yoyBody.innerHTML = "";
-          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-          const yearsToCompare = [selectedYear - 2, selectedYear - 1, selectedYear];
-          
-          monthNames.forEach((mName, mIdx) => {
+          for (let m = 1; m <= 12; m++) {
+            const curVal = monthlyTotals[m][selectedYear];
+            const prevVal = monthlyTotals[m][selectedYear - 1];
+            const prev2Val = monthlyTotals[m][selectedYear - 2];
+
+            const diff = curVal - prevVal;
+            const pct = prevVal > 0 ? ((diff / prevVal) * 100).toFixed(1) : "0.0";
+            const isPos = diff >= 0;
+
             const tr = document.createElement("tr");
-            let rowHtml = `<td>${mName}</td>`;
-            
-            yearsToCompare.forEach(y => {
-              const rev = monthlyData[y] ? monthlyData[y][mIdx] : 0;
-              rowHtml += `<td>${fmt(rev)}</td>`;
-            });
-
-            const curRev = monthlyData[selectedYear] ? monthlyData[selectedYear][mIdx] : 0;
-            const prevRev = monthlyData[selectedYear - 1] ? monthlyData[selectedYear - 1][mIdx] : 0;
-            let growthStr = "-";
-            let growthClass = "";
-            if (prevRev > 0) {
-              const diff = curRev - prevRev;
-              const pct = ((diff / prevRev) * 100).toFixed(1);
-              const sign = diff >= 0 ? "+" : "";
-              growthStr = `${sign}${pct}% (${sign}${fmt(diff)})`;
-              growthClass = diff >= 0 ? "positive" : "negative";
-            } else if (curRev > 0) {
-              growthStr = "+100% (New)";
-              growthClass = "positive";
-            }
-
-            rowHtml += `<td class="${growthClass}">${growthStr}</td>`;
-            tr.innerHTML = rowHtml;
+            tr.innerHTML = `
+              <td>${monthNames[m-1]}</td>
+              <td>${fmt(prev2Val)}</td>
+              <td>${fmt(prevVal)}</td>
+              <td>${fmt(curVal)}</td>
+              <td class="${isPos ? 'positive' : 'negative'}">${isPos ? '+' : ''}${pct}%</td>
+            `;
             yoyBody.appendChild(tr);
-          });
+          }
         }
 
         const momBody = $("momTableBody");
         if (momBody) {
           momBody.innerHTML = "";
-          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-          const curYearData = monthlyData[selectedYear] || Array(12).fill(0);
+          let prevMonthVal = 0;
 
-          for (let i = 0; i < 12; i++) {
+          for (let m = 1; m <= 12; m++) {
+            const curVal = monthlyTotals[m][selectedYear];
+            const diff = m === 1 ? 0 : curVal - prevMonthVal;
+            const pct = (m === 1 || prevMonthVal === 0) ? "0.0" : ((diff / prevMonthVal) * 100).toFixed(1);
+            const isPos = diff >= 0;
+
             const tr = document.createElement("tr");
-            const rev = curYearData[i];
-            let momDiffStr = "-";
-            let momPctStr = "-";
-            let momClass = "";
-
-            if (i > 0) {
-              const prevRev = curYearData[i - 1];
-              if (prevRev > 0) {
-                const diff = rev - prevRev;
-                const pct = ((diff / prevRev) * 100).toFixed(1);
-                const sign = diff >= 0 ? "+" : "";
-                momDiffStr = `${sign}${fmt(diff)}`;
-                momPctStr = `${sign}${pct}%`;
-                momClass = diff >= 0 ? "positive" : "negative";
-              } else if (rev > 0) {
-                momDiffStr = `${fmt(rev)}`;
-                momPctStr = "+100%";
-                momClass = "positive";
-              }
-            }
-
             tr.innerHTML = `
-              <td>${monthNames[i]}</td>
-              <td>${fmt(rev)}</td>
-              <td class="${momClass}">${momDiffStr}</td>
-              <td class="${momClass}">${momPctStr}</td>
+              <td>${monthNames[m-1]}</td>
+              <td>${fmt(curVal)}</td>
+              <td class="${isPos ? 'positive' : 'negative'}">${m === 1 ? '-' : (isPos ? '+' : '') + fmt(diff)}</td>
+              <td class="${isPos ? 'positive' : 'negative'}">${m === 1 ? '-' : (isPos ? '+' : '') + pct + '%'}</td>
             `;
             momBody.appendChild(tr);
+            prevMonthVal = curVal;
           }
         }
       },
       exportMomYoyCSV: () => {
         const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
-        let csvContent = "data:text/csv;charset=utf-8,";
+        let csv = `MoM & YoY Analysis for Year ${selectedYear}\n\nYear-over-Year Monthly Comparison\nMonth,Year ${selectedYear-2},Year ${selectedYear-1},Year ${selectedYear},Growth (%)\n`;
         
-        csvContent += `Year-over-Year (YoY) Monthly Comparison (${selectedYear})\n`;
-        csvContent += `Month,${selectedYear - 2} (£),${selectedYear - 1} (£),${selectedYear} (£),YoY Growth (%)\n`;
-        
-        const yoyRows = document.querySelectorAll("#yoyTableBody tr");
-        yoyRows.forEach(row => {
-          const cols = row.querySelectorAll("td");
-          if (cols.length >= 5) {
-            csvContent += `"${cols[0].innerText}","${cols[1].innerText}","${cols[2].innerText}","${cols[3].innerText}","${cols[4].innerText}"\n`;
+        const monthlyTotals = {};
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = { [selectedYear - 2]: 0, [selectedYear - 1]: 0, [selectedYear]: 0 };
+        }
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
           }
         });
-        
-        csvContent += `\nMonth-over-Month (MoM) Sequential Performance (${selectedYear})\n`;
-        csvContent += `Month,Revenue (£),MoM Change (£),MoM Growth (%)\n`;
-        
-        const momRows = document.querySelectorAll("#momTableBody tr");
-        momRows.forEach(row => {
-          const cols = row.querySelectorAll("td");
-          if (cols.length >= 4) {
-            csvContent += `"${cols[0].innerText}","${cols[1].innerText}","${cols[2].innerText}","${cols[3].innerText}"\n`;
-          }
-        });
-        
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Mom_Yoy_Analysis_${selectedYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast("MoM & YoY CSV exported successfully!");
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        for (let m = 1; m <= 12; m++) {
+          const cur = monthlyTotals[m][selectedYear] / 100;
+          const p1 = monthlyTotals[m][selectedYear - 1] / 100;
+          const p2 = monthlyTotals[m][selectedYear - 2] / 100;
+          const diff = cur - p1;
+          const pct = p1 > 0 ? ((diff / p1) * 100).toFixed(1) : "0.0";
+          csv += `"${monthNames[m-1]}",${p2},${p1},${cur},"${pct}%"\n`;
+        }
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `MoM_YoY_Analysis_${selectedYear}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
       },
       exportMomYoyPDF: () => {
-        DashboardApp.switchTab(5);
         window.print();
       },
+      exportAnalyticsCSV: () => {
+        const sVal = $("analyticsStartDate")?.value;
+        const eVal = $("analyticsEndDate")?.value;
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+
+        if (filtered.length === 0) {
+          alert("No data to export for selected analytics date range.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total\n";
+        filtered.forEach(r => {
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Analytics_Sales_Report_${sVal}_to_${eVal}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
       printReport: () => {
-        DashboardApp.switchTab(1);
         window.print();
       }
     };
-
-    async function load() {
-      const loader = $("loading");
-      if (loader) {
-        loader.innerText = "Syncing datasets...";
-        loader.classList.remove("hidden");
-      }
-
-      const cachedRaw = localStorage.getItem("dash_cached_raw");
-      const cachedBanked = localStorage.getItem("dash_cached_banked");
-
-      if (cachedRaw) {
-        try {
-          STATE.raw = JSON.parse(cachedRaw);
-          STATE.raw.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-          STATE.isFullLoaded = true;
-        } catch(e) {}
-      }
-
-      if (cachedBanked) {
-        try {
-          STATE.banked = JSON.parse(cachedBanked);
-          STATE.banked.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-        } catch(e) {}
-      }
-
-      try {
-        const currentYear = new Date().getFullYear();
-        STATE.currentYear = currentYear;
-        const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-        const json = await res.json();
-        
-        let fullRecords = [];
-        let bankedRecords = [];
-        const sourceTabs = json.tabs || json.sheetsData;
-
-        if (json && sourceTabs) {
-          Object.keys(sourceTabs).forEach(tabName => {
-            const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              if (tabName.toLowerCase() === "banked") {
-                bankedRecords = processBankedRows(tabRows);
-              } else {
-                const sRows = processRows(tabRows);
-                fullRecords = fullRecords.concat(sRows);
-              }
-            }
-          });
-        }
-
-        if (fullRecords.length > 0) {
-          const uniqueMap = new Map();
-          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-          fullRecords = Array.from(uniqueMap.values());
-          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-          
-          STATE.raw = fullRecords;
-          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-        }
-
-        if (bankedRecords.length > 0) {
-          STATE.banked = bankedRecords;
-          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
-        }
-
-        STATE.isFullLoaded = true;
-      } catch (err) {
-        console.warn("Live fetch failed, using cached data if available:", err);
-      }
-
-      if (loader) loader.classList.add("hidden");
-
-      const now = new Date();
-      const cachedStart = localStorage.getItem("dash_startDate");
-      const cachedEnd = localStorage.getItem("dash_endDate");
-      const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
-
-      if ($("startDate")) {
-        $("startDate").value = cachedStart || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-      }
-      if ($("endDate")) {
-        $("endDate").value = cachedEnd || formatDateLocal(now);
-      }
-      if ($("bankingStartDate")) {
-        $("bankingStartDate").value = cachedBankingStart || formatDateLocal(new Date(now.getFullYear(), now.getMonth(), 1));
-      }
-
-      initWeekButtons(now.getFullYear(), now.getMonth());
-      initMonthlyButtonsBar();
-      initAccountingFySelect();
-      initMomYoyYearSelect();
-      startBackgroundPolling();
-
-      DashboardApp.applyRange();
-    }
-
-    const todayStr = formatDateLocal(new Date());
-    if ($("entryDate")) {
-      $("entryDate").value = todayStr;
-      DashboardApp.onEntryDateChange();
-    }
   </script>
 </body>
 </html>
