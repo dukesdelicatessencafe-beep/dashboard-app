@@ -607,7 +607,7 @@
     <button onclick="DashboardApp.login()" style="width: 100%;">Login Securely</button>
   </div>
 
-  <!-- NAVIGATION -->
+  <!-- NAVIGATION WITH REFRESH BUTTON -->
   <div id="nav" class="hidden">
     <button id="navBtn-0" onclick="DashboardApp.switchTab(0)">OVERVIEW</button>
     <button id="navBtn-1" onclick="DashboardApp.switchTab(1)">ANALYTICS</button>
@@ -615,6 +615,7 @@
     <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
     <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
     <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
+    <button id="navBtn-refresh" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; flex: 0 1 auto;">🔄 REFRESH</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -1177,7 +1178,7 @@
         case 80:
         case 81:
         case 82:
-          return { symbol: "🌦️️", name: "Showers" };
+          return { symbol: "🌦", name: "Showers" };
         case 95:
         case 96:
         case 99:
@@ -2483,6 +2484,63 @@
           initMomYoyYearSelect();
         }
       },
+      refreshData: async () => {
+        const loader = $("loading");
+        if (loader) {
+          loader.innerText = "Refreshing data from Google Sheet...";
+          loader.classList.remove("hidden");
+        }
+        try {
+          const currentYear = STATE.currentYear || new Date().getFullYear();
+          const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
+          const json = await res.json();
+          
+          let fullRecords = [];
+          let bankedRecords = [];
+          const sourceTabs = json.tabs || json.sheetsData;
+
+          if (json && sourceTabs) {
+            Object.keys(sourceTabs).forEach(tabName => {
+              const tabRows = sourceTabs[tabName];
+              if (Array.isArray(tabRows) && tabRows.length > 0) {
+                if (tabName.toLowerCase().includes("banked")) {
+                  bankedRecords = processBankedRows(tabRows);
+                } else {
+                  const sRows = processRows(tabRows);
+                  fullRecords = fullRecords.concat(sRows);
+                }
+              }
+            });
+          }
+
+          if (fullRecords.length > 0) {
+            const uniqueMap = new Map();
+            fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
+            fullRecords = Array.from(uniqueMap.values());
+            fullRecords.sort((a, b) => a.dateInt - b.dateInt);
+
+            STATE.raw = fullRecords;
+            localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
+          }
+
+          if (bankedRecords.length > 0) {
+            STATE.banked = bankedRecords;
+            localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
+            renderBankedTable();
+          }
+
+          STATE.isFullLoaded = true;
+          DashboardApp.applyOverviewRange();
+          DashboardApp.applyAnalyticsRange();
+          
+          if (loader) loader.classList.add("hidden");
+          toast("Data refreshed successfully!");
+        } catch (err) {
+          if (loader) loader.classList.add("hidden");
+          console.error("Refresh failed:", err);
+          toast("Failed to refresh data. Check connection.");
+        }
+      },
       applyOverviewRange: () => {
         const sVal = $("overviewStartDate")?.value;
         const eVal = $("overviewEndDate")?.value;
@@ -2677,13 +2735,13 @@
         STATE.pendingPayload = null;
       },
       confirmAndSubmit: async () => {
-        $("verifyModal").classList.add("hidden");
+        if (!STATE.pendingPayload) return;
         const payload = STATE.pendingPayload;
-        if (!payload) return;
+        DashboardApp.closeVerifyModal();
 
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Submitting sales entry to Google Sheet...";
+          loader.innerText = "Submitting entry to Google Sheet...";
           loader.classList.remove("hidden");
         }
 
@@ -2696,31 +2754,35 @@
           if (loader) loader.classList.add("hidden");
 
           if (json.status === "success") {
-            toast("Sales successfully submitted and saved!");
+            toast("Sales entry successfully recorded!");
+            $("dataEntryForm").reset();
+            const now = getUKTime();
+            $("entryDate").value = formatDateLocal(now);
+            DashboardApp.onEntryDateChange();
             load();
-            DashboardApp.switchTab(0);
           } else {
-            alert("Submission error: " + (json.message || "Unknown error"));
+            alert("Error saving data: " + (json.message || "Unknown error"));
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          alert("Network error during submission. Please check connection.");
+          alert("Network error while submitting entry.");
         }
-        STATE.pendingPayload = null;
       },
       renderAccountingData: () => {
+        const fySelect = $("accFySelect");
         const tbody = $("accountingTableBody");
-        if (!tbody) return;
+        if (!fySelect || !tbody) return;
         tbody.innerHTML = "";
 
-        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const fyStartInt = fyYear * 10000 + 201;
-        const fyEndInt = (fyYear + 1) * 10000 + 131;
+        const selectedFy = parseInt(fySelect.value, 10);
+        const fyStartInt = selectedFy * 10000 + 201; // Feb 1st
+        const fyEndInt = (selectedFy + 1) * 10000 + 131; // Jan 31st
 
         const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
+        filtered.sort((a, b) => a.dateInt - b.dateInt);
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No sales records found for FY ${fyYear}.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for Financial Year ${selectedFy}.</td></tr>`;
           return;
         }
 
@@ -2733,128 +2795,216 @@
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
             <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"] || 0)}</td>
-            <td>${fmt(r.categories["COUNTER"] || 0)}</td>
-            <td>${fmt(r.categories["Kitchen"] || 0)}</td>
-            <td>${fmt(r.categories["DRINK"] || 0)}</td>
-            <td>${fmt(r.categories["DELI"] || 0)}</td>
-            <td>${fmt(r.categories["ALCOHOL"] || 0)}</td>
+            <td>${fmt(r.categories["ICE CREAM"])}</td>
+            <td>${fmt(r.categories["COUNTER"])}</td>
+            <td>${fmt(r.categories["Kitchen"])}</td>
+            <td>${fmt(r.categories["DRINK"])}</td>
+            <td>${fmt(r.categories["DELI"])}</td>
+            <td>${fmt(r.categories["ALCOHOL"])}</td>
           `;
           tbody.appendChild(tr);
         });
       },
       exportAccountingCSV: () => {
-        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const fyStartInt = fyYear * 10000 + 201;
-        const fyEndInt = (fyYear + 1) * 10000 + 131;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
+        const fySelect = $("accFySelect");
+        const selectedFy = fySelect ? fySelect.value : new Date().getFullYear();
+        const fyStartInt = selectedFy * 10000 + 201;
+        const fyEndInt = (selectedFy + 1) * 10000 + 131;
 
-        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
+        if (filtered.length === 0) {
+          alert("No data to export for this Financial Year.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\r\n";
         filtered.forEach(r => {
           const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)},${((r.categories["ICE CREAM"]||0)/100).toFixed(2)},${((r.categories["COUNTER"]||0)/100).toFixed(2)},${((r.categories["Kitchen"]||0)/100).toFixed(2)},${((r.categories["DRINK"]||0)/100).toFixed(2)},${((r.categories["DELI"]||0)/100).toFixed(2)},${((r.categories["ALCOHOL"]||0)/100).toFixed(2)}\n`;
+          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\r\n`;
         });
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `Accounting_FY_${fyYear}.csv`;
+        a.download = `Accounting_FY_${selectedFy}.csv`;
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast("Accounting CSV exported successfully!");
       },
       renderMomYoyData: () => {
-        const year = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
-        
-        safeSet("yoyHeaderCur", `${year} (£)`);
-        safeSet("yoyHeaderPrev1", `${year - 1} (£)`);
-        safeSet("yoyHeaderPrev2", `${year - 2} (£)`);
+        const yearSelect = $("momYoyYearSelect");
+        const yoyTbody = $("yoyTableBody");
+        const momTbody = $("momTableBody");
+        if (!yearSelect || !yoyTbody || !momTbody) return;
 
-        const yoyBody = $("yoyTableBody");
-        const momBody = $("momTableBody");
-        if (!yoyBody || !momBody) return;
+        const selectedYear = parseInt(yearSelect.value, 10);
+        yoyTbody.innerHTML = "";
+        momTbody.innerHTML = "";
 
-        yoyBody.innerHTML = "";
-        momBody.innerHTML = "";
+        safeSet("yoyHeaderPrev2", `Year ${selectedYear - 2} (£)`);
+        safeSet("yoyHeaderPrev1", `Year ${selectedYear - 1} (£)`);
+        safeSet("yoyHeaderCur", `Year ${selectedYear} (£)`);
 
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
         const monthlyTotals = {};
-        for (let y = year - 2; y <= year; y++) {
-          monthlyTotals[y] = new Array(12).fill(0);
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = {
+            [selectedYear - 2]: 0,
+            [selectedYear - 1]: 0,
+            [selectedYear]: 0
+          };
         }
 
         STATE.raw.forEach(r => {
           if (!r.parsedDate) return;
           const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth();
-          if (y >= year - 2 && y <= year) {
-            monthlyTotals[y][m] += r.dailyTotalCents;
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
           }
         });
 
-        for (let m = 0; m < 12; m++) {
-          const curVal = monthlyTotals[year][m];
-          const prev1Val = monthlyTotals[year - 1][m];
-          const prev2Val = monthlyTotals[year - 2][m];
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        let prevMonthRevCents = null;
 
-          const diff = curVal - prev1Val;
-          const pct = prev1Val > 0 ? ((diff / prev1Val) * 100).toFixed(1) : "0.0";
-          const sign = diff >= 0 ? "+" : "";
+        for (let m = 1; m <= 12; m++) {
+          const y2Rev = monthlyTotals[m][selectedYear - 2];
+          const y1Rev = monthlyTotals[m][selectedYear - 1];
+          const curRev = monthlyTotals[m][selectedYear];
 
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${monthNames[m]}</td>
-            <td>${fmt(prev2Val)}</td>
-            <td>${fmt(prev1Val)}</td>
-            <td>${fmt(curVal)}</td>
-            <td class="${diff >= 0 ? 'positive' : 'negative'}">${sign}${sign ? '' : ''}${sign}${pct}%</td>
-          `;
-          yoyBody.appendChild(tr);
-        }
+          const yoyDiff = curRev - y1Rev;
+          const yoyPct = y1Rev > 0 ? ((yoyDiff / y1Rev) * 100).toFixed(1) : "0.0";
+          const yoySign = yoyDiff >= 0 ? "+" : "";
 
-        let prevMonthRev = null;
-        for (let m = 0; m < 12; m++) {
-          const curRev = monthlyTotals[year][m];
-          let diffStr = "-";
-          let pctStr = "-";
-          let isPos = true;
-
-          if (prevMonthRev !== null && prevMonthRev > 0) {
-            const diff = curRev - prevMonthRev;
-            const pct = ((diff / prevMonthRev) * 100).toFixed(1);
-            isPos = diff >= 0;
-            const sign = isPos ? "+" : "";
-            diffStr = `${sign}${fmt(diff)}`;
-            pctStr = `${sign}${pct}%`;
-          }
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${monthNames[m]}</td>
+          const yoyTr = document.createElement("tr");
+          yoyTr.innerHTML = `
+            <td>${monthNames[m - 1]}</td>
+            <td>${fmt(y2Rev)}</td>
+            <td>${fmt(y1Rev)}</td>
             <td>${fmt(curRev)}</td>
-            <td class="${isPos ? 'positive' : 'negative'}">${diffStr}</td>
-            <td class="${isPos ? 'positive' : 'negative'}">${pctStr}</td>
+            <td class="${yoyDiff >= 0 ? 'positive' : 'negative'}">${yoySign}${yoySign === "" && yoyDiff < 0 ? "" : yoySign}${fmt(yoyDiff).replace("£","£")} (${yoySign}${yoyPct}%)</td>
           `;
-          momBody.appendChild(tr);
-          prevMonthRev = curRev;
+          yoyTbody.appendChild(yoyTr);
+
+          let momDiffCents = 0;
+          let momPct = "0.0";
+          if (prevMonthRevCents !== null && prevMonthRevCents > 0) {
+            momDiffCents = curRev - prevMonthRevCents;
+            momPct = ((momDiffCents / prevMonthRevCents) * 100).toFixed(1);
+          }
+          const momSign = momDiffCents >= 0 ? "+" : "";
+
+          const momTr = document.createElement("tr");
+          momTr.innerHTML = `
+            <td>${monthNames[m - 1]}</td>
+            <td>${fmt(curRev)}</td>
+            <td class="${momDiffCents >= 0 ? 'positive' : 'negative'}">${momSign}${fmt(momDiffCents)}</td>
+            <td class="${momDiffCents >= 0 ? 'positive' : 'negative'}">${momSign}${momPct}%</td>
+          `;
+          momTbody.appendChild(momTr);
+
+          prevMonthRevCents = curRev;
         }
       },
       exportMomYoyCSV: () => {
-        toast("MoM & YoY CSV exported.");
+        const yearSelect = $("momYoyYearSelect");
+        const selectedYear = yearSelect ? yearSelect.value : new Date().getFullYear();
+        
+        let csv = `Month,Year ${selectedYear-2},Year ${selectedYear-1},Year ${selectedYear},YoY Growth (%),MoM Revenue,MoM Change,MoM Growth (%)\r\n`;
+        
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const monthlyTotals = {};
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = {
+            [selectedYear - 2]: 0,
+            [selectedYear - 1]: 0,
+            [selectedYear]: 0
+          };
+        }
+
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
+          }
+        });
+
+        let prevRev = null;
+        for (let m = 1; m <= 12; m++) {
+          const y2 = monthlyTotals[m][selectedYear - 2] / 100;
+          const y1 = monthlyTotals[m][selectedYear - 1] / 100;
+          const cur = monthlyTotals[m][selectedYear] / 100;
+          const yoyPct = y1 > 0 ? (((cur - y1) / y1) * 100).toFixed(1) : "0.0";
+          
+          let momDiff = 0;
+          let momPct = "0.0";
+          if (prevRev !== null && prevRev > 0) {
+            momDiff = cur - prevRev;
+            momPct = ((momDiff / prevRev) * 100).toFixed(1);
+          }
+
+          csv += `"${monthNames[m-1]}",${y2},${y1},${cur},${yoyPct}%,${cur},${momDiff},${momPct}%\r\n`;
+          prevRev = cur;
+        }
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `MoM_YoY_Analysis_${selectedYear}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast("MoM & YoY CSV exported successfully!");
       },
       exportMomYoyPDF: () => {
         document.body.classList.add("printing-momyoy");
         window.print();
-        setTimeout(() => document.body.classList.remove("printing-momyoy"), 1000);
+        setTimeout(() => {
+          document.body.classList.remove("printing-momyoy");
+        }, 1000);
       },
       exportAnalyticsCSV: () => {
-        toast("Analytics CSV exported.");
+        const sVal = $("analyticsStartDate")?.value;
+        const eVal = $("analyticsEndDate")?.value;
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+
+        if (filtered.length === 0) {
+          alert("No data to export for this range.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total\r\n";
+        filtered.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\r\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Analytics_Report_${sVal || 'start'}_to_${eVal || 'end'}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast("Analytics CSV exported successfully!");
       },
       printReport: () => {
         document.body.classList.add("printing-analytics");
         window.print();
-        setTimeout(() => document.body.classList.remove("printing-analytics"), 1000);
+        setTimeout(() => {
+          document.body.classList.remove("printing-analytics");
+        }, 1000);
       }
     };
   </script>
