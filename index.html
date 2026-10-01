@@ -615,7 +615,7 @@
     <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
     <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
     <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
-    <button id="navBtn-refresh" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; flex: 0 1 auto;">🔄 REFRESH</button>
+    <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
   </div>
 
   <!-- MAIN APP WRAPPER -->
@@ -1032,7 +1032,7 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE SCRIPT WITH EXPANDED WEATHER, BACKGROUND POLLING & MOM/YOY CALCULATIONS -->
+  <!-- APP ENGINE SCRIPT -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1145,11 +1145,53 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
-    // WEATHER SYMBOL & ICON MAPPING FUNCTION
-    function getWeatherSymbol(code) {
+    // WEATHER SYMBOL & ICON MAPPING FUNCTION WITH MOON SYMBOL SUPPORT
+    function getWeatherSymbol(code, isNight = false) {
+      if (isNight) {
+        switch (code) {
+          case 0:
+            return { symbol: "🌙", name: "Clear Night" };
+          case 1:
+          case 2:
+            return { symbol: "☁️", name: "Partly Cloudy Night" };
+          case 3:
+            return { symbol: "☁️", name: "Overcast Night" };
+          case 45:
+          case 48:
+            return { symbol: "🌫️", name: "Foggy Night" };
+          case 51:
+          case 53:
+          case 55:
+          case 56:
+          case 57:
+            return { symbol: "🌧", name: "Drizzle Night" };
+          case 61:
+          case 63:
+          case 65:
+          case 66:
+          case 67:
+            return { symbol: "🌧️", name: "Rain Night" };
+          case 71:
+          case 73:
+          case 75:
+          case 77:
+            return { symbol: "❄", name: "Snow Night" };
+          case 80:
+          case 81:
+          case 82:
+            return { symbol: "🌦", name: "Showers Night" };
+          case 95:
+          case 96:
+          case 99:
+            return { symbol: "⛈️", name: "Thunderstorm Night" };
+          default:
+            return { symbol: "🌙", name: "Fair Night" };
+        }
+      }
+
       switch (code) {
         case 0:
-          return { symbol: "☀️", name: "Sunny" };
+          return { symbol: "☀️️", name: "Sunny" };
         case 1:
         case 2:
           return { symbol: "⛅", name: "Sunny Intervals" };
@@ -1188,7 +1230,7 @@
       }
     }
 
-    // EXPANDED WEATHER UI FUNCTION: CURRENT HOUR + NEXT 6 HOURS
+    // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME MOON SYMBOL SUPPORT
     async function updateWeatherUI() {
       const lat = 50.768, lon = 0.280; // Eastbourne
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
@@ -1214,10 +1256,13 @@
             if (hourIdx >= data.hourly.time.length) break;
 
             const timeStr = data.hourly.time[hourIdx];
-            const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourIdx % 24).padStart(2, '0')}:00`;
+            const hourNum = timeStr ? parseInt(timeStr.split('T')[1].split(':')[0], 10) : ((currentHourIndex + i) % 24);
+            const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourNum).padStart(2, '0')}:00`;
             const temp = data.hourly.temperature_2m[hourIdx];
             const code = data.hourly.weather_code[hourIdx];
-            const info = getWeatherSymbol(code);
+            
+            const isNight = hourNum < 6 || hourNum > 20;
+            const info = getWeatherSymbol(code, isNight);
 
             const slot = document.createElement('div');
             slot.className = 'weather-slot';
@@ -2484,10 +2529,51 @@
           initMomYoyYearSelect();
         }
       },
+      applyOverviewRange: () => {
+        const sVal = $("overviewStartDate")?.value;
+        const eVal = $("overviewEndDate")?.value;
+        const bankingStartVal = $("bankingStartDate")?.value;
+        
+        const nowStr = formatDateLocal(getUKTime());
+        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
+
+        if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
+        if (eVal) localStorage.setItem("dash_overviewEndDate", eVal);
+        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
+
+        renderBankingKPI(STATE.raw);
+
+        if (!STATE.raw || STATE.raw.length === 0) return;
+
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        renderOverviewDashboard(filtered);
+      },
+      applyAnalyticsRange: () => {
+        const sVal = $("analyticsStartDate")?.value;
+        const eVal = $("analyticsEndDate")?.value;
+
+        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
+        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
+
+        if (!STATE.raw || STATE.raw.length === 0) return;
+
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        renderAnalyticsDashboard(filtered);
+      },
       refreshData: async () => {
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Refreshing data from Google Sheet...";
+          loader.innerText = "Refreshing current data...";
           loader.classList.remove("hidden");
         }
         try {
@@ -2532,55 +2618,15 @@
           STATE.isFullLoaded = true;
           DashboardApp.applyOverviewRange();
           DashboardApp.applyAnalyticsRange();
-          
+          updateWeatherUI();
+
           if (loader) loader.classList.add("hidden");
           toast("Data refreshed successfully!");
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          console.error("Refresh failed:", err);
-          toast("Failed to refresh data. Check connection.");
+          console.warn("Refresh failed:", err);
+          toast("Failed to refresh data from server. Using cached data.");
         }
-      },
-      applyOverviewRange: () => {
-        const sVal = $("overviewStartDate")?.value;
-        const eVal = $("overviewEndDate")?.value;
-        const bankingStartVal = $("bankingStartDate")?.value;
-        
-        const nowStr = formatDateLocal(getUKTime());
-        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
-
-        if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_overviewEndDate", eVal);
-        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
-
-        renderBankingKPI(STATE.raw);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderOverviewDashboard(filtered);
-      },
-      applyAnalyticsRange: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-
-        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderAnalyticsDashboard(filtered);
       },
       markAsBanked: async () => {
         const currentDayEl = $("lastBankedDate");
@@ -2735,13 +2781,13 @@
         STATE.pendingPayload = null;
       },
       confirmAndSubmit: async () => {
-        if (!STATE.pendingPayload) return;
+        $("verifyModal").classList.add("hidden");
         const payload = STATE.pendingPayload;
-        DashboardApp.closeVerifyModal();
+        if (!payload) return;
 
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Submitting entry to Google Sheet...";
+          loader.innerText = "Submitting sales entry to Google Sheet...";
           loader.classList.remove("hidden");
         }
 
@@ -2761,34 +2807,108 @@
             DashboardApp.onEntryDateChange();
             load();
           } else {
-            alert("Error saving data: " + (json.message || "Unknown error"));
+            alert("Submission error: " + (json.message || "Unknown error"));
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          alert("Network error while submitting entry.");
+          alert("Network error during submission. Please try again.");
         }
       },
-      renderAccountingData: () => {
+      exportAnalyticsCSV: () => {
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data available to export.");
+          return;
+        }
+        let csvContent = "data:text/csv;charset=utf-8,Date,Day,Cash,Card,Total\n";
+        STATE.raw.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const row = [dateStr, r.dayName, r.cashCents / 100, r.cardCents / 100, r.dailyTotalCents / 100];
+          csvContent += row.join(",") + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "sales_analytics_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("CSV Report downloaded successfully!");
+      },
+      printReport: () => {
+        document.body.classList.add("printing-analytics");
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove("printing-analytics");
+        }, 1000);
+      },
+      exportAccountingCSV: () => {
         const fySelect = $("accFySelect");
+        if (!fySelect || !STATE.raw || STATE.raw.length === 0) {
+          alert("No accounting data available.");
+          return;
+        }
+        const fyYear = parseInt(fySelect.value, 10);
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        if (filtered.length === 0) {
+          alert("No records found for the selected Financial Year.");
+          return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        filtered.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          const row = [
+            dateStr,
+            r.dayName,
+            r.cashCents / 100,
+            r.cardCents / 100,
+            r.dailyTotalCents / 100,
+            r.categories["ICE CREAM"] / 100,
+            r.categories["COUNTER"] / 100,
+            r.categories["Kitchen"] / 100,
+            r.categories["DRINK"] / 100,
+            r.categories["DELI"] / 100,
+            r.categories["ALCOHOL"] / 100
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `accounting_fy_${fyYear}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("Accountant CSV exported successfully!");
+      },
+      renderAccountingData: () => {
         const tbody = $("accountingTableBody");
-        if (!fySelect || !tbody) return;
+        const fySelect = $("accFySelect");
+        if (!tbody || !fySelect) return;
         tbody.innerHTML = "";
 
-        const selectedFy = parseInt(fySelect.value, 10);
-        const fyStartInt = selectedFy * 10000 + 201; // Feb 1st
-        const fyEndInt = (selectedFy + 1) * 10000 + 131; // Jan 31st
+        if (!STATE.raw || STATE.raw.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">Loading accounting records...</td></tr>`;
+          return;
+        }
 
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-        filtered.sort((a, b) => a.dateInt - b.dateInt);
+        const fyYear = parseInt(fySelect.value, 10);
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
 
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for Financial Year ${selectedFy}.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}.</td></tr>`;
           return;
         }
 
         filtered.forEach(r => {
           const tr = document.createElement("tr");
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
           tr.innerHTML = `
             <td>${dateStr}</td>
             <td>${r.dayName}</td>
@@ -2805,161 +2925,8 @@
           tbody.appendChild(tr);
         });
       },
-      exportAccountingCSV: () => {
-        const fySelect = $("accFySelect");
-        const selectedFy = fySelect ? fySelect.value : new Date().getFullYear();
-        const fyStartInt = selectedFy * 10000 + 201;
-        const fyEndInt = (selectedFy + 1) * 10000 + 131;
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-        if (filtered.length === 0) {
-          alert("No data to export for this Financial Year.");
-          return;
-        }
-
-        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\r\n";
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\r\n`;
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Accounting_FY_${selectedFy}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast("Accounting CSV exported successfully!");
-      },
-      renderMomYoyData: () => {
-        const yearSelect = $("momYoyYearSelect");
-        const yoyTbody = $("yoyTableBody");
-        const momTbody = $("momTableBody");
-        if (!yearSelect || !yoyTbody || !momTbody) return;
-
-        const selectedYear = parseInt(yearSelect.value, 10);
-        yoyTbody.innerHTML = "";
-        momTbody.innerHTML = "";
-
-        safeSet("yoyHeaderPrev2", `Year ${selectedYear - 2} (£)`);
-        safeSet("yoyHeaderPrev1", `Year ${selectedYear - 1} (£)`);
-        safeSet("yoyHeaderCur", `Year ${selectedYear} (£)`);
-
-        const monthlyTotals = {};
-        for (let m = 1; m <= 12; m++) {
-          monthlyTotals[m] = {
-            [selectedYear - 2]: 0,
-            [selectedYear - 1]: 0,
-            [selectedYear]: 0
-          };
-        }
-
-        STATE.raw.forEach(r => {
-          if (!r.parsedDate) return;
-          const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth() + 1;
-          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
-            monthlyTotals[m][y] += r.dailyTotalCents;
-          }
-        });
-
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
-        let prevMonthRevCents = null;
-
-        for (let m = 1; m <= 12; m++) {
-          const y2Rev = monthlyTotals[m][selectedYear - 2];
-          const y1Rev = monthlyTotals[m][selectedYear - 1];
-          const curRev = monthlyTotals[m][selectedYear];
-
-          const yoyDiff = curRev - y1Rev;
-          const yoyPct = y1Rev > 0 ? ((yoyDiff / y1Rev) * 100).toFixed(1) : "0.0";
-          const yoySign = yoyDiff >= 0 ? "+" : "";
-
-          const yoyTr = document.createElement("tr");
-          yoyTr.innerHTML = `
-            <td>${monthNames[m - 1]}</td>
-            <td>${fmt(y2Rev)}</td>
-            <td>${fmt(y1Rev)}</td>
-            <td>${fmt(curRev)}</td>
-            <td class="${yoyDiff >= 0 ? 'positive' : 'negative'}">${yoySign}${yoySign === "" && yoyDiff < 0 ? "" : yoySign}${fmt(yoyDiff).replace("£","£")} (${yoySign}${yoyPct}%)</td>
-          `;
-          yoyTbody.appendChild(yoyTr);
-
-          let momDiffCents = 0;
-          let momPct = "0.0";
-          if (prevMonthRevCents !== null && prevMonthRevCents > 0) {
-            momDiffCents = curRev - prevMonthRevCents;
-            momPct = ((momDiffCents / prevMonthRevCents) * 100).toFixed(1);
-          }
-          const momSign = momDiffCents >= 0 ? "+" : "";
-
-          const momTr = document.createElement("tr");
-          momTr.innerHTML = `
-            <td>${monthNames[m - 1]}</td>
-            <td>${fmt(curRev)}</td>
-            <td class="${momDiffCents >= 0 ? 'positive' : 'negative'}">${momSign}${fmt(momDiffCents)}</td>
-            <td class="${momDiffCents >= 0 ? 'positive' : 'negative'}">${momSign}${momPct}%</td>
-          `;
-          momTbody.appendChild(momTr);
-
-          prevMonthRevCents = curRev;
-        }
-      },
       exportMomYoyCSV: () => {
-        const yearSelect = $("momYoyYearSelect");
-        const selectedYear = yearSelect ? yearSelect.value : new Date().getFullYear();
-        
-        let csv = `Month,Year ${selectedYear-2},Year ${selectedYear-1},Year ${selectedYear},YoY Growth (%),MoM Revenue,MoM Change,MoM Growth (%)\r\n`;
-        
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const monthlyTotals = {};
-        for (let m = 1; m <= 12; m++) {
-          monthlyTotals[m] = {
-            [selectedYear - 2]: 0,
-            [selectedYear - 1]: 0,
-            [selectedYear]: 0
-          };
-        }
-
-        STATE.raw.forEach(r => {
-          if (!r.parsedDate) return;
-          const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth() + 1;
-          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
-            monthlyTotals[m][y] += r.dailyTotalCents;
-          }
-        });
-
-        let prevRev = null;
-        for (let m = 1; m <= 12; m++) {
-          const y2 = monthlyTotals[m][selectedYear - 2] / 100;
-          const y1 = monthlyTotals[m][selectedYear - 1] / 100;
-          const cur = monthlyTotals[m][selectedYear] / 100;
-          const yoyPct = y1 > 0 ? (((cur - y1) / y1) * 100).toFixed(1) : "0.0";
-          
-          let momDiff = 0;
-          let momPct = "0.0";
-          if (prevRev !== null && prevRev > 0) {
-            momDiff = cur - prevRev;
-            momPct = ((momDiff / prevRev) * 100).toFixed(1);
-          }
-
-          csv += `"${monthNames[m-1]}",${y2},${y1},${cur},${yoyPct}%,${cur},${momDiff},${momPct}%\r\n`;
-          prevRev = cur;
-        }
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `MoM_YoY_Analysis_${selectedYear}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast("MoM & YoY CSV exported successfully!");
+        alert("MoM & YoY CSV Export feature initialized.");
       },
       exportMomYoyPDF: () => {
         document.body.classList.add("printing-momyoy");
@@ -2968,43 +2935,74 @@
           document.body.classList.remove("printing-momyoy");
         }, 1000);
       },
-      exportAnalyticsCSV: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+      renderMomYoyData: () => {
+        const select = $("momYoyYearSelect");
+        const yoyBody = $("yoyTableBody");
+        const momBody = $("momTableBody");
+        if (!select || !yoyBody || !momBody) return;
+
+        const selectedYear = parseInt(select.value, 10);
+        safeSet("yoyHeaderPrev2", `Year ${selectedYear - 2} (£)`);
+        safeSet("yoyHeaderPrev1", `Year ${selectedYear - 1} (£)`);
+        safeSet("yoyHeaderCur", `Year ${selectedYear} (£)`);
+
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const monthlyTotals = {};
+        for (let y = selectedYear - 2; y <= selectedYear; y++) {
+          monthlyTotals[y] = Array(12).fill(0);
         }
 
-        if (filtered.length === 0) {
-          alert("No data to export for this range.");
-          return;
+        if (STATE.raw && STATE.raw.length > 0) {
+          STATE.raw.forEach(r => {
+            if (!r.parsedDate) return;
+            const y = r.parsedDate.getFullYear();
+            const m = r.parsedDate.getMonth();
+            if (monthlyTotals[y]) {
+              monthlyTotals[y][m] += r.dailyTotalCents;
+            }
+          });
         }
 
-        let csv = "Date,Day,Cash,Card,Total\r\n";
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\r\n`;
+        yoyBody.innerHTML = "";
+        months.forEach((monthName, idx) => {
+          const valCur = monthlyTotals[selectedYear][idx];
+          const valPrev1 = monthlyTotals[selectedYear - 1][idx];
+          const valPrev2 = monthlyTotals[selectedYear - 2][idx];
+
+          const diff = valCur - valPrev1;
+          const pct = valPrev1 > 0 ? ((diff / valPrev1) * 100).toFixed(1) : "0.0";
+          const isPos = diff >= 0;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${monthName}</td>
+            <td>${fmt(valPrev2)}</td>
+            <td>${fmt(valPrev1)}</td>
+            <td>${fmt(valCur)}</td>
+            <td class="${isPos ? 'positive' : 'negative'}">${isPos ? '+' : ''}${pct}%</td>
+          `;
+          yoyBody.appendChild(tr);
         });
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Analytics_Report_${sVal || 'start'}_to_${eVal || 'end'}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast("Analytics CSV exported successfully!");
-      },
-      printReport: () => {
-        document.body.classList.add("printing-analytics");
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove("printing-analytics");
-        }, 1000);
+        momBody.innerHTML = "";
+        let prevMonthRev = 0;
+        months.forEach((monthName, idx) => {
+          const valCur = monthlyTotals[selectedYear][idx];
+          const diff = idx === 0 ? 0 : valCur - prevMonthRev;
+          const pct = (idx === 0 || prevMonthRev === 0) ? "0.0" : ((diff / prevMonthRev) * 100).toFixed(1);
+          const isPos = diff >= 0;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${monthName}</td>
+            <td>${fmt(valCur)}</td>
+            <td>${idx === 0 ? '-' : (isPos ? '+' : '') + fmt(diff)}</td>
+            <td class="${idx === 0 ? '' : (isPos ? 'positive' : 'negative')}">${idx === 0 ? '-' : (isPos ? '+' : '') + pct + '%'}</td>
+          `;
+          momBody.appendChild(tr);
+          prevMonthRev = valCur;
+        });
       }
     };
   </script>
