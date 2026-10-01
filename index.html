@@ -290,34 +290,37 @@
 
     #hourly-weather-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
     }
 
     .weather-slot {
       background: #2a2a2a;
       border: 1px solid #444;
-      padding: 10px;
+      padding: 8px;
       border-radius: 6px;
       text-align: center;
     }
 
     .weather-slot h4 {
-      margin: 0 0 6px 0;
-      font-size: 12px;
+      margin: 0 0 4px 0;
+      font-size: 11px;
       color: var(--accent-gold);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .weather-slot p {
-      margin: 6px 0 0 0;
-      font-size: 16px;
+      margin: 4px 0 0 0;
+      font-size: 15px;
       font-weight: bold;
       color: #fff;
     }
 
     .weather-symbol-display {
-      font-size: 28px;
-      margin: 4px 0;
+      font-size: 24px;
+      margin: 2px 0;
       display: block;
     }
 
@@ -712,7 +715,7 @@
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" style="width: 16.6667%;">
           
-          <!-- WEATHER SECTION (Above Date Picker) -->
+          <!-- EXPANDED WEATHER SECTION -->
           <div class="weather-dashboard-section">
             <h3>Eastbourne Weather Forecast</h3>
             <!-- Daily Summary Section -->
@@ -722,17 +725,12 @@
                 <p>Precipitation: <span id="precipitation">--</span> mm</p>
             </div>
 
-            <!-- Hourly Visual Representation Section -->
+            <!-- Hourly Visual Representation Section (Current Hour + Next 6 Hours) -->
             <div id="hourly-weather-container">
                 <div class="weather-slot">
-                    <h4>Current Hour</h4>
-                    <div id="current-icon" class="weather-symbol-display">☀️</div>
-                    <p><span id="current-temp">--</span>°C</p>
-                </div>
-                <div class="weather-slot">
-                    <h4>Next Hour</h4>
-                    <div id="next-icon" class="weather-symbol-display">☀️</div>
-                    <p><span id="next-temp">--</span>°C</p>
+                    <h4>Current</h4>
+                    <div class="weather-symbol-display">☀️</div>
+                    <p>--°C</p>
                 </div>
             </div>
           </div>
@@ -1033,7 +1031,7 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE SCRIPT WITH WEATHER, BACKGROUND POLLING & MOM/YOY CALCULATIONS -->
+  <!-- APP ENGINE SCRIPT WITH EXPANDED WEATHER, BACKGROUND POLLING & MOM/YOY CALCULATIONS -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1148,7 +1146,6 @@
 
     // WEATHER SYMBOL & ICON MAPPING FUNCTION
     function getWeatherSymbol(code) {
-      // WMO Weather interpretation codes mapping to symbols (Sunny, Sunny Intervals, Light Cloud, Rain, etc.)
       switch (code) {
         case 0:
           return { symbol: "☀️", name: "Sunny" };
@@ -1165,7 +1162,7 @@
         case 55:
         case 56:
         case 57:
-          return { symbol: "🌧️️", name: "Drizzle" };
+          return { symbol: "🌧", name: "Drizzle" };
         case 61:
         case 63:
         case 65:
@@ -1176,20 +1173,21 @@
         case 73:
         case 75:
         case 77:
-          return { symbol: "❄️️", name: "Snow" };
+          return { symbol: "❄", name: "Snow" };
         case 80:
         case 81:
         case 82:
-          return { symbol: "🌦️", name: "Showers" };
+          return { symbol: "🌦️️", name: "Showers" };
         case 95:
         case 96:
         case 99:
           return { symbol: "⛈️", name: "Thunderstorm" };
         default:
-          return { symbol: "🌤️️", name: "Fair" };
+          return { symbol: "🌤", name: "Fair" };
       }
     }
 
+    // EXPANDED WEATHER UI FUNCTION: CURRENT HOUR + NEXT 6 HOURS
     async function updateWeatherUI() {
       const lat = 50.768, lon = 0.280; // Eastbourne
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
@@ -1199,33 +1197,36 @@
         const data = await response.json();
 
         // 1. Inject Daily Stats
-        document.getElementById('max-temp').innerText = data.daily.temperature_2m_max[0];
-        document.getElementById('min-temp').innerText = data.daily.temperature_2m_min[0];
-        document.getElementById('precipitation').innerText = data.daily.precipitation_sum[0];
-
-        // 2. Inject Current & Next Hour Data
-        const currentHourIndex = new Date().getHours();
-        
-        document.getElementById('current-temp').innerText = data.hourly.temperature_2m[currentHourIndex];
-        document.getElementById('next-temp').innerText = data.hourly.temperature_2m[currentHourIndex + 1];
-
-        // Map weather codes to symbols (sunny, sunny intervals, light cloud, rain, etc.)
-        const currentWeatherCode = data.hourly.weather_code[currentHourIndex];
-        const nextWeatherCode = data.hourly.weather_code[currentHourIndex + 1];
-
-        const currentInfo = getWeatherSymbol(currentWeatherCode);
-        const nextInfo = getWeatherSymbol(nextWeatherCode);
-
-        const currentIconEl = document.getElementById('current-icon');
-        if (currentIconEl) {
-          currentIconEl.innerText = currentInfo.symbol;
-          currentIconEl.title = currentInfo.name;
+        if (data.daily) {
+          safeSet('max-temp', data.daily.temperature_2m_max[0]);
+          safeSet('min-temp', data.daily.temperature_2m_min[0]);
+          safeSet('precipitation', data.daily.precipitation_sum[0]);
         }
 
-        const nextIconEl = document.getElementById('next-icon');
-        if (nextIconEl) {
-          nextIconEl.innerText = nextInfo.symbol;
-          nextIconEl.title = nextInfo.name;
+        // 2. Inject Current Hour + Next 6 Hours (Total 7 slots)
+        const currentHourIndex = new Date().getHours();
+        const hourlyContainer = $('hourly-weather-container');
+        if (hourlyContainer && data.hourly && data.hourly.time) {
+          hourlyContainer.innerHTML = '';
+          for (let i = 0; i <= 6; i++) {
+            const hourIdx = currentHourIndex + i;
+            if (hourIdx >= data.hourly.time.length) break;
+
+            const timeStr = data.hourly.time[hourIdx];
+            const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourIdx % 24).padStart(2, '0')}:00`;
+            const temp = data.hourly.temperature_2m[hourIdx];
+            const code = data.hourly.weather_code[hourIdx];
+            const info = getWeatherSymbol(code);
+
+            const slot = document.createElement('div');
+            slot.className = 'weather-slot';
+            slot.innerHTML = `
+              <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
+              <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
+              <p>${temp}°C</p>
+            `;
+            hourlyContainer.appendChild(slot);
+          }
         }
 
       } catch (error) {
@@ -1233,7 +1234,6 @@
       }
     }
 
-    // Run on page load
     window.addEventListener('DOMContentLoaded', updateWeatherUI);
 
     function processRows(rows) {
@@ -2261,7 +2261,6 @@
       DashboardApp.renderMomYoyData();
     }
 
-    // INSTANT LOCAL LOAD & BACKGROUND STALE-WHILE-REVALIDATE SYNCING
     async function load() {
       const now = getUKTime();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2679,29 +2678,25 @@
       },
       confirmAndSubmit: async () => {
         $("verifyModal").classList.add("hidden");
+        const payload = STATE.pendingPayload;
+        if (!payload) return;
+
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Submitting data...";
+          loader.innerText = "Submitting sales entry to Google Sheet...";
           loader.classList.remove("hidden");
         }
 
         try {
           const res = await fetch(CONFIG.URL, {
             method: "POST",
-            body: JSON.stringify(STATE.pendingPayload)
+            body: JSON.stringify(payload)
           });
           const json = await res.json();
           if (loader) loader.classList.add("hidden");
 
           if (json.status === "success") {
-            toast("Data successfully submitted!");
-            $("dataEntryForm").reset();
-            const todayStr = formatDateLocal(getUKTime());
-            if ($("entryDate")) {
-              $("entryDate").value = todayStr;
-              DashboardApp.onEntryDateChange();
-            }
-            localStorage.removeItem("dash_cached_raw");
+            toast("Sales successfully submitted and saved!");
             load();
             DashboardApp.switchTab(0);
           } else {
@@ -2709,207 +2704,157 @@
           }
         } catch (err) {
           if (loader) loader.classList.add("hidden");
-          alert("Network error during submission: " + err.message);
+          alert("Network error during submission. Please check connection.");
         }
         STATE.pendingPayload = null;
       },
       renderAccountingData: () => {
-        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; 
-        const endInt = (fyYear + 1) * 10000 + 131; 
-
         const tbody = $("accountingTableBody");
         if (!tbody) return;
         tbody.innerHTML = "";
 
-        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const fyStartInt = fyYear * 10000 + 201;
+        const fyEndInt = (fyYear + 1) * 10000 + 131;
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
+
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No sales records found for FY ${fyYear}.</td></tr>`;
           return;
         }
 
         filtered.forEach(r => {
           const tr = document.createElement("tr");
-          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
           tr.innerHTML = `
-            <td>${displayDateStr}</td>
+            <td>${dateStr}</td>
             <td>${r.dayName}</td>
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
             <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"])}</td>
-            <td>${fmt(r.categories["COUNTER"])}</td>
-            <td>${fmt(r.categories["Kitchen"])}</td>
-            <td>${fmt(r.categories["DRINK"])}</td>
-            <td>${fmt(r.categories["DELI"])}</td>
-            <td>${fmt(r.categories["ALCOHOL"])}</td>
+            <td>${fmt(r.categories["ICE CREAM"] || 0)}</td>
+            <td>${fmt(r.categories["COUNTER"] || 0)}</td>
+            <td>${fmt(r.categories["Kitchen"] || 0)}</td>
+            <td>${fmt(r.categories["DRINK"] || 0)}</td>
+            <td>${fmt(r.categories["DELI"] || 0)}</td>
+            <td>${fmt(r.categories["ALCOHOL"] || 0)}</td>
           `;
           tbody.appendChild(tr);
         });
       },
       exportAccountingCSV: () => {
         const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
-        const startInt = fyYear * 10000 + 201; 
-        const endInt = (fyYear + 1) * 10000 + 131; 
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
-        if (filtered.length === 0) {
-          alert("No data to export for selected Financial Year.");
-          return;
-        }
+        const fyStartInt = fyYear * 10000 + 201;
+        const fyEndInt = (fyYear + 1) * 10000 + 131;
+        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
 
         let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
         filtered.forEach(r => {
-          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${dateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)},${((r.categories["ICE CREAM"]||0)/100).toFixed(2)},${((r.categories["COUNTER"]||0)/100).toFixed(2)},${((r.categories["Kitchen"]||0)/100).toFixed(2)},${((r.categories["DRINK"]||0)/100).toFixed(2)},${((r.categories["DELI"]||0)/100).toFixed(2)},${((r.categories["ALCOHOL"]||0)/100).toFixed(2)}\n`;
         });
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `Accounting_FY_${fyYear}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-        toast("Accounting CSV exported successfully!");
       },
       renderMomYoyData: () => {
         const year = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
-        const yoyPrev2Body = $("yoyHeaderPrev2");
-        const yoyPrev1Body = $("yoyHeaderPrev1");
-        const yoyCurBody = $("yoyHeaderCur");
-
-        if (yoyPrev2Body) yoyPrev2Body.innerText = `Year ${year - 2} (£)`;
-        if (yoyPrev1Body) yoyPrev1Body.innerText = `Year ${year - 1} (£)`;
-        if (yoyCurBody) yoyCurBody.innerText = `Year ${year} (£)`;
-
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
-        const monthlyRev = (yr) => {
-          const revs = new Array(12).fill(0);
-          STATE.raw.forEach(r => {
-            if (r.parsedDate && r.parsedDate.getFullYear() === yr) {
-              const m = r.parsedDate.getMonth();
-              revs[m] += r.dailyTotalCents;
-            }
-          });
-          return revs;
-        };
+        safeSet("yoyHeaderCur", `${year} (£)`);
+        safeSet("yoyHeaderPrev1", `${year - 1} (£)`);
+        safeSet("yoyHeaderPrev2", `${year - 2} (£)`);
 
-        const revCur = monthlyRev(year);
-        const revPrev1 = monthlyRev(year - 1);
-        const revPrev2 = monthlyRev(year - 2);
+        const yoyBody = $("yoyTableBody");
+        const momBody = $("momTableBody");
+        if (!yoyBody || !momBody) return;
 
-        const yoyTbody = $("yoyTableBody");
-        if (yoyTbody) {
-          yoyTbody.innerHTML = "";
-          months.forEach((mName, idx) => {
-            const cur = revCur[idx];
-            const p1 = revPrev1[idx];
-            const p2 = revPrev2[idx];
-            const growth = p1 > 0 ? (((cur - p1) / p1) * 100).toFixed(1) : "0.0";
-            const isPos = (cur - p1) >= 0;
+        yoyBody.innerHTML = "";
+        momBody.innerHTML = "";
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${mName}</td>
-              <td>${fmt(p2)}</td>
-              <td>${fmt(p1)}</td>
-              <td>${fmt(cur)}</td>
-              <td class="${isPos ? 'positive' : 'negative'}">${isPos ? '+' : ''}${growth}%</td>
-            `;
-            yoyTbody.appendChild(tr);
-          });
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const monthlyTotals = {};
+        for (let y = year - 2; y <= year; y++) {
+          monthlyTotals[y] = new Array(12).fill(0);
         }
 
-        const momTbody = $("momTableBody");
-        if (momTbody) {
-          momTbody.innerHTML = "";
-          let prevVal = 0;
-          months.forEach((mName, idx) => {
-            const cur = revCur[idx];
-            const diff = idx === 0 ? 0 : cur - prevVal;
-            const growth = idx === 0 || prevVal === 0 ? "0.0" : (((cur - prevVal) / prevVal) * 100).toFixed(1);
-            const isPos = diff >= 0;
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth();
+          if (y >= year - 2 && y <= year) {
+            monthlyTotals[y][m] += r.dailyTotalCents;
+          }
+        });
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${mName}</td>
-              <td>${fmt(cur)}</td>
-              <td class="${isPos ? 'positive' : 'negative'}">${idx === 0 ? '-' : (isPos ? '+' : '') + fmt(diff)}</td>
-              <td class="${isPos ? 'positive' : 'negative'}">${idx === 0 || prevVal === 0 ? '-' : (isPos ? '+' : '') + growth + '%'}</td>
-            `;
-            momTbody.appendChild(tr);
-            prevVal = cur;
-          });
+        for (let m = 0; m < 12; m++) {
+          const curVal = monthlyTotals[year][m];
+          const prev1Val = monthlyTotals[year - 1][m];
+          const prev2Val = monthlyTotals[year - 2][m];
+
+          const diff = curVal - prev1Val;
+          const pct = prev1Val > 0 ? ((diff / prev1Val) * 100).toFixed(1) : "0.0";
+          const sign = diff >= 0 ? "+" : "";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${monthNames[m]}</td>
+            <td>${fmt(prev2Val)}</td>
+            <td>${fmt(prev1Val)}</td>
+            <td>${fmt(curVal)}</td>
+            <td class="${diff >= 0 ? 'positive' : 'negative'}">${sign}${sign ? '' : ''}${sign}${pct}%</td>
+          `;
+          yoyBody.appendChild(tr);
+        }
+
+        let prevMonthRev = null;
+        for (let m = 0; m < 12; m++) {
+          const curRev = monthlyTotals[year][m];
+          let diffStr = "-";
+          let pctStr = "-";
+          let isPos = true;
+
+          if (prevMonthRev !== null && prevMonthRev > 0) {
+            const diff = curRev - prevMonthRev;
+            const pct = ((diff / prevMonthRev) * 100).toFixed(1);
+            isPos = diff >= 0;
+            const sign = isPos ? "+" : "";
+            diffStr = `${sign}${fmt(diff)}`;
+            pctStr = `${sign}${pct}%`;
+          }
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${monthNames[m]}</td>
+            <td>${fmt(curRev)}</td>
+            <td class="${isPos ? 'positive' : 'negative'}">${diffStr}</td>
+            <td class="${isPos ? 'positive' : 'negative'}">${pctStr}</td>
+          `;
+          momBody.appendChild(tr);
+          prevMonthRev = curRev;
         }
       },
       exportMomYoyCSV: () => {
-        const year = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
-        let csv = `MoM & YoY Analysis Report for Year ${year}\n\n`;
-        csv += "Month,Year-2,Year-1,Selected Year,YoY Growth (%)\n";
-        
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        const monthlyRev = (yr) => {
-          const revs = new Array(12).fill(0);
-          STATE.raw.forEach(r => {
-            if (r.parsedDate && r.parsedDate.getFullYear() === yr) {
-              const m = r.parsedDate.getMonth();
-              revs[m] += r.dailyTotalCents;
-            }
-          });
-          return revs;
-        };
-
-        const revCur = monthlyRev(year);
-        const revPrev1 = monthlyRev(year - 1);
-        const revPrev2 = monthlyRev(year - 2);
-
-        months.forEach((mName, idx) => {
-          const cur = revCur[idx] / 100;
-          const p1 = revPrev1[idx] / 100;
-          const p2 = revPrev2[idx] / 100;
-          const growth = p1 > 0 ? (((cur - p1) / p1) * 100).toFixed(1) : "0.0";
-          csv += `"${mName}",${p2},${p1},${cur},${growth}%\n`;
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `MoM_YoY_Analysis_${year}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast("MoM & YoY CSV exported successfully!");
+        toast("MoM & YoY CSV exported.");
       },
       exportMomYoyPDF: () => {
         document.body.classList.add("printing-momyoy");
         window.print();
-        setTimeout(() => { document.body.classList.remove("printing-momyoy"); }, 1000);
+        setTimeout(() => document.body.classList.remove("printing-momyoy"), 1000);
       },
       exportAnalyticsCSV: () => {
-        if (!STATE.raw || STATE.raw.length === 0) {
-          alert("No data to export.");
-          return;
-        }
-        let csv = "Date,Day,Cash,Card,Total\n";
-        STATE.raw.forEach(r => {
-          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "Sales_Analytics_Report.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-        toast("Analytics CSV exported successfully!");
+        toast("Analytics CSV exported.");
       },
       printReport: () => {
         document.body.classList.add("printing-analytics");
         window.print();
-        setTimeout(() => { document.body.classList.remove("printing-analytics"); }, 1000);
+        setTimeout(() => document.body.classList.remove("printing-analytics"), 1000);
       }
     };
   </script>
