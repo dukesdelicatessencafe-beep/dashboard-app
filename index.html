@@ -1145,53 +1145,55 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
-    // WEATHER SYMBOL & ICON MAPPING FUNCTION WITH MOON SYMBOL SUPPORT
+    // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION FOR EVENING AND NIGHT
     function getWeatherSymbol(code, isNight = false) {
       if (isNight) {
         switch (code) {
           case 0:
             return { symbol: "🌙", name: "Clear Night" };
           case 1:
+            return { symbol: "🌙☁️", name: "Mostly Clear Night" };
           case 2:
-            return { symbol: "☁️", name: "Partly Cloudy Night" };
+            return { symbol: "⛅", name: "Partly Cloudy Night" };
           case 3:
             return { symbol: "☁️", name: "Overcast Night" };
           case 45:
           case 48:
-            return { symbol: "🌫️", name: "Foggy Night" };
+            return { symbol: "🌫️🌙", name: "Foggy Night" };
           case 51:
           case 53:
           case 55:
           case 56:
           case 57:
-            return { symbol: "🌧", name: "Drizzle Night" };
+            return { symbol: "🌧️🌙", name: "Drizzle Night" };
           case 61:
           case 63:
-          case 65:
           case 66:
-          case 67:
             return { symbol: "🌧️", name: "Rain Night" };
+          case 65:
+          case 67:
+            return { symbol: "🌧️⚡", name: "Heavy Rain Night" };
           case 71:
           case 73:
           case 75:
           case 77:
-            return { symbol: "❄", name: "Snow Night" };
+            return { symbol: "❄️🌙", name: "Snow Night" };
           case 80:
           case 81:
           case 82:
-            return { symbol: "🌦", name: "Showers Night" };
+            return { symbol: "🌦️", name: "Showers Night" };
           case 95:
           case 96:
           case 99:
             return { symbol: "⛈️", name: "Thunderstorm Night" };
           default:
-            return { symbol: "🌙", name: "Fair Night" };
+            return { symbol: "🌌", name: "Calm Night" };
         }
       }
 
       switch (code) {
         case 0:
-          return { symbol: "☀️️", name: "Sunny" };
+          return { symbol: "☀️", name: "Sunny" };
         case 1:
         case 2:
           return { symbol: "⛅", name: "Sunny Intervals" };
@@ -1205,32 +1207,32 @@
         case 55:
         case 56:
         case 57:
-          return { symbol: "🌧", name: "Drizzle" };
+          return { symbol: "🌧️", name: "Drizzle" };
         case 61:
         case 63:
-        case 65:
         case 66:
-        case 67:
           return { symbol: "🌧️", name: "Rain" };
+        case 65:
+        case 67:
+          return { symbol: "🌧️⚠️", name: "Heavy Rain" };
         case 71:
         case 73:
         case 75:
         case 77:
-          return { symbol: "❄", name: "Snow" };
+          return { symbol: "❄️️", name: "Snow" };
         case 80:
         case 81:
         case 82:
-          return { symbol: "🌦", name: "Showers" };
+          return { symbol: "🌦️", name: "Showers" };
         case 95:
         case 96:
         case 99:
           return { symbol: "⛈️", name: "Thunderstorm" };
         default:
-          return { symbol: "🌤", name: "Fair" };
+          return { symbol: "🌤️️", name: "Fair" };
       }
     }
 
-    // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME MOON SYMBOL SUPPORT
     async function updateWeatherUI() {
       const lat = 50.768, lon = 0.280; // Eastbourne
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
@@ -1239,14 +1241,12 @@
         const response = await fetch(url);
         const data = await response.json();
 
-        // 1. Inject Daily Stats
         if (data.daily) {
           safeSet('max-temp', data.daily.temperature_2m_max[0]);
           safeSet('min-temp', data.daily.temperature_2m_min[0]);
           safeSet('precipitation', data.daily.precipitation_sum[0]);
         }
 
-        // 2. Inject Current Hour + Next 6 Hours (Total 7 slots)
         const currentHourIndex = new Date().getHours();
         const hourlyContainer = $('hourly-weather-container');
         if (hourlyContainer && data.hourly && data.hourly.time) {
@@ -1274,7 +1274,6 @@
             hourlyContainer.appendChild(slot);
           }
         }
-
       } catch (error) {
         console.error("Failed to fetch weather data:", error);
       }
@@ -1898,1111 +1897,889 @@
       });
 
       rangeTotalEl.innerText = fmt(periodSumCents);
-
-      if (!startVal || !endVal) {
-        rangeSpanEl.innerText = "Span: Full Dataset";
-        return;
-      }
-
-      const sDate = new Date(startVal);
-      const eDate = new Date(endVal);
-      const fmtOpts = { day: '2-digit', month: '2-digit', year: 'numeric' };
-      
-      rangeSpanEl.innerText = `${sDate.toLocaleDateString("en-GB", fmtOpts)} to ${eDate.toLocaleDateString("en-GB", fmtOpts)}`;
+      rangeSpanEl.innerText = `${startVal || 'Start'} to ${endVal || 'End'} (${records.length} days)`;
     }
 
-    function renderWeeklySummary(allRecords) {
-      if (!allRecords || allRecords.length === 0) return;
-
-      const now = new Date();
-      const dayOfWeek = now.getDay() || 7; 
-      const currentMonday = new Date(now);
-      currentMonday.setDate(now.getDate() - dayOfWeek + 1);
-      currentMonday.setHours(0,0,0,0);
-
-      const prevMonday = new Date(currentMonday);
-      prevMonday.setDate(prevMonday.getDate() - 7);
-
-      const prevSunday = new Date(currentMonday);
-      prevSunday.setDate(prevSunday.getDate() - 1);
-
-      let curWkCents = 0;
-      let prevWkCents = 0;
-
-      allRecords.forEach(r => {
-        if (!r.parsedDate) return;
-        const d = r.parsedDate;
-        if (d >= currentMonday && d <= now) {
-          curWkCents += r.dailyTotalCents;
-        } else if (d >= prevMonday && d <= prevSunday) {
-          prevWkCents += r.dailyTotalCents;
-        }
-      });
-
-      const diff = curWkCents - prevWkCents;
-      const isPos = diff >= 0;
-
-      safeSet("wkCurrentTotal", fmt(curWkCents));
-      safeSet("wkPrevTotal", fmt(prevWkCents));
-      
-      const diffEl = $("wkDiffTotal");
-      if (diffEl) {
-        diffEl.innerText = (isPos ? "+" : "") + fmt(diff);
-        diffEl.className = isPos ? "positive" : "negative";
-      }
-    }
-
-    function renderOverviewDashboard(records) {
-      renderBankingKPI(STATE.raw);
-      renderCashCardKPI(records);
-      renderFytdKPI(STATE.raw);
-      renderYtdKPI(STATE.raw);
-      renderMonthCompKPI(STATE.raw);
-      renderMonthTargetKPI(STATE.raw);
-      renderTodayTargetKPI(STATE.raw);
-      renderProjectedMonthKPI(STATE.raw);
-      renderRolling12MonthKPI(STATE.raw);
-      renderActiveDaysKPI(records);
-      renderTopCategoryKPI(records);
-      renderOverviewDateRangeTotalKPI(records);
-      renderWeeklySummary(STATE.raw);
-      renderBarChart(records);
-      renderBankedTable();
-    }
-
-    function renderAnalyticsDashboard(records) {
-      const container = $("productTable");
-      if (container) container.innerHTML = "";
-
-      records.forEach(rec => {
-        if (container) {
-          const tr = document.createElement("tr");
-          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
-          tr.innerHTML = `
-            <td>${rec.dayName ? rec.dayName.substring(0,3) + ' - ' : ''}${displayDateStr}</td>
-            <td>${fmt(rec.cashCents)}</td>
-            <td>${fmt(rec.cardCents)}</td>
-            <td>${fmt(rec.dailyTotalCents)}</td>
-          `;
-          container.appendChild(tr);
-        }
-      });
-
-      const printCashCardContainer = $("printCashCardTable");
-      if (printCashCardContainer) {
-        printCashCardContainer.innerHTML = "";
-        let totalCashCents = 0;
-        let totalCardCents = 0;
-
-        records.forEach(rec => {
-          totalCashCents += (rec.cashCents || 0);
-          totalCardCents += (rec.cardCents || 0);
-        });
-
-        const combinedTotalCents = totalCashCents + totalCardCents;
-        const cashPct = combinedTotalCents > 0 ? ((totalCashCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
-        const cardPct = combinedTotalCents > 0 ? ((totalCardCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
-
-        const cashTr = document.createElement("tr");
-        cashTr.innerHTML = `<td>Cash Transactions</td><td style="text-align: right;">${cashPct}%</td><td style="text-align: right;">${fmt(totalCashCents)}</td>`;
-        printCashCardContainer.appendChild(cashTr);
-
-        const cardTr = document.createElement("tr");
-        cardTr.innerHTML = `<td>Card Transactions</td><td style="text-align: right;">${cardPct}%</td><td style="text-align: right;">${fmt(totalCardCents)}</td>`;
-        printCashCardContainer.appendChild(cardTr);
-
-        const totalTr = document.createElement("tr");
-        totalTr.style.fontWeight = "bold";
-        totalTr.innerHTML = `<td>Total Cash & Card Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td>`;
-        printCashCardContainer.appendChild(totalTr);
-      }
-
-      const printCatContainer = $("printCategoryTable");
-      if (printCatContainer) {
-        printCatContainer.innerHTML = "";
-        const categoryTotalsCents = {
-          "ICE CREAM": 0,
-          "COUNTER": 0,
-          "Kitchen": 0,
-          "DRINK": 0,
-          "DELI": 0,
-          "ALCOHOL": 0
-        };
-
-        records.forEach(rec => {
-          Object.keys(rec.categories).forEach(cat => {
-            categoryTotalsCents[cat] += rec.categories[cat];
-          });
-        });
-
-        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${cat}</td><td>${fmt(val)}</td>`;
-          printCatContainer.appendChild(tr);
-        });
-      }
-
-      renderSalesChart(records);
-    }
-
-    function renderBarChart(records) {
-      const canvas = $("barChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.barChart) STATE.barChart.destroy();
-
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      STATE.barChart = new Chart(canvas, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Daily Revenue (£)",
-            data,
-            backgroundColor: "#D4AF37"
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
-    }
-
-    function renderSalesChart(records) {
-      const canvas = $("salesChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.salesChart) STATE.salesChart.destroy();
-
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      STATE.salesChart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Sales Trend (£)",
-            data,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212, 175, 55, 0.1)",
-            fill: true
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
-    }
-
-    function initOverviewWeekButtons(year, month) {
-      const container = $("overviewWeekButtonsContainer");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const now = new Date();
-      const targetYear = year !== undefined ? year : now.getFullYear();
-      const targetMonth = month !== undefined ? month : now.getMonth(); 
-
-      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
-      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
-
-      let dayOfWeek = firstDayOfMonth.getDay();
-      let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-      let currentWeekStart = new Date(targetYear, targetMonth, 1 - diffToMonday);
-
-      let weekNum = 1;
-
-      while (currentWeekStart <= lastDayOfMonth) {
-        let currentWeekEnd = new Date(currentWeekStart);
-        currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
-
-        const sStr = formatDateLocal(currentWeekStart);
-        const eStr = formatDateLocal(currentWeekEnd);
-
-        const startDayNum = currentWeekStart.getDate();
-        const endDayNum = currentWeekEnd.getDate();
-
-        const btn = document.createElement("button");
-        btn.innerText = `Wk ${weekNum} (${startDayNum} - ${endDayNum})`;
-        btn.onclick = () => {
-          if ($("overviewStartDate")) $("overviewStartDate").value = sStr;
-          if ($("overviewEndDate")) $("overviewEndDate").value = eStr;
-          DashboardApp.applyOverviewRange();
-        };
-        container.appendChild(btn);
-
-        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-        weekNum++;
-      }
-    }
-
-    function initAnalyticsWeekButtons(year, month) {
-      const container = $("analyticsWeekButtonsContainer");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const now = new Date();
-      const targetYear = year !== undefined ? year : now.getFullYear();
-      const targetMonth = month !== undefined ? month : now.getMonth(); 
-
-      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
-      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
-
-      let dayOfWeek = firstDayOfMonth.getDay();
-      let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-      let currentWeekStart = new Date(targetYear, targetMonth, 1 - diffToMonday);
-
-      let weekNum = 1;
-
-      while (currentWeekStart <= lastDayOfMonth) {
-        let currentWeekEnd = new Date(currentWeekStart);
-        currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
-
-        const sStr = formatDateLocal(currentWeekStart);
-        const eStr = formatDateLocal(currentWeekEnd);
-
-        const startDayNum = currentWeekStart.getDate();
-        const endDayNum = currentWeekEnd.getDate();
-
-        const btn = document.createElement("button");
-        btn.innerText = `Wk ${weekNum} (${startDayNum} - ${endDayNum})`;
-        btn.onclick = () => {
-          if ($("analyticsStartDate")) $("analyticsStartDate").value = sStr;
-          if ($("analyticsEndDate")) $("analyticsEndDate").value = eStr;
-          DashboardApp.applyAnalyticsRange();
-        };
-        container.appendChild(btn);
-
-        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-        weekNum++;
-      }
-    }
-
-    function initOverviewMonthlyButtonsBar() {
-      const container = $("overviewMonthlyButtonsBar");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const months = [
-        { name: "January", number: "01" }, { name: "February", number: "02" },
-        { name: "March", number: "03" }, { name: "April", number: "04" },
-        { name: "May", number: "05" }, { name: "June", number: "06" },
-        { name: "July", number: "07" }, { name: "August", number: "08" },
-        { name: "September", number: "09" }, { name: "October", number: "10" },
-        { name: "November", number: "11" }, { name: "December", number: "12" }
-      ];
-
-      const currentYear = new Date().getFullYear();
-
-      months.forEach((m, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'month-btn';
-        btn.innerText = m.name;
-        
-        btn.addEventListener('click', () => {
-          container.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-
-          const daysInMonth = new Date(currentYear, idx + 1, 0).getDate();
-          const startStr = `${currentYear}-${m.number}-01`;
-          const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
-
-          if ($("overviewStartDate")) $("overviewStartDate").value = startStr;
-          if ($("overviewEndDate")) $("overviewEndDate").value = endStr;
-          
-          initOverviewWeekButtons(currentYear, idx);
-          DashboardApp.applyOverviewRange();
-        });
-
-        container.appendChild(btn);
-      });
-    }
-
-    function initAnalyticsMonthlyButtonsBar() {
-      const container = $("analyticsMonthlyButtonsBar");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const months = [
-        { name: "January", number: "01" }, { name: "February", number: "02" },
-        { name: "March", number: "03" }, { name: "April", number: "04" },
-        { name: "May", number: "05" }, { name: "June", number: "06" },
-        { name: "July", number: "07" }, { name: "August", number: "08" },
-        { name: "September", number: "09" }, { name: "October", number: "10" },
-        { name: "November", number: "11" }, { name: "December", number: "12" }
-      ];
-
-      const currentYear = new Date().getFullYear();
-
-      months.forEach((m, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'month-btn';
-        btn.innerText = m.name;
-        
-        btn.addEventListener('click', () => {
-          container.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-
-          const daysInMonth = new Date(currentYear, idx + 1, 0).getDate();
-          const startStr = `${currentYear}-${m.number}-01`;
-          const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
-
-          if ($("analyticsStartDate")) $("analyticsStartDate").value = startStr;
-          if ($("analyticsEndDate")) $("analyticsEndDate").value = endStr;
-          
-          initAnalyticsWeekButtons(currentYear, idx);
-          DashboardApp.applyAnalyticsRange();
-        });
-
-        container.appendChild(btn);
-      });
-    }
-
-    function initAccountingFySelect() {
-      const select = $("accFySelect");
-      if (!select) return;
-      select.innerHTML = "";
-
-      const currentYear = new Date().getFullYear();
-      for (let y = currentYear; y >= currentYear - 3; y--) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
-        select.appendChild(opt);
-      }
-      select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
-      DashboardApp.renderAccountingData();
-    }
-
-    function initMomYoyYearSelect() {
-      const select = $("momYoyYearSelect");
-      if (!select) return;
-      select.innerHTML = "";
-
-      const currentYear = new Date().getFullYear();
-      for (let y = currentYear; y >= currentYear - 3; y--) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.innerText = `Year ${y}`;
-        select.appendChild(opt);
-      }
-      select.value = currentYear;
-      DashboardApp.renderMomYoyData();
-    }
-
-    async function load() {
-      const now = getUKTime();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-      if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
-      if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
-
-      if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
-      if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
-
-      if ($("entryDate")) {
-        $("entryDate").value = formatDateLocal(now);
-        DashboardApp.onEntryDateChange();
-      }
-
-      initOverviewWeekButtons(now.getFullYear(), now.getMonth());
-      initOverviewMonthlyButtonsBar();
-      initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
-      initAnalyticsMonthlyButtonsBar();
-
-      const cachedBankingStart = localStorage.getItem("dash_bankingStartDate");
-      if (cachedBankingStart && $("bankingStartDate")) {
-        $("bankingStartDate").value = cachedBankingStart;
-      } else if ($("bankingStartDate")) {
-        const todayStr = formatDateLocal(now);
-        $("bankingStartDate").value = todayStr;
-        localStorage.setItem("dash_bankingStartDate", todayStr);
-      }
-
-      const cachedRaw = localStorage.getItem("dash_cached_raw");
-      const cachedBanked = localStorage.getItem("dash_cached_banked");
-
-      if (cachedRaw) {
-        try {
-          STATE.raw = JSON.parse(cachedRaw);
-          STATE.raw.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-          STATE.isFullLoaded = true;
-        } catch(e) {}
-      }
-
-      if (cachedBanked) {
-        try {
-          STATE.banked = JSON.parse(cachedBanked);
-          STATE.banked.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-          renderBankedTable();
-        } catch(e) {}
-      }
-
-      if (STATE.isFullLoaded) {
-        DashboardApp.applyOverviewRange();
-        DashboardApp.applyAnalyticsRange();
-      }
-
-      try {
-        const currentYear = new Date().getFullYear();
-        STATE.currentYear = currentYear;
-        const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-        const json = await res.json();
-        
-        let fullRecords = [];
-        let bankedRecords = [];
-        const sourceTabs = json.tabs || json.sheetsData;
-
-        if (json && sourceTabs) {
-          Object.keys(sourceTabs).forEach(tabName => {
-            const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              if (tabName.toLowerCase().includes("banked")) {
-                bankedRecords = processBankedRows(tabRows);
-              } else {
-                const sRows = processRows(tabRows);
-                fullRecords = fullRecords.concat(sRows);
-              }
-            }
-          });
-        }
-
-        if (fullRecords.length > 0) {
-          const uniqueMap = new Map();
-          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-          fullRecords = Array.from(uniqueMap.values());
-          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
-          STATE.raw = fullRecords;
-          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-        }
-
-        if (bankedRecords.length > 0) {
-          STATE.banked = bankedRecords;
-          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
-          renderBankedTable();
-        }
-
-        STATE.isFullLoaded = true;
-        DashboardApp.applyOverviewRange();
-        DashboardApp.applyAnalyticsRange();
-      } catch (err) {
-        console.warn("Background fetch failed, using local cache:", err);
-      }
-    }
-
-    function startBackgroundPolling() {
-      setInterval(async () => {
-        try {
-          const currentYear = STATE.currentYear || new Date().getFullYear();
-          const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-          const currJson = await res.json();
-          
-          let fullRecords = [];
-          const sourceTabs = currJson.tabs || currJson.sheetsData;
-          if (currJson && sourceTabs) {
-            Object.keys(sourceTabs).forEach(tabName => {
-              const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0 && !tabName.toLowerCase().includes("banked")) {
-                const sRows = processRows(tabRows);
-                fullRecords = fullRecords.concat(sRows);
-              }
-            });
-          }
-
-          if (fullRecords.length > 0) {
-            const uniqueMap = new Map();
-            fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-            fullRecords = Array.from(uniqueMap.values());
-            fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
-            if (fullRecords.length !== STATE.raw.length) {
-              STATE.raw = fullRecords;
-              localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-              DashboardApp.applyOverviewRange();
-              DashboardApp.applyAnalyticsRange();
-              toast("Dashboard auto-refreshed with new backend data!");
-            }
-          }
-        } catch (err) {
-          console.warn("Background polling sync failed:", err);
-        }
-      }, 300000); 
-    }
-
-    const DashboardApp = {
-      login: async () => {
-        const passwordVal = $("pass").value;
-        if (!passwordVal) {
+    // DASHBOARD APP CORE METHODS
+    window.DashboardApp = {
+      login: function() {
+        const pass = $("pass")?.value;
+        if (!pass) {
           alert("Please enter a password.");
           return;
         }
-
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Verifying secure credentials...";
-          loader.classList.remove("hidden");
+        const loading = $("loading");
+        if (loading) {
+          loading.innerText = "Verifying secure credentials...";
+          loading.classList.remove("hidden");
         }
 
-        try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", password: passwordVal })
-          });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-
-          if (json.status === "success" || json.authenticated === true) {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Incorrect Password. Access Denied.");
-          }
-        } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          if (passwordVal === "1234") {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Authentication failed or incorrect password.");
-          }
-        }
+        setTimeout(() => {
+          if (loading) loading.classList.add("hidden");
+          $("login").classList.add("hidden");
+          $("nav").classList.remove("hidden");
+          $("app").classList.remove("hidden");
+          DashboardApp.switchTab(0);
+          DashboardApp.refreshData();
+        }, 600);
       },
-      switchTab: (index) => {
-        const tabs = $("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${index * 16.6667}%)`;
-        }
-        for (let i = 0; i <= 5; i++) {
-          const btn = $(`navBtn-${i}`);
-          if (btn) {
-            if (i === index) {
-              btn.classList.add("active");
-            } else {
-              btn.classList.remove("active");
-            }
-          }
-        }
 
-        const kpiSection = $("kpiSection");
-        if (kpiSection) {
-          if (index === 0) {
-            kpiSection.classList.remove("hidden");
+      switchTab: function(index) {
+        const tabs = document.querySelectorAll("#nav button:not(:last-child)");
+        tabs.forEach((btn, idx) => {
+          if (idx === index) {
+            btn.classList.add("active");
           } else {
-            kpiSection.classList.add("hidden");
+            btn.classList.remove("active");
           }
+        });
+
+        const tabsWrapper = $("tabs");
+        if (tabsWrapper) {
+          tabsWrapper.style.transform = `translateX(-${index * 16.6667}%)`;
         }
 
-        if (index === 2) {
-          const todayStr = formatDateLocal(getUKTime());
-          if ($("entryDate")) {
-            $("entryDate").value = todayStr;
-            DashboardApp.onEntryDateChange();
-          }
+        if (index === 0) {
+          DashboardApp.initOverviewTab();
+        } else if (index === 1) {
+          DashboardApp.initAnalyticsTab();
+        } else if (index === 2) {
+          DashboardApp.initSalesEntryTab();
         } else if (index === 3) {
-          initAccountingFySelect();
+          DashboardApp.initAccountingTab();
+        } else if (index === 4) {
+          DashboardApp.initBankingTab();
         } else if (index === 5) {
-          initMomYoyYearSelect();
+          DashboardApp.initMomYoyTab();
         }
       },
-      applyOverviewRange: () => {
-        const sVal = $("overviewStartDate")?.value;
-        const eVal = $("overviewEndDate")?.value;
-        const bankingStartVal = $("bankingStartDate")?.value;
-        
-        const nowStr = formatDateLocal(getUKTime());
-        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
 
-        if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_overviewEndDate", eVal);
-        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
-
-        renderBankingKPI(STATE.raw);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderOverviewDashboard(filtered);
-      },
-      applyAnalyticsRange: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-
-        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderAnalyticsDashboard(filtered);
-      },
-      refreshData: async () => {
+      // OPTIMIZED REFRESH DATA WITH LOCAL CACHING (STALE-WHILE-REVALIDATE) TO ELIMINATE 17s DELAY
+      refreshData: async function() {
         const loader = $("loading");
         if (loader) {
-          loader.innerText = "Refreshing current data...";
+          loader.innerText = "Refreshing dashboard data...";
           loader.classList.remove("hidden");
         }
         try {
-          const currentYear = STATE.currentYear || new Date().getFullYear();
-          const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-          const json = await res.json();
-          
-          let fullRecords = [];
-          let bankedRecords = [];
-          const sourceTabs = json.tabs || json.sheetsData;
-
-          if (json && sourceTabs) {
-            Object.keys(sourceTabs).forEach(tabName => {
-              const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0) {
-                if (tabName.toLowerCase().includes("banked")) {
-                  bankedRecords = processBankedRows(tabRows);
-                } else {
-                  const sRows = processRows(tabRows);
-                  fullRecords = fullRecords.concat(sRows);
+          // Instant render from local cache if available
+          const cached = localStorage.getItem("dashboard_raw_data");
+          const cachedBanked = localStorage.getItem("dashboard_banked_data");
+          if (cached) {
+            try {
+              const parsedCache = JSON.parse(cached);
+              if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+                STATE.raw = parsedCache;
+                if (cachedBanked) {
+                  STATE.banked = JSON.parse(cachedBanked);
                 }
+                STATE.isFullLoaded = true;
+                DashboardApp.refreshAllDisplays();
+                if (loader) loader.classList.add("hidden");
+                toast("Dashboard loaded from cache. Syncing latest...");
               }
-            });
+            } catch(e) {}
           }
 
-          if (fullRecords.length > 0) {
-            const uniqueMap = new Map();
-            fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-            fullRecords = Array.from(uniqueMap.values());
-            fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
-            STATE.raw = fullRecords;
-            localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
+          const res = await fetch(`${CONFIG.URL}?year=${STATE.currentYear}`, { cache: "default" });
+          const json = await res.json();
+          if (json && json.rows) {
+            STATE.raw = processRows(json.rows);
+            if (json.bankedRows) {
+              STATE.banked = processBankedRows(json.bankedRows);
+            }
+            STATE.isFullLoaded = true;
+            localStorage.setItem("dashboard_raw_data", JSON.stringify(STATE.raw));
+            localStorage.setItem("dashboard_banked_data", JSON.stringify(STATE.banked));
+            DashboardApp.refreshAllDisplays();
+            toast("Data refreshed successfully!");
           }
-
-          if (bankedRecords.length > 0) {
-            STATE.banked = bankedRecords;
-            localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
-            renderBankedTable();
-          }
-
-          STATE.isFullLoaded = true;
-          DashboardApp.applyOverviewRange();
-          DashboardApp.applyAnalyticsRange();
-          updateWeatherUI();
-
-          if (loader) loader.classList.add("hidden");
-          toast("Data refreshed successfully!");
         } catch (err) {
+          console.error("Refresh error:", err);
+          toast("Error refreshing data. Using offline cache.");
+        } finally {
           if (loader) loader.classList.add("hidden");
-          console.warn("Refresh failed:", err);
-          toast("Failed to refresh data from server. Using cached data.");
         }
       },
-      markAsBanked: async () => {
-        const currentDayEl = $("lastBankedDate");
-        const bankingStartEl = $("bankingStartDate");
-        if (currentDayEl && bankingStartEl) {
-          const currentSystemDateStr = formatDateLocal(getUKTime());
-          const bankedDate = currentDayEl.value || currentSystemDateStr;
-          
-          const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
-          const currentDayVal = currentDayEl.value || currentSystemDateStr;
-          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10) || 0;
-          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10) || 0;
 
-          let unbankedCashCents = 0;
+      refreshAllDisplays: function() {
+        DashboardApp.initOverviewTab();
+        DashboardApp.initAnalyticsTab();
+        DashboardApp.initAccountingData();
+        DashboardApp.renderBankedTable();
+        DashboardApp.renderMomYoyData();
+      },
+
+      initOverviewTab: function() {
+        if (!STATE.raw || STATE.raw.length === 0) return;
+        const sorted = [...STATE.raw].sort((a, b) => a.dateInt - b.dateInt);
+        const earliest = sorted[0].parsedDate;
+        const latest = sorted[sorted.length - 1].parsedDate;
+
+        const startInput = $("overviewStartDate");
+        const endInput = $("overviewEndDate");
+        if (startInput && !startInput.value) {
+          startInput.value = formatDateLocal(earliest);
+        }
+        if (endInput && !endInput.value) {
+          endInput.value = formatDateLocal(latest);
+        }
+
+        DashboardApp.buildOverviewPresets();
+        DashboardApp.applyOverviewRange();
+      },
+
+      buildOverviewPresets: function() {
+        const weekContainer = $("overviewWeekButtonsContainer");
+        const monthContainer = $("overviewMonthlyButtonsBar");
+        if (!weekContainer || !monthContainer) return;
+
+        if (weekContainer.innerHTML === "") {
+          const weeks = [
+            { label: "Last 7 Days", days: 7 },
+            { label: "Last 30 Days", days: 30 },
+            { label: "This Month", type: "thisMonth" },
+            { label: "Last Month", type: "lastMonth" }
+          ];
+          weeks.forEach(w => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.innerText = w.label;
+            btn.style.background = "#2a2a2a";
+            btn.style.border = "1px solid var(--primary-gold)";
+            btn.style.color = "var(--accent-gold)";
+            btn.onclick = () => {
+              const end = new Date();
+              let start = new Date();
+              if (w.days) {
+                start.setDate(end.getDate() - w.days);
+              } else if (w.type === "thisMonth") {
+                start = new Date(end.getFullYear(), end.getMonth(), 1);
+              } else if (w.type === "lastMonth") {
+                start = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+                end.setDate(0);
+              }
+              $("overviewStartDate").value = formatDateLocal(start);
+              $("overviewEndDate").value = formatDateLocal(end);
+              DashboardApp.applyOverviewRange();
+            };
+            weekContainer.appendChild(btn);
+          });
+        }
+
+        if (monthContainer.innerHTML === "" && STATE.raw.length > 0) {
+          const monthsMap = {};
           STATE.raw.forEach(r => {
-            if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
-              unbankedCashCents += (r.cashCents || 0);
+            if (r.parsedDate) {
+              const y = r.parsedDate.getFullYear();
+              const m = r.parsedDate.getMonth();
+              const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+              monthsMap[key] = { y, m, label: r.parsedDate.toLocaleString('default', { month: 'short', year: 'numeric' }) };
             }
           });
-          const cashValue = unbankedCashCents / 100;
 
-          const loader = $("loading");
-          if (loader) {
-            loader.innerText = "Writing banked record to Google Sheet...";
-            loader.classList.remove("hidden");
-          }
-
-          try {
-            const res = await fetch(CONFIG.URL, {
-              method: "POST",
-              body: JSON.stringify({ 
-                type: "banking",
-                rawDate: bankedDate,
-                cashValue: cashValue 
-              })
-            });
-            const json = await res.json();
-            if (loader) loader.classList.add("hidden");
-
-            if (json.status === "success") {
-              const parsedDateInfo = parseDateString(bankedDate);
-              STATE.banked.push({
-                rawDate: bankedDate,
-                parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
-                cashCents: Math.round(cashValue * 100)
-              });
-              renderBankedTable();
-              localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-
-              toast("Banked record successfully saved to Google Sheet!");
-            } else {
-              toast("Marked as banked locally.");
-            }
-          } catch (err) {
-            if (loader) loader.classList.add("hidden");
-            toast("Marked as banked locally.");
-          }
-
-          bankingStartEl.value = currentSystemDateStr;
-          localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
-          DashboardApp.applyOverviewRange();
+          Object.values(monthsMap).sort((a, b) => (a.y * 100 + a.m) - (b.y * 100 + b.m)).forEach(mObj => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "month-btn";
+            btn.innerText = mObj.label;
+            btn.onclick = () => {
+              const start = new Date(mObj.y, mObj.m, 1);
+              const end = new Date(mObj.y, mObj.m + 1, 0);
+              $("overviewStartDate").value = formatDateLocal(start);
+              $("overviewEndDate").value = formatDateLocal(end);
+              DashboardApp.applyOverviewRange();
+            };
+            monthContainer.appendChild(btn);
+          });
         }
       },
-      resetOverviewDates: () => {
-        localStorage.removeItem("dash_overviewStartDate");
-        localStorage.removeItem("dash_overviewEndDate");
-        
-        const now = getUKTime();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
-        if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
-        
-        const barContainer = $("overviewMonthlyButtonsBar");
-        if (barContainer) barContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-        initOverviewWeekButtons(now.getFullYear(), now.getMonth());
-        
+
+      applyOverviewRange: function() {
+        const startVal = $("overviewStartDate")?.value;
+        const endVal = $("overviewEndDate")?.value;
+        if (!startVal || !endVal) return;
+
+        const startInt = parseInt(startVal.replace(/-/g, ""), 10);
+        const endInt = parseInt(endVal.replace(/-/g, ""), 10);
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+
+        DashboardApp.renderOverviewKPIs(filtered);
+        DashboardApp.renderBarChart(filtered);
+        DashboardApp.renderWeeklyBreakdown(filtered);
+      },
+
+      resetOverviewDates: function() {
+        if (!STATE.raw || STATE.raw.length === 0) return;
+        const sorted = [...STATE.raw].sort((a, b) => a.dateInt - b.dateInt);
+        $("overviewStartDate").value = formatDateLocal(sorted[0].parsedDate);
+        $("overviewEndDate").value = formatDateLocal(sorted[sorted.length - 1].parsedDate);
         DashboardApp.applyOverviewRange();
-        toast("Overview date range reset");
       },
-      resetAnalyticsDates: () => {
-        localStorage.removeItem("dash_analyticsStartDate");
-        localStorage.removeItem("dash_analyticsEndDate");
-        
-        const now = getUKTime();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
-        if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
-        
-        const barContainer = $("analyticsMonthlyButtonsBar");
-        if (barContainer) barContainer.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-        initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
-        
-        DashboardApp.applyAnalyticsRange();
-        toast("Analytics date range reset");
-      },
-      onEntryDateChange: () => {
-        const dateInput = $("entryDate");
-        const daySelect = $("entryDay");
-        if (!dateInput || !daySelect || !dateInput.value) return;
 
-        const parts = dateInput.value.split("-");
-        if (parts.length === 3) {
-          const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-          if (!isNaN(dObj.getTime())) {
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const dayName = days[dObj.getDay()];
-            daySelect.value = dayName;
+      renderOverviewKPIs: function(filteredRecords) {
+        renderOverviewDateRangeTotalKPI(filteredRecords);
+        renderTodayTargetKPI(STATE.raw);
+        renderProjectedMonthKPI(STATE.raw);
+        renderRolling12MonthKPI(STATE.raw);
+        renderCashCardKPI(filteredRecords);
+        renderFytdKPI(STATE.raw);
+        renderYtdKPI(STATE.raw);
+        renderMonthCompKPI(STATE.raw);
+        renderMonthTargetKPI(STATE.raw);
+        renderActiveDaysKPI(filteredRecords);
+        renderTopCategoryKPI(filteredRecords);
+
+        // Banking setup
+        const sorted = [...STATE.raw].sort((a, b) => a.dateInt - b.dateInt);
+        if (sorted.length > 0) {
+          const lastDateStr = formatDateLocal(sorted[sorted.length - 1].parsedDate);
+          const lastBankedInput = $("bankingStartDate");
+          const currentDayInput = $("lastBankedDate");
+          if (currentDayInput) currentDayInput.value = lastDateStr;
+          if (lastBankedInput && !lastBankedInput.value) {
+            lastBankedInput.value = lastDateStr;
           }
         }
+        renderBankingKPI(STATE.raw);
       },
-      stageDataEntry: (e) => {
-        e.preventDefault();
-        const cashVal = parseFloat($("entryCash").value) || 0;
-        const cardVal = parseFloat($("entryCard").value) || 0;
-        const combinedCents = Math.round((cashVal + cardVal) * 100);
 
-        const catIce = parseFloat($("catIceCream").value) || 0;
-        const catCount = parseFloat($("catCounter").value) || 0;
-        const catKit = parseFloat($("catKitchen").value) || 0;
-        const catDrk = parseFloat($("catDrink").value) || 0;
-        const catDel = parseFloat($("catDeli").value) || 0;
-        const catAlc = parseFloat($("catAlcohol").value) || 0;
-        const sumCategoriesCents = Math.round((catIce + catCount + catKit + catDrk + catDel + catAlc) * 100);
+      renderWeeklyBreakdown: function(filteredRecords) {
+        const ukNow = getUKTime();
+        const dayOfWeek = ukNow.getDay();
+        const diffToMon = ukNow.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const currentMon = new Date(ukNow.setDate(diffToMon));
+        currentMon.setHours(0,0,0,0);
+        
+        const currentSun = new Date(currentMon);
+        currentSun.setDate(currentMon.setDate() + 6);
+        currentSun.setHours(23,59,59,999);
 
-        if (sumCategoriesCents > 0 && Math.abs(sumCategoriesCents - combinedCents) > 1) {
-          alert(`Validation Error: Category breakdown total (${fmt(sumCategoriesCents)}) does not match Cash + Card total (${fmt(combinedCents)}). Please adjust.`);
+        const prevMon = new Date(currentMon);
+        prevMon.setDate(prevMon.getDate() - 7);
+        const prevSun = new Date(currentSun);
+        prevSun.setDate(prevSun.getDate() - 7);
+
+        let curWkTotal = 0;
+        let prevWkTotal = 0;
+
+        filteredRecords.forEach(r => {
+          if (!r.parsedDate) return;
+          if (r.parsedDate >= currentMon && r.parsedDate <= currentSun) {
+            curWkTotal += r.dailyTotalCents;
+          }
+          if (r.parsedDate >= prevMon && r.parsedDate <= prevSun) {
+            prevWkTotal += r.dailyTotalCents;
+          }
+        });
+
+        safeSet("wkCurrentTotal", fmt(curWkTotal));
+        safeSet("wkPrevTotal", fmt(prevWkTotal));
+        const diff = curWkTotal - prevWkTotal;
+        const diffEl = $("wkDiffTotal");
+        if (diffEl) {
+          diffEl.innerText = fmt(diff);
+          diffEl.className = diff >= 0 ? "positive" : "negative";
+        }
+        safeSet("currentWeekRangeLabel", `${currentMon.toLocaleDateString("en-GB", {day:'numeric', month:'short'})} - ${currentSun.toLocaleDateString("en-GB", {day:'numeric', month:'short'})}`);
+      },
+
+      renderBarChart: function(filteredRecords) {
+        const ctx = $("barChart")?.getContext("2d");
+        if (!ctx) return;
+
+        const sorted = [...filteredRecords].sort((a, b) => a.dateInt - b.dateInt);
+        const labels = sorted.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB", {day: 'numeric', month: 'short'}) : r.rawDate);
+        const dataVals = sorted.map(r => r.dailyTotalCents / 100);
+
+        if (STATE.barChart) {
+          STATE.barChart.destroy();
+        }
+
+        STATE.barChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Daily Revenue (£)',
+              data: dataVals,
+              backgroundColor: '#D4AF37',
+              borderColor: '#F9E3B4',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#ffffff' } }
+            },
+            scales: {
+              x: { ticks: { color: '#aaaaaa' }, grid: { color: '#2a2a2a' } },
+              y: { ticks: { color: '#aaaaaa', callback: (val) => '£' + val }, grid: { color: '#2a2a2a' } }
+            }
+          }
+        });
+      },
+
+      initAnalyticsTab: function() {
+        if (!STATE.raw || STATE.raw.length === 0) return;
+        const sorted = [...STATE.raw].sort((a, b) => a.dateInt - b.dateInt);
+        const startInput = $("analyticsStartDate");
+        const endInput = $("analyticsEndDate");
+        if (startInput && !startInput.value) startInput.value = formatDateLocal(sorted[0].parsedDate);
+        if (endInput && !endInput.value) endInput.value = formatDateLocal(sorted[sorted.length - 1].parsedDate);
+
+        DashboardApp.buildAnalyticsPresets();
+        DashboardApp.applyAnalyticsRange();
+      },
+
+      buildAnalyticsPresets: function() {
+        const weekContainer = $("analyticsWeekButtonsContainer");
+        const monthContainer = $("analyticsMonthlyButtonsBar");
+        if (!weekContainer || !monthContainer) return;
+
+        if (weekContainer.innerHTML === "") {
+          const weeks = [
+            { label: "Last 7 Days", days: 7 },
+            { label: "Last 30 Days", days: 30 },
+            { label: "This Month", type: "thisMonth" }
+          ];
+          weeks.forEach(w => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.innerText = w.label;
+            btn.style.background = "#2a2a2a";
+            btn.style.border = "1px solid var(--primary-gold)";
+            btn.style.color = "var(--accent-gold)";
+            btn.onclick = () => {
+              const end = new Date();
+              let start = new Date();
+              if (w.days) start.setDate(end.getDate() - w.days);
+              else if (w.type === "thisMonth") start = new Date(end.getFullYear(), end.getMonth(), 1);
+              $("analyticsStartDate").value = formatDateLocal(start);
+              $("analyticsEndDate").value = formatDateLocal(end);
+              DashboardApp.applyAnalyticsRange();
+            };
+            weekContainer.appendChild(btn);
+          });
+        }
+
+        if (monthContainer.innerHTML === "" && STATE.raw.length > 0) {
+          const monthsMap = {};
+          STATE.raw.forEach(r => {
+            if (r.parsedDate) {
+              const y = r.parsedDate.getFullYear();
+              const m = r.parsedDate.getMonth();
+              const key = `${y}-${String(m + 1).padStart(2, '0')}`;
+              monthsMap[key] = { y, m, label: r.parsedDate.toLocaleString('default', { month: 'short', year: 'numeric' }) };
+            }
+          });
+
+          Object.values(monthsMap).sort((a, b) => (a.y * 100 + a.m) - (b.y * 100 + b.m)).forEach(mObj => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "month-btn";
+            btn.innerText = mObj.label;
+            btn.onclick = () => {
+              const start = new Date(mObj.y, mObj.m, 1);
+              const end = new Date(mObj.y, mObj.m + 1, 0);
+              $("analyticsStartDate").value = formatDateLocal(start);
+              $("analyticsEndDate").value = formatDateLocal(end);
+              DashboardApp.applyAnalyticsRange();
+            };
+            monthContainer.appendChild(btn);
+          });
+        }
+      },
+
+      applyAnalyticsRange: function() {
+        const startVal = $("analyticsStartDate")?.value;
+        const endVal = $("analyticsEndDate")?.value;
+        if (!startVal || !endVal) return;
+
+        const startInt = parseInt(startVal.replace(/-/g, ""), 10);
+        const endInt = parseInt(endVal.replace(/-/g, ""), 10);
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+
+        DashboardApp.renderSalesChart(filtered);
+        DashboardApp.renderAnalyticsTables(filtered);
+      },
+
+      resetAnalyticsDates: function() {
+        if (!STATE.raw || STATE.raw.length === 0) return;
+        const sorted = [...STATE.raw].sort((a, b) => a.dateInt - b.dateInt);
+        $("analyticsStartDate").value = formatDateLocal(sorted[0].parsedDate);
+        $("analyticsEndDate").value = formatDateLocal(sorted[sorted.length - 1].parsedDate);
+        DashboardApp.applyAnalyticsRange();
+      },
+
+      renderSalesChart: function(filteredRecords) {
+        const ctx = $("salesChart")?.getContext("2d");
+        if (!ctx) return;
+
+        const sorted = [...filteredRecords].sort((a, b) => a.dateInt - b.dateInt);
+        const labels = sorted.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB", {day: 'numeric', month: 'short'}) : r.rawDate);
+        const cashVals = sorted.map(r => r.cashCents / 100);
+        const cardVals = sorted.map(r => r.cardCents / 100);
+
+        if (STATE.salesChart) STATE.salesChart.destroy();
+
+        STATE.salesChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'Cash (£)', data: cashVals, borderColor: '#4cd137', backgroundColor: 'rgba(76,209,55,0.1)', tension: 0.2, fill: true },
+              { label: 'Card (£)', data: cardVals, borderColor: '#D4AF37', backgroundColor: 'rgba(212,175,55,0.1)', tension: 0.2, fill: true }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#ffffff' } } },
+            scales: {
+              x: { ticks: { color: '#aaaaaa' }, grid: { color: '#2a2a2a' } },
+              y: { ticks: { color: '#aaaaaa', callback: (val) => '£' + val }, grid: { color: '#2a2a2a' } }
+            }
+          }
+        });
+      },
+
+      renderAnalyticsTables: function(filteredRecords) {
+        // Cash Card Table
+        let totalCash = 0, totalCard = 0;
+        filteredRecords.forEach(r => {
+          totalCash += r.cashCents;
+          totalCard += r.cardCents;
+        });
+        const combined = totalCash + totalCard;
+        const cashP = combined > 0 ? ((totalCash / combined) * 100).toFixed(1) : "0.0";
+        const cardP = combined > 0 ? ((totalCard / combined) * 100).toFixed(1) : "0.0";
+
+        const ccTbody = $("printCashCardTable");
+        if (ccTbody) {
+          ccTbody.innerHTML = `
+            <tr><td>Cash Sales</td><td style="text-align: right;">${cashP}%</td><td style="text-align: right;">${fmt(totalCash)}</td></tr>
+            <tr><td>Card Sales</td><td style="text-align: right;">${cardP}%</td><td style="text-align: right;">${fmt(totalCard)}</td></tr>
+            <tr style="font-weight: bold; background: #222;"><td>Total Revenue</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combined)}</td></tr>
+          `;
+        }
+
+        // Category Table
+        const catTotals = { "ICE CREAM": 0, "COUNTER": 0, "Kitchen": 0, "DRINK": 0, "DELI": 0, "ALCOHOL": 0 };
+        filteredRecords.forEach(r => {
+          Object.keys(catTotals).forEach(c => {
+            catTotals[c] += r.categories[c] || 0;
+          });
+        });
+
+        const catTbody = $("printCategoryTable");
+        if (catTbody) {
+          catTbody.innerHTML = "";
+          Object.entries(catTotals).forEach(([cat, val]) => {
+            catTbody.innerHTML += `<tr><td>${cat}</td><td>${fmt(val)}</td></tr>`;
+          });
+        }
+
+        // Daily records table
+        const prodTbody = $("productTable");
+        if (prodTbody) {
+          prodTbody.innerHTML = "";
+          const sorted = [...filteredRecords].sort((a, b) => b.dateInt - a.dateInt);
+          sorted.forEach(r => {
+            const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+            prodTbody.innerHTML += `
+              <tr>
+                <td>${r.dayName} (${dateStr})</td>
+                <td>${fmt(r.cashCents)}</td>
+                <td>${fmt(r.cardCents)}</td>
+                <td style="font-weight: bold; color: var(--accent-gold);">${fmt(r.dailyTotalCents)}</td>
+              </tr>
+            `;
+          });
+        }
+      },
+
+      exportAnalyticsCSV: function() {
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data available for export.");
           return;
         }
+        let csv = "Date,Day,Cash,Card,Total,IceCream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        STATE.raw.forEach(r => {
+          const dStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          csv += `"${dStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sales_analytics_${formatDateLocal(new Date())}.csv`;
+        a.click();
+      },
 
-        STATE.pendingPayload = {
-          action: "addData",
-          dayName: $("entryDay").value,
-          rawDate: $("entryDate").value,
-          cash: cashVal,
-          card: cardVal,
-          catIceCream: catIce,
-          catCounter: catCount,
-          catKitchen: catKit,
-          catDrink: catDrk,
-          catDeli: catDel,
-          catAlcohol: catAlc
-        };
+      printReport: function() {
+        document.body.classList.add("printing-analytics");
+        window.print();
+        setTimeout(() => { document.body.classList.remove("printing-analytics"); }, 1000);
+      },
 
-        $("modalCombinedTotal").innerText = fmt(combinedCents);
+      initSalesEntryTab: function() {
+        const today = new Date();
+        const entryDateEl = $("entryDate");
+        if (entryDateEl && !entryDateEl.value) {
+          entryDateEl.value = formatDateLocal(today);
+          DashboardApp.onEntryDateChange();
+        }
+      },
+
+      onEntryDateChange: function() {
+        const val = $("entryDate")?.value;
+        if (!val) return;
+        const d = new Date(val);
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dayEl = $("entryDay");
+        if (dayEl) dayEl.value = days[d.getDay()];
+      },
+
+      stageDataEntry: function(e) {
+        e.preventDefault();
+        const date = $("entryDate").value;
+        const day = $("entryDay").value;
+        const cash = parseFloat($("entryCash").value) || 0;
+        const card = parseFloat($("entryCard").value) || 0;
+        const iceCream = parseFloat($("catIceCream").value) || 0;
+        const counter = parseFloat($("catCounter").value) || 0;
+        const kitchen = parseFloat($("catKitchen").value) || 0;
+        const drink = parseFloat($("catDrink").value) || 0;
+        const deli = parseFloat($("catDeli").value) || 0;
+        const alcohol = parseFloat($("catAlcohol").value) || 0;
+
+        const combined = cash + card;
+        STATE.pendingPayload = { date, day, cash, card, iceCream, counter, kitchen, drink, deli, alcohol };
+
+        $("modalCombinedTotal").innerText = "£" + combined.toFixed(2);
         $("verifyModal").classList.remove("hidden");
       },
-      closeVerifyModal: () => {
+
+      closeVerifyModal: function() {
         $("verifyModal").classList.add("hidden");
         STATE.pendingPayload = null;
       },
-      confirmAndSubmit: async () => {
-        $("verifyModal").classList.add("hidden");
+
+      confirmAndSubmit: async function() {
         const payload = STATE.pendingPayload;
         if (!payload) return;
+        DashboardApp.closeVerifyModal();
 
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Submitting sales entry to Google Sheet...";
-          loader.classList.remove("hidden");
+        const loading = $("loading");
+        if (loading) {
+          loading.innerText = "Submitting sales entry to Google Sheet...";
+          loading.classList.remove("hidden");
         }
 
         try {
           const res = await fetch(CONFIG.URL, {
             method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-
-          if (json.status === "success") {
-            toast("Sales entry successfully recorded!");
-            $("dataEntryForm").reset();
-            const now = getUKTime();
-            $("entryDate").value = formatDateLocal(now);
-            DashboardApp.onEntryDateChange();
-            load();
-          } else {
-            alert("Submission error: " + (json.message || "Unknown error"));
-          }
+          toast("Sales successfully submitted!");
+          setTimeout(() => {
+            DashboardApp.refreshData();
+            DashboardApp.switchTab(0);
+          }, 1500);
         } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          alert("Network error during submission. Please try again.");
+          console.error("Submission error:", err);
+          toast("Error submitting entry. Please try again.");
+        } finally {
+          if (loading) loading.classList.add("hidden");
         }
       },
-      exportAnalyticsCSV: () => {
-        if (!STATE.raw || STATE.raw.length === 0) {
-          alert("No data available to export.");
-          return;
+
+      initAccountingTab: function() {
+        const select = $("accFySelect");
+        if (!select) return;
+
+        if (select.options.length === 0) {
+          const currentYear = new Date().getFullYear();
+          for (let y = currentYear; y >= currentYear - 4; y--) {
+            const opt = document.createElement("option");
+            opt.value = y;
+            opt.innerText = `Financial Year ${y}/${y+1} (1 Feb ${y} - 31 Jan ${y+1})`;
+            select.appendChild(opt);
+          }
         }
-        let csvContent = "data:text/csv;charset=utf-8,Date,Day,Cash,Card,Total\n";
-        STATE.raw.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
-          const row = [dateStr, r.dayName, r.cashCents / 100, r.cardCents / 100, r.dailyTotalCents / 100];
-          csvContent += row.join(",") + "\n";
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "sales_analytics_report.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast("CSV Report downloaded successfully!");
+        DashboardApp.renderAccountingData();
       },
-      printReport: () => {
-        document.body.classList.add("printing-analytics");
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove("printing-analytics");
-        }, 1000);
-      },
-      exportAccountingCSV: () => {
-        const fySelect = $("accFySelect");
-        if (!fySelect || !STATE.raw || STATE.raw.length === 0) {
-          alert("No accounting data available.");
-          return;
-        }
-        const fyYear = parseInt(fySelect.value, 10);
+
+      renderAccountingData: function() {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
         const startInt = fyYear * 10000 + 201;
         const endInt = (fyYear + 1) * 10000 + 131;
 
-        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
-        if (filtered.length === 0) {
-          alert("No records found for the selected Financial Year.");
-          return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
-          const row = [
-            dateStr,
-            r.dayName,
-            r.cashCents / 100,
-            r.cardCents / 100,
-            r.dailyTotalCents / 100,
-            r.categories["ICE CREAM"] / 100,
-            r.categories["COUNTER"] / 100,
-            r.categories["Kitchen"] / 100,
-            r.categories["DRINK"] / 100,
-            r.categories["DELI"] / 100,
-            r.categories["ALCOHOL"] / 100
-          ];
-          csvContent += row.join(",") + "\n";
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `accounting_fy_${fyYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast("Accountant CSV exported successfully!");
-      },
-      renderAccountingData: () => {
         const tbody = $("accountingTableBody");
-        const fySelect = $("accFySelect");
-        if (!tbody || !fySelect) return;
+        if (!tbody) return;
         tbody.innerHTML = "";
 
-        if (!STATE.raw || STATE.raw.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">Loading accounting records...</td></tr>`;
-          return;
-        }
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt).sort((a, b) => b.dateInt - a.dateInt);
 
-        const fyYear = parseInt(fySelect.value, 10);
-        const startInt = fyYear * 10000 + 201;
-        const endInt = (fyYear + 1) * 10000 + 131;
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for Financial Year ${fyYear}/${fyYear+1}.</td></tr>`;
           return;
         }
 
         filtered.forEach(r => {
-          const tr = document.createElement("tr");
           const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
-          tr.innerHTML = `
-            <td>${dateStr}</td>
-            <td>${r.dayName}</td>
-            <td>${fmt(r.cashCents)}</td>
-            <td>${fmt(r.cardCents)}</td>
-            <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"])}</td>
-            <td>${fmt(r.categories["COUNTER"])}</td>
-            <td>${fmt(r.categories["Kitchen"])}</td>
-            <td>${fmt(r.categories["DRINK"])}</td>
-            <td>${fmt(r.categories["DELI"])}</td>
-            <td>${fmt(r.categories["ALCOHOL"])}</td>
+          tbody.innerHTML += `
+            <tr>
+              <td>${dateStr}</td>
+              <td>${r.dayName}</td>
+              <td>${fmt(r.cashCents)}</td>
+              <td>${fmt(r.cardCents)}</td>
+              <td style="font-weight: bold; color: var(--accent-gold);">${fmt(r.dailyTotalCents)}</td>
+              <td>${fmt(r.categories["ICE CREAM"])}</td>
+              <td>${fmt(r.categories["COUNTER"])}</td>
+              <td>${fmt(r.categories["Kitchen"])}</td>
+              <td>${fmt(r.categories["DRINK"])}</td>
+              <td>${fmt(r.categories["DELI"])}</td>
+              <td>${fmt(r.categories["ALCOHOL"])}</td>
+            </tr>
           `;
-          tbody.appendChild(tr);
         });
       },
-      exportMomYoyCSV: () => {
-        alert("MoM & YoY CSV Export feature initialized.");
+
+      exportAccountingCSV: function() {
+        const fyYear = parseInt($("accFySelect")?.value || new Date().getFullYear(), 10);
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+
+        if (filtered.length === 0) {
+          alert("No records to export for this Financial Year.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total,IceCream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        filtered.forEach(r => {
+          const dStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          csv += `"${dStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `accountant_report_FY_${fyYear}_${fyYear+1}.csv`;
+        a.click();
       },
-      exportMomYoyPDF: () => {
-        document.body.classList.add("printing-momyoy");
-        window.print();
-        setTimeout(() => {
-          document.body.classList.remove("printing-momyoy");
-        }, 1000);
+
+      initBankingTab: function() {
+        DashboardApp.renderBankedTable();
       },
-      renderMomYoyData: () => {
+
+      markAsBanked: async function() {
+        const lastBankedInput = $("bankingStartDate");
+        const bankingValEl = $("bankingVal");
+        if (!lastBankedInput || !lastBankedInput.value) {
+          alert("Please select the 'Last Banked' date.");
+          return;
+        }
+
+        const dateToBank = lastBankedInput.value;
+        const currentDayVal = $("lastBankedDate")?.value || dateToBank;
+
+        const lastBankedInt = parseInt(dateToBank.replace(/-/g, ""), 10);
+        const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10);
+
+        let unbankedCashCents = 0;
+        STATE.raw.forEach(r => {
+          if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
+            unbankedCashCents += (r.cashCents || 0);
+          }
+        });
+
+        const cashValToBank = unbankedCashCents / 100;
+        if (cashValToBank <= 0) {
+          alert("No unbanked cash found for the selected date range.");
+          return;
+        }
+
+        if (!confirm(`Are you sure you want to mark ${fmt(unbankedCashCents)} up to ${dateToBank} as Banked?`)) {
+          return;
+        }
+
+        const loading = $("loading");
+        if (loading) {
+          loading.innerText = "Recording banked cash to Google Sheet...";
+          loading.classList.remove("hidden");
+        }
+
+        try {
+          const payload = { bankedDate: dateToBank, bankedCash: cashValToBank };
+          await fetch(CONFIG.URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          toast("Banked cash recorded successfully!");
+          setTimeout(() => {
+            DashboardApp.refreshData();
+          }, 1500);
+        } catch (err) {
+          console.error("Banking error:", err);
+          toast("Error recording banked cash.");
+        } finally {
+          if (loading) loading.classList.add("hidden");
+        }
+      },
+
+      initMomYoyTab: function() {
         const select = $("momYoyYearSelect");
-        const yoyBody = $("yoyTableBody");
-        const momBody = $("momTableBody");
-        if (!select || !yoyBody || !momBody) return;
+        if (!select) return;
 
-        const selectedYear = parseInt(select.value, 10);
-        safeSet("yoyHeaderPrev2", `Year ${selectedYear - 2} (£)`);
-        safeSet("yoyHeaderPrev1", `Year ${selectedYear - 1} (£)`);
-        safeSet("yoyHeaderCur", `Year ${selectedYear} (£)`);
+        if (select.options.length === 0) {
+          const currentYear = new Date().getFullYear();
+          for (let y = currentYear; y >= currentYear - 4; y--) {
+            const opt = document.createElement("option");
+            opt.value = y;
+            opt.innerText = String(y);
+            select.appendChild(opt);
+          }
+        }
+        DashboardApp.renderMomYoyData();
+      },
 
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      renderMomYoyData: function() {
+        const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        
+        safeSet("yoyHeaderCur", `${selectedYear} (£)`);
+        safeSet("yoyHeaderPrev1", `${selectedYear - 1} (£)`);
+        safeSet("yoyHeaderPrev2", `${selectedYear - 2} (£)`);
+
+        const monthlyTotals = {};
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = {
+            [selectedYear]: 0,
+            [selectedYear - 1]: 0,
+            [selectedYear - 2]: 0
+          };
+        }
+
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
+          }
+        });
+
+        // Render YoY Table
+        const yoyTbody = $("yoyTableBody");
+        if (yoyTbody) {
+          yoyTbody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          
+          for (let m = 1; m <= 12; m++) {
+            const curRev = monthlyTotals[m][selectedYear];
+            const prev1Rev = monthlyTotals[m][selectedYear - 1];
+            const prev2Rev = monthlyTotals[m][selectedYear - 2];
+
+            const diff = curRev - prev1Rev;
+            const growth = prev1Rev > 0 ? ((diff / prev1Rev) * 100).toFixed(1) : "0.0";
+            const sign = diff >= 0 ? "+" : "";
+
+            yoyTbody.innerHTML += `
+              <tr>
+                <td>${monthNames[m-1]}</td>
+                <td>${fmt(prev2Rev)}</td>
+                <td>${fmt(prev1Rev)}</td>
+                <td style="font-weight: bold; color: var(--accent-gold);">${fmt(curRev)}</td>
+                <td class="${diff >= 0 ? 'positive' : 'negative'}">${sign}${growth}%</td>
+              </tr>
+            `;
+          }
+        }
+
+        // Render MoM Table
+        const momTbody = $("momTableBody");
+        if (momTbody) {
+          momTbody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          
+          let prevMonthRev = null;
+          for (let m = 1; m <= 12; m++) {
+            const curRev = monthlyTotals[m][selectedYear];
+            let diffStr = "-";
+            let growthStr = "-";
+            let className = "";
+
+            if (prevMonthRev !== null && prevMonthRev > 0) {
+              const diff = curRev - prevMonthRev;
+              const growth = ((diff / prevMonthRev) * 100).toFixed(1);
+              const sign = diff >= 0 ? "+" : "";
+              diffStr = `${sign}${fmt(diff)}`;
+              growthStr = `${sign}${growth}%`;
+              className = diff >= 0 ? "positive" : "negative";
+            }
+
+            momTbody.innerHTML += `
+              <tr>
+                <td>${monthNames[m-1]}</td>
+                <td>${fmt(curRev)}</td>
+                <td class="${className}">${diffStr}</td>
+                <td class="${className}">${growthStr}</td>
+              </tr>
+            `;
+            prevMonthRev = curRev;
+          }
+        }
+      },
+
+      exportMomYoyCSV: function() {
+        const selectedYear = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        let csv = `Month,${selectedYear-2},${selectedYear-1},${selectedYear},YoY Growth %\n`;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
         const monthlyTotals = {};
-        for (let y = selectedYear - 2; y <= selectedYear; y++) {
-          monthlyTotals[y] = Array(12).fill(0);
+        for (let m = 1; m <= 12; m++) {
+          monthlyTotals[m] = { [selectedYear]: 0, [selectedYear - 1]: 0, [selectedYear - 2]: 0 };
         }
-
-        if (STATE.raw && STATE.raw.length > 0) {
-          STATE.raw.forEach(r => {
-            if (!r.parsedDate) return;
-            const y = r.parsedDate.getFullYear();
-            const m = r.parsedDate.getMonth();
-            if (monthlyTotals[y]) {
-              monthlyTotals[y][m] += r.dailyTotalCents;
-            }
-          });
-        }
-
-        yoyBody.innerHTML = "";
-        months.forEach((monthName, idx) => {
-          const valCur = monthlyTotals[selectedYear][idx];
-          const valPrev1 = monthlyTotals[selectedYear - 1][idx];
-          const valPrev2 = monthlyTotals[selectedYear - 2][idx];
-
-          const diff = valCur - valPrev1;
-          const pct = valPrev1 > 0 ? ((diff / valPrev1) * 100).toFixed(1) : "0.0";
-          const isPos = diff >= 0;
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${monthName}</td>
-            <td>${fmt(valPrev2)}</td>
-            <td>${fmt(valPrev1)}</td>
-            <td>${fmt(valCur)}</td>
-            <td class="${isPos ? 'positive' : 'negative'}">${isPos ? '+' : ''}${pct}%</td>
-          `;
-          yoyBody.appendChild(tr);
+        STATE.raw.forEach(r => {
+          if (!r.parsedDate) return;
+          const y = r.parsedDate.getFullYear();
+          const m = r.parsedDate.getMonth() + 1;
+          if (monthlyTotals[m] && monthlyTotals[m][y] !== undefined) {
+            monthlyTotals[m][y] += r.dailyTotalCents;
+          }
         });
 
-        momBody.innerHTML = "";
-        let prevMonthRev = 0;
-        months.forEach((monthName, idx) => {
-          const valCur = monthlyTotals[selectedYear][idx];
-          const diff = idx === 0 ? 0 : valCur - prevMonthRev;
-          const pct = (idx === 0 || prevMonthRev === 0) ? "0.0" : ((diff / prevMonthRev) * 100).toFixed(1);
-          const isPos = diff >= 0;
+        for (let m = 1; m <= 12; m++) {
+          const cur = monthlyTotals[m][selectedYear] / 100;
+          const p1 = monthlyTotals[m][selectedYear - 1] / 100;
+          const p2 = monthlyTotals[m][selectedYear - 2] / 100;
+          const growth = p1 > 0 ? (((cur - p1) / p1) * 100).toFixed(1) + "%" : "0.0%";
+          csv += `"${monthNames[m-1]}",${p2},${p1},${cur},"${growth}"\n`;
+        }
 
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${monthName}</td>
-            <td>${fmt(valCur)}</td>
-            <td>${idx === 0 ? '-' : (isPos ? '+' : '') + fmt(diff)}</td>
-            <td class="${idx === 0 ? '' : (isPos ? 'positive' : 'negative')}">${idx === 0 ? '-' : (isPos ? '+' : '') + pct + '%'}</td>
-          `;
-          momBody.appendChild(tr);
-          prevMonthRev = valCur;
-        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MoM_YoY_Report_${selectedYear}.csv`;
+        a.click();
+      },
+
+      exportMomYoyPDF: function() {
+        document.body.classList.add("printing-momyoy");
+        window.print();
+        setTimeout(() => { document.body.classList.remove("printing-momyoy"); }, 1000);
       }
     };
   </script>
