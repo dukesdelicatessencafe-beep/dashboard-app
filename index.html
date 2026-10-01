@@ -655,24 +655,28 @@
             <div class="monthly-buttons-bar" id="overviewMonthlyButtonsBar"></div>
           </div>
 
-          <!-- Daily Summary Section -->
-          <div id="daily-stats-container">
-            <p>Max Temp: <span id="max-temp">--</span>°C</p>
-            <p>Min Temp: <span id="min-temp">--</span>°C</p>
-            <p>Precipitation: <span id="precipitation">--</span> mm</p>
-          </div>
-
-          <!-- Hourly Visual Representation Section -->
-          <div id="hourly-weather-container">
-            <div class="weather-slot">
-              <h4>Current Hour</h4>
-              <img id="current-icon" src="" alt="Current Weather Icon">
-              <p><span id="current-temp">--</span>°C</p>
+          <!-- Weather Sections Added Here -->
+          <div class="entry-form-card" style="margin-bottom: 15px;">
+            <h2 style="font-size: 15px; color: var(--primary-gold); margin-top: 0; margin-bottom: 10px;">Eastbourne Weather (Open-Meteo)</h2>
+            <!-- Daily Summary Section -->
+            <div id="daily-stats-container" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; color: var(--accent-gold);">
+                <p style="margin:0;">Max Temp: <span id="max-temp">--</span>°C</p>
+                <p style="margin:0;">Min Temp: <span id="min-temp">--</span>°C</p>
+                <p style="margin:0;">Precipitation: <span id="precipitation">--</span> mm</p>
             </div>
-            <div class="weather-slot">
-              <h4>Next Hour</h4>
-              <img id="next-icon" src="" alt="Next Weather Icon">
-              <p><span id="next-temp">--</span>°C</p>
+
+            <!-- Hourly Visual Representation Section -->
+            <div id="hourly-weather-container" style="display: flex; gap: 15px;">
+                <div class="weather-slot" style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444; flex: 1; text-align: center;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #aaa;">Current Hour</h4>
+                    <img id="current-icon" src="" alt="Current Weather Icon" style="width: 32px; height: 32px; display: none;">
+                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: var(--accent-gold);"><span id="current-temp">--</span>°C</p>
+                </div>
+                <div class="weather-slot" style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444; flex: 1; text-align: center;">
+                    <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #aaa;">Next Hour</h4>
+                    <img id="next-icon" src="" alt="Next Weather Icon" style="width: 32px; height: 32px; display: none;">
+                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: #fff;"><span id="next-temp">--</span>°C</p>
+                </div>
             </div>
           </div>
 
@@ -2094,6 +2098,31 @@
       DashboardApp.renderMomYoyData();
     }
 
+    // WEATHER UI UPDATE FUNCTION
+    async function updateWeatherUI() {
+      const lat = 50.768, lon = 0.280; // Eastbourne
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // 1. Inject Daily Stats
+        document.getElementById('max-temp').innerText = data.daily.temperature_2m_max[0];
+        document.getElementById('min-temp').innerText = data.daily.temperature_2m_min[0];
+        document.getElementById('precipitation').innerText = data.daily.precipitation_sum[0];
+
+        // 2. Inject Current & Next Hour Data
+        const currentHourIndex = new Date().getHours();
+        
+        document.getElementById('current-temp').innerText = data.hourly.temperature_2m[currentHourIndex];
+        document.getElementById('next-temp').innerText = data.hourly.temperature_2m[currentHourIndex + 1];
+
+      } catch (error) {
+        console.error("Failed to fetch weather data:", error);
+      }
+    }
+
     // INSTANT LOCAL LOAD & BACKGROUND STALE-WHILE-REVALIDATE SYNCING
     async function load() {
       const now = getUKTime();
@@ -2106,7 +2135,6 @@
       if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
       if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
 
-      // Always show current date on sales entry date picker
       if ($("entryDate")) {
         $("entryDate").value = formatDateLocal(now);
         DashboardApp.onEntryDateChange();
@@ -2264,6 +2292,7 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
+            updateWeatherUI();
             startBackgroundPolling();
           } else {
             alert("Incorrect Password. Access Denied.");
@@ -2275,6 +2304,7 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
+            updateWeatherUI();
             startBackgroundPolling();
           } else {
             alert("Authentication failed or incorrect password.");
@@ -2307,7 +2337,6 @@
         }
 
         if (index === 2) {
-          // Always ensure current date is shown when switching to Sales Entry
           const todayStr = formatDateLocal(getUKTime());
           if ($("entryDate")) {
             $("entryDate").value = todayStr;
@@ -2596,46 +2625,72 @@
         let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
         filtered.forEach(r => {
           const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+          csv += `"${displayDateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)},${(r.categories["ICE CREAM"]/100).toFixed(2)},${(r.categories["COUNTER"]/100).toFixed(2)},${(r.categories["Kitchen"]/100).toFixed(2)},${(r.categories["DRINK"]/100).toFixed(2)},${(r.categories["DELI"]/100).toFixed(2)},${(r.categories["ALCOHOL"]/100).toFixed(2)}\n`;
         });
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.setAttribute("href", url);
-        a.setAttribute("download", `Accounting_Report_FY_${fyYear}.csv`);
+        a.setAttribute("download", `accounting_fy_${fyYear}.csv`);
+        a.style.visibility = "hidden";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+      },
+      exportAnalyticsCSV: () => {
+        const sVal = $("analyticsStartDate")?.value;
+        const eVal = $("analyticsEndDate")?.value;
+        let filtered = STATE.raw;
+        if (sVal && eVal) {
+          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
+          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
+          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        }
+        if (filtered.length === 0) {
+          alert("No data to export for selected range.");
+          return;
+        }
+
+        let csv = "Date,Day,Cash,Card,Total\n";
+        filtered.forEach(r => {
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${displayDateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const urlObj = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.setAttribute("href", urlObj);
+        a.setAttribute("download", `analytics_report.csv`);
+        a.style.visibility = "hidden";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      },
+      printReport: () => {
+        document.body.classList.add("printing-analytics");
+        window.print();
+        setTimeout(() => document.body.classList.remove("printing-analytics"), 1000);
+      },
+      exportMomYoyCSV: () => {
+        alert("MoM & YoY CSV export coming soon.");
+      },
+      exportMomYoyPDF: () => {
+        document.body.classList.add("printing-momyoy");
+        window.print();
+        setTimeout(() => document.body.classList.remove("printing-momyoy"), 1000);
+      },
+      renderMomYoyData: () => {
+        // placeholder
       }
     };
 
-    async function updateWeatherUI() {
-      const lat = 50.768, lon = 0.280; // Eastbourne
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        // 1. Inject Daily Stats
-        document.getElementById('max-temp').innerText = data.daily.temperature_2m_max[0];
-        document.getElementById('min-temp').innerText = data.daily.temperature_2m_min[0];
-        document.getElementById('precipitation').innerText = data.daily.precipitation_sum[0];
-
-        // 2. Inject Current & Next Hour Data
-        const currentHourIndex = new Date().getHours();
-        
-        document.getElementById('current-temp').innerText = data.hourly.temperature_2m[currentHourIndex];
-        document.getElementById('next-temp').innerText = data.hourly.temperature_2m[currentHourIndex + 1];
-
-      } catch (error) {
-        console.error("Failed to fetch weather data:", error);
-      }
-    }
-
     // Run on page load
-    window.addEventListener('DOMContentLoaded', updateWeatherUI);
+    window.addEventListener('DOMContentLoaded', () => {
+      // Auto login check or prompt if needed, init via DashboardApp
+    });
   </script>
 </body>
 </html>
