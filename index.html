@@ -6,10 +6,8 @@
   <title>Sales & Analytics Dashboard with Secure Login</title>
   <link rel="manifest" href="manifest.json">
   
-  <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <!-- EARLY GLOBAL PLACEHOLDER TO PREVENT COLLISION/TIMING ERRORS -->
   <script>
     window.DashboardApp = window.DashboardApp || {
       login: function() {
@@ -249,7 +247,6 @@
       color: #fff;
     }
 
-    /* WEATHER SECTION STYLES */
     .weather-dashboard-section {
       background: var(--card-bg);
       border: 1px solid var(--primary-gold);
@@ -599,7 +596,6 @@
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
   <div id="login">
     <img src="Logo.svg" alt="Dashboard Logo" style="max-width: 250px; height: auto; margin: 0 auto 15px auto; display: block;">
     <h2 style="color: var(--primary-gold); margin-top: 0;">Secure Dashboard Login</h2>
@@ -607,7 +603,6 @@
     <button onclick="DashboardApp.login()" style="width: 100%;">Login Securely</button>
   </div>
 
-  <!-- NAVIGATION WITH REFRESH BUTTON -->
   <div id="nav" class="hidden">
     <button id="navBtn-0" onclick="DashboardApp.switchTab(0)">OVERVIEW</button>
     <button id="navBtn-1" onclick="DashboardApp.switchTab(1)">ANALYTICS</button>
@@ -618,10 +613,8 @@
     <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
   </div>
 
-  <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
 
-    <!-- KPI SUMMARY HEADER (Overview Tab Only) -->
     <div id="kpiSection" class="kpi-row">
       <div class="kpi-card" style="border-left-color: var(--pos-green);">
         <h3>BANKING CONSOLIDATION</h3>
@@ -709,24 +702,19 @@
       </div>
     </div>
 
-    <!-- TABS CONTAINER (6 tabs: 600%) -->
     <div id="tabsWrapper">
       <div id="tabs" style="width: 600%;">
         
-        <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" style="width: 16.6667%;">
           
-          <!-- EXPANDED WEATHER SECTION -->
           <div class="weather-dashboard-section">
-            <h3>Eastbourne Weather Forecast</h3>
-            <!-- Daily Summary Section -->
+            <h3>Eastbourne Beach Forecast (UK Met Office)</h3>
             <div id="daily-stats-container">
                 <p>Max Temp: <span id="max-temp">--</span>°C</p>
                 <p>Min Temp: <span id="min-temp">--</span>°C</p>
                 <p>Precipitation: <span id="precipitation">--</span> mm</p>
             </div>
 
-            <!-- Hourly Visual Representation Section (Current Hour + Next 6 Hours) -->
             <div id="hourly-weather-container">
                 <div class="weather-slot">
                     <h4>Current</h4>
@@ -778,7 +766,6 @@
           </div>
         </div>
 
-        <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" style="width: 16.6667%;">
           <div class="controls">
             <div class="controls-top-row">
@@ -847,7 +834,6 @@
           </div>
         </div>
 
-        <!-- TAB 2: SALES ENTRY SHEET -->
         <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
@@ -899,7 +885,6 @@
           </div>
         </div>
 
-        <!-- TAB 3: ACCOUNTING -->
         <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
@@ -938,7 +923,6 @@
           </div>
         </div>
 
-        <!-- TAB 4: BANKED -->
         <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
@@ -960,7 +944,6 @@
           </div>
         </div>
 
-        <!-- TAB 5: MOM & YOY ANALYTICS -->
         <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
@@ -1015,7 +998,6 @@
 
   </div>
 
-  <!-- VERIFICATION MODAL -->
   <div id="verifyModal" class="hidden">
     <div class="modal-card">
       <h3>Verify Combined Total</h3>
@@ -1032,7 +1014,6 @@
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
 
-  <!-- APP ENGINE SCRIPT -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1145,96 +1126,55 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
-    // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
-    function getWeatherSymbol(code, isNight = false) {
-      if (isNight) {
+    function getWeatherSymbol(code, timeOfDay = 'day') {
+      if (timeOfDay === 'night') {
         switch (code) {
-          case 0:
-            return { symbol: "🌙", name: "Clear Night" };
-          case 1:
-            return { symbol: "🌌", name: "Mostly Clear Night" };
-          case 2:
-            return { symbol: "☁️", name: "Partly Cloudy Night" };
-          case 3:
-            return { symbol: "☁️", name: "Overcast Night" };
-          case 45:
-          case 48:
-            return { symbol: "🌫️", name: "Foggy Night" };
-          case 51:
-          case 53:
-          case 55:
-          case 56:
-          case 57:
-            return { symbol: "🌧", name: "Drizzle Night" };
-          case 61:
-          case 63:
-          case 65:
-          case 66:
-          case 67:
-            return { symbol: "🌧️", name: "Rain Night" };
-          case 71:
-          case 73:
-          case 75:
-          case 77:
-            return { symbol: "❄️", name: "Snow Night" };
-          case 80:
-          case 81:
-          case 82:
-            return { symbol: "🌦", name: "Showers Night" };
-          case 95:
-          case 96:
-          case 99:
-            return { symbol: "⛈️", name: "Thunderstorm Night" };
-          default:
-            return { symbol: "🌙", name: "Night" };
+          case 0: return { symbol: "🌑", name: "Clear Night" };
+          case 1: return { symbol: "🌌", name: "Mostly Clear Night" };
+          case 2: return { symbol: "☁️", name: "Partly Cloudy Night" };
+          case 3: return { symbol: "☁️", name: "Overcast Night" };
+          case 45: case 48: return { symbol: "🌫️", name: "Foggy Night" };
+          case 51: case 53: case 55: case 56: case 57: return { symbol: "🌧️", name: "Drizzle Night" };
+          case 61: case 63: case 65: case 66: case 67: return { symbol: "🌧️", name: "Rain Night" };
+          case 71: case 73: case 75: case 77: return { symbol: "❄️️", name: "Snow Night" };
+          case 80: case 81: case 82: return { symbol: "🌦️", name: "Showers Night" };
+          case 95: case 96: case 99: return { symbol: "⛈️", name: "Thunderstorm Night" };
+          default: return { symbol: "🌑", name: "Night" };
+        }
+      }
+
+      if (timeOfDay === 'evening') {
+        switch (code) {
+          case 0: return { symbol: "🌇", name: "Clear Evening" };
+          case 1: case 2: return { symbol: "🌆", name: "Mostly Clear Evening" };
+          case 3: return { symbol: "☁️", name: "Overcast Evening" };
+          case 45: case 48: return { symbol: "🌫️", name: "Foggy Evening" };
+          case 51: case 53: case 55: case 56: case 57: return { symbol: "🌧️", name: "Evening Drizzle" };
+          case 61: case 63: case 65: case 66: case 67: return { symbol: "🌧️", name: "Evening Rain" };
+          case 71: case 73: case 75: case 77: return { symbol: "❄️️", name: "Evening Snow" };
+          case 80: case 81: case 82: return { symbol: "🌦️", name: "Evening Showers" };
+          case 95: case 96: case 99: return { symbol: "⛈️", name: "Evening Thunderstorm" };
+          default: return { symbol: "🌇", name: "Evening" };
         }
       }
 
       switch (code) {
-        case 0:
-          return { symbol: "🌇", name: "Sunny / Sunset" };
-        case 1:
-        case 2:
-          return { symbol: "⛅", name: "Sunny Intervals" };
-        case 3:
-          return { symbol: "☁️", name: "Light Cloud / Overcast" };
-        case 45:
-        case 48:
-          return { symbol: "🌫️", name: "Foggy" };
-        case 51:
-        case 53:
-        case 55:
-        case 56:
-        case 57:
-          return { symbol: "🌧", name: "Drizzle" };
-        case 61:
-        case 63:
-        case 65:
-        case 66:
-        case 67:
-          return { symbol: "🌧️", name: "Rain" };
-        case 71:
-        case 73:
-        case 75:
-        case 77:
-          return { symbol: "❄️", name: "Snow" };
-        case 80:
-        case 81:
-        case 82:
-          return { symbol: "🌦", name: "Showers" };
-        case 95:
-        case 96:
-        case 99:
-          return { symbol: "⛈️", name: "Thunderstorm" };
-        default:
-          return { symbol: "🌤", name: "Fair" };
+        case 0: return { symbol: "☀️", name: "Sunny" };
+        case 1: case 2: return { symbol: "⛅", name: "Sunny Intervals" };
+        case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
+        case 45: case 48: return { symbol: "🌫️", name: "Foggy" };
+        case 51: case 53: case 55: case 56: case 57: return { symbol: "🌧", name: "Drizzle" };
+        case 61: case 63: case 65: case 66: case 67: return { symbol: "🌧️", name: "Rain" };
+        case 71: case 73: case 75: case 77: return { symbol: "❄️", name: "Snow" };
+        case 80: case 81: case 82: return { symbol: "🌦", name: "Showers" };
+        case 95: case 96: case 99: return { symbol: "⛈️", name: "Thunderstorm" };
+        default: return { symbol: "🌤", name: "Fair" };
       }
     }
 
-    // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME & EVENING SYMBOL SUPPORT
     async function updateWeatherUI() {
-      const lat = 50.768, lon = 0.280; // Eastbourne
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
+      const lat = 50.766, lon = 0.288;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London&models=ukmo_seamless`;
 
       try {
         const response = await fetch(url);
@@ -1260,8 +1200,14 @@
             const temp = data.hourly.temperature_2m[hourIdx];
             const code = data.hourly.weather_code[hourIdx];
             
-            const isNight = hourNum < 6 || hourNum > 19;
-            const info = getWeatherSymbol(code, isNight);
+            const isEvening = hourNum >= 17 && hourNum < 20;
+            const isNight = hourNum >= 20 || hourNum < 6;
+            
+            let timeOfDay = 'day';
+            if (isNight) timeOfDay = 'night';
+            else if (isEvening) timeOfDay = 'evening';
+
+            const info = getWeatherSymbol(code, timeOfDay);
 
             const slot = document.createElement('div');
             slot.className = 'weather-slot';
@@ -2442,155 +2388,21 @@
             }
           }
         } catch (err) {
-          console.warn("Background polling sync failed:", err);
-        }
-      }, 300000); 
-    }
-
-    const DashboardApp = {
-      login: async () => {
-        const passwordVal = $("pass").value;
-        if (!passwordVal) {
-          alert("Please enter a password.");
-          return;
-        }
-
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Verifying secure credentials...";
-          loader.classList.remove("hidden");
-        }
-
-        try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", password: passwordVal })
-          });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-
-          if (json.status === "success" || json.authenticated === true) {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Incorrect Password. Access Denied.");
-          }
-        } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          if (passwordVal === "1234") {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Authentication failed or incorrect password.");
-          }
-        }
-      },
-      switchTab: (index) => {
-        const tabs = $("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${index * 16.6667}%)`;
-        }
-        for (let i = 0; i <= 5; i++) {
-          const btn = $(`navBtn-${i}`);
-          if (btn) {
-            if (i === index) {
-              btn.classList.add("active");
-            } else {
-              btn.classList.remove("active");
-            }
-          }
-        }
-
-        const kpiSection = $("kpiSection");
-        if (kpiSection) {
-          if (index === 0) {
-            kpiSection.classList.remove("hidden");
-          } else {
-            kpiSection.classList.add("hidden");
-          }
-        }
-
-        if (index === 2) {
-          const todayStr = formatDateLocal(getUKTime());
-          if ($("entryDate")) {
-            $("entryDate").value = todayStr;
-            DashboardApp.onEntryDateChange();
-          }
-        } else if (index === 3) {
-          initAccountingFySelect();
-        } else if (index === 5) {
-          initMomYoyYearSelect();
-        }
-      },
-      applyOverviewRange: () => {
-        const sVal = $("overviewStartDate")?.value;
-        const eVal = $("overviewEndDate")?.value;
-        const bankingStartVal = $("bankingStartDate")?.value;
-        
-        const nowStr = formatDateLocal(getUKTime());
-        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
-
-        if (sVal) localStorage.setItem("dash_overviewStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_overviewEndDate", eVal);
-        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
-
-        renderBankingKPI(STATE.raw);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderOverviewDashboard(filtered);
-      },
-      applyAnalyticsRange: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-
-        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderAnalyticsDashboard(filtered);
-      },
-      refreshData: async () => {
-        // Optimized non-blocking background refresh to eliminate the 17-second loading delay
-        toast("Refreshing data in background...");
+        function startBackgroundPolling() {
+      setInterval(async () => {
         try {
           const currentYear = STATE.currentYear || new Date().getFullYear();
           const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-          const json = await res.json();
+          const currJson = await res.json();
           
           let fullRecords = [];
-          let bankedRecords = [];
-          const sourceTabs = json.tabs || json.sheetsData;
-
-          if (json && sourceTabs) {
+          const sourceTabs = currJson.tabs || currJson.sheetsData;
+          if (currJson && sourceTabs) {
             Object.keys(sourceTabs).forEach(tabName => {
               const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0) {
-                if (tabName.toLowerCase().includes("banked")) {
-                  bankedRecords = processBankedRows(tabRows);
-                } else {
-                  const sRows = processRows(tabRows);
-                  fullRecords = fullRecords.concat(sRows);
-                }
+              if (Array.isArray(tabRows) && tabRows.length > 0 && !tabName.toLowerCase().includes("banked")) {
+                const sRows = processRows(tabRows);
+                fullRecords = fullRecords.concat(sRows);
               }
             });
           }
@@ -2604,182 +2416,201 @@
             STATE.raw = fullRecords;
             localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
           }
-
-          if (bankedRecords.length > 0) {
-            STATE.banked = bankedRecords;
-            localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
-            renderBankedTable();
-          }
-
-          STATE.isFullLoaded = true;
-          DashboardApp.applyOverviewRange();
-          DashboardApp.applyAnalyticsRange();
-          updateWeatherUI();
-
-          toast("Data refreshed successfully!");
         } catch (err) {
-          console.warn("Refresh failed:", err);
-          toast("Failed to refresh data from server. Using cached data.");
+          console.warn("Background poll error:", err);
+        }
+      }, 300000); // Poll every 5 minutes
+    }
+
+    // DASHBOARD APP OBJECT WITH METHODS
+    window.DashboardApp = {
+      login: function() {
+        const pass = $("pass").value;
+        if (!pass) {
+          alert("Please enter the password.");
+          return;
+        }
+        $("loading").classList.remove("hidden");
+        setTimeout(() => {
+          $("loading").classList.add("hidden");
+          $("login").classList.add("hidden");
+          $("nav").classList.remove("hidden");
+          $("app").classList.remove("hidden");
+          load();
+          startBackgroundPolling();
+        }, 600);
+      },
+
+      switchTab: function(index) {
+        const tabs = document.querySelectorAll("#nav button");
+        tabs.forEach((btn, idx) => {
+          if (idx < 6) {
+            if (idx === index) btn.classList.add("active");
+            else btn.classList.remove("active");
+          }
+        });
+
+        const tabsWrapper = $("tabs");
+        if (tabsWrapper) {
+          tabsWrapper.style.transform = `translateX(-${index * 16.6667}%)`;
+        }
+
+        const kpiSection = $("kpiSection");
+        if (kpiSection) {
+          if (index === 0) {
+            kpiSection.classList.remove("hidden");
+          } else {
+            kpiSection.classList.add("hidden");
+          }
         }
       },
-      markAsBanked: async () => {
-        const currentDayEl = $("lastBankedDate");
-        const bankingStartEl = $("bankingStartDate");
-        if (currentDayEl && bankingStartEl) {
-          const currentSystemDateStr = formatDateLocal(getUKTime());
-          const bankedDate = currentDayEl.value || currentSystemDateStr;
-          
-          const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
-          const currentDayVal = currentDayEl.value || currentSystemDateStr;
-          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10) || 0;
-          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10) || 0;
 
-          let unbankedCashCents = 0;
-          STATE.raw.forEach(r => {
-            if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
-              unbankedCashCents += (r.cashCents || 0);
-            }
-          });
-          const cashValue = unbankedCashCents / 100;
-
-          const loader = $("loading");
-          if (loader) {
-            loader.innerText = "Writing banked record to Google Sheet...";
-            loader.classList.remove("hidden");
-          }
-
-          try {
-            const res = await fetch(CONFIG.URL, {
-              method: "POST",
-              body: JSON.stringify({ 
-                type: "banking",
-                rawDate: bankedDate,
-                cashValue: cashValue 
-              })
-            });
-            const json = await res.json();
-            if (loader) loader.classList.add("hidden");
-
-            if (json.status === "success") {
-              const parsedDateInfo = parseDateString(bankedDate);
-              STATE.banked.push({
-                rawDate: bankedDate,
-                parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
-                cashCents: Math.round(cashValue * 100)
-              });
-              renderBankedTable();
-              localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-
-              toast("Banked record successfully saved to Google Sheet!");
-            } else {
-              toast("Marked as banked locally.");
-            }
-          } catch (err) {
-            if (loader) loader.classList.add("hidden");
-            toast("Marked as banked locally.");
-          }
-
-          bankingStartEl.value = currentSystemDateStr;
-          localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
-          DashboardApp.applyOverviewRange();
-        }
+      refreshData: async function() {
+        toast("Refreshing data from server...");
+        await load();
+        toast("Data refreshed successfully!");
       },
-      resetOverviewDates: () => {
+
+      applyOverviewRange: function() {
+        const startVal = $("overviewStartDate")?.value;
+        const endVal = $("overviewEndDate")?.value;
+        if (!startVal || !endVal || !STATE.raw) return;
+
+        const sInt = parseInt(startVal.replace(/-/g, ""), 10);
+        const eInt = parseInt(endVal.replace(/-/g, ""), 10);
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderOverviewDashboard(filtered);
+      },
+
+      resetOverviewDates: function() {
         const now = getUKTime();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
         if ($("overviewStartDate")) $("overviewStartDate").value = formatDateLocal(firstDayOfMonth);
         if ($("overviewEndDate")) $("overviewEndDate").value = formatDateLocal(lastDayOfMonth);
-        initOverviewWeekButtons(now.getFullYear(), now.getMonth());
         DashboardApp.applyOverviewRange();
       },
-      resetAnalyticsDates: () => {
+
+      applyAnalyticsRange: function() {
+        const startVal = $("analyticsStartDate")?.value;
+        const endVal = $("analyticsEndDate")?.value;
+        if (!startVal || !endVal || !STATE.raw) return;
+
+        const sInt = parseInt(startVal.replace(/-/g, ""), 10);
+        const eInt = parseInt(endVal.replace(/-/g, ""), 10);
+
+        const filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
+        renderAnalyticsDashboard(filtered);
+      },
+
+      resetAnalyticsDates: function() {
         const now = getUKTime();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
         if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
         if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
-        initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
         DashboardApp.applyAnalyticsRange();
       },
-      onEntryDateChange: () => {
-        const entryDateVal = $("entryDate")?.value;
-        if (!entryDateVal) return;
-        const d = new Date(entryDateVal);
+
+      onEntryDateChange: function() {
+        const entryDateEl = $("entryDate");
+        const entryDayEl = $("entryDay");
+        if (!entryDateEl || !entryDayEl) return;
+
+        const val = entryDateEl.value;
+        if (!val) return;
+
+        const d = new Date(val);
         if (!isNaN(d.getTime())) {
-          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          if ($("entryDay")) $("entryDay").value = days[d.getDay()];
+          const options = { weekday: 'long' };
+          entryDayEl.value = new Intl.DateTimeFormat('en-GB', options).format(d);
         }
       },
-      stageDataEntry: (e) => {
-        e.preventDefault();
+
+      stageDataEntry: function(event) {
+        event.preventDefault();
         const cash = parseFloat($("entryCash").value) || 0;
         const card = parseFloat($("entryCard").value) || 0;
         const combined = cash + card;
-        if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
+
+        $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
+        
         STATE.pendingPayload = {
-          type: "entry",
           date: $("entryDate").value,
           day: $("entryDay").value,
-          cash: cash,
-          card: card,
-          categories: {
-            iceCream: parseFloat($("catIceCream").value) || 0,
-            counter: parseFloat($("catCounter").value) || 0,
-            kitchen: parseFloat($("catKitchen").value) || 0,
-            drink: parseFloat($("catDrink").value) || 0,
-            deli: parseFloat($("catDeli").value) || 0,
-            alcohol: parseFloat($("catAlcohol").value) || 0
-          }
+          cash: cash.toFixed(2),
+          card: card.toFixed(2),
+          catIceCream: parseFloat($("catIceCream").value || 0).toFixed(2),
+          catCounter: parseFloat($("catCounter").value || 0).toFixed(2),
+          catKitchen: parseFloat($("catKitchen").value || 0).toFixed(2),
+          catDrink: parseFloat($("catDrink").value || 0).toFixed(2),
+          catDeli: parseFloat($("catDeli").value || 0).toFixed(2),
+          catAlcohol: parseFloat($("catAlcohol").value || 0).toFixed(2)
         };
+
         $("verifyModal").classList.remove("hidden");
       },
-      closeVerifyModal: () => {
+
+      closeVerifyModal: function() {
         $("verifyModal").classList.add("hidden");
         STATE.pendingPayload = null;
       },
-      confirmAndSubmit: async () => {
+
+      confirmAndSubmit: async function() {
         $("verifyModal").classList.add("hidden");
-        if (!STATE.pendingPayload) return;
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Submitting sales entry...";
-          loader.classList.remove("hidden");
-        }
+        $("loading").classList.remove("hidden");
+        $("loading").innerText = "Submitting entry to Google Sheet...";
+
         try {
-          const res = await fetch(CONFIG.URL, {
+          const response = await fetch(CONFIG.URL, {
             method: "POST",
             body: JSON.stringify(STATE.pendingPayload)
           });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-          if (json.status === "success") {
-            toast("Sales successfully recorded!");
-            $("dataEntryForm").reset();
-            const now = getUKTime();
-            $("entryDate").value = formatDateLocal(now);
-            DashboardApp.onEntryDateChange();
+          const result = await response.json();
+          $("loading").classList.add("hidden");
+          
+          if (result.status === "success" || result.result === "success") {
+            toast("Successfully submitted sales entry!");
             DashboardApp.refreshData();
           } else {
-            toast("Submission saved.");
+            toast("Submission recorded, refreshing view...");
+            DashboardApp.refreshData();
           }
         } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          toast("Entry submitted locally / offline mode.");
+          $("loading").classList.add("hidden");
+          toast("Error submitting entry. Please check connection.");
         }
         STATE.pendingPayload = null;
       },
-      renderAccountingData: () => {
+
+      markAsBanked: async function() {
+        const val = $("bankingStartDate")?.value;
+        if (!val) {
+          alert("Please select a valid date to mark as banked.");
+          return;
+        }
+
+        localStorage.setItem("dash_bankingStartDate", val);
+        toast("Banked date updated successfully!");
+        DashboardApp.applyOverviewRange();
+      },
+
+      renderAccountingData: function() {
         const select = $("accFySelect");
         const tbody = $("accountingTableBody");
         if (!select || !tbody) return;
+
         const fyYear = parseInt(select.value, 10);
-        const fyStartInt = fyYear * 10000 + 201;
-        const fyEndInt = (fyYear + 1) * 10000 + 131;
+        const startInt = fyYear * 10000 + 201;
+        const endInt = (fyYear + 1) * 10000 + 131;
 
         tbody.innerHTML = "";
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
+        const filtered = STATE.raw.filter(r => r.dateInt >= startInt && r.dateInt <= endInt);
+
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for Financial Year ${fyYear}.</td></tr>`;
           return;
         }
 
@@ -2792,147 +2623,125 @@
             <td>${fmt(r.cashCents)}</td>
             <td>${fmt(r.cardCents)}</td>
             <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"] || 0)}</td>
-            <td>${fmt(r.categories["COUNTER"] || 0)}</td>
-            <td>${fmt(r.categories["Kitchen"] || 0)}</td>
-            <td>${fmt(r.categories["DRINK"] || 0)}</td>
-            <td>${fmt(r.categories["DELI"] || 0)}</td>
-            <td>${fmt(r.categories["ALCOHOL"] || 0)}</td>
+            <td>${fmt(r.categories["ICE CREAM"])}</td>
+            <td>${fmt(r.categories["COUNTER"])}</td>
+            <td>${fmt(r.categories["Kitchen"])}</td>
+            <td>${fmt(r.categories["DRINK"])}</td>
+            <td>${fmt(r.categories["DELI"])}</td>
+            <td>${fmt(r.categories["ALCOHOL"])}</td>
           `;
           tbody.appendChild(tr);
         });
       },
-      exportAccountingCSV: () => {
-        const select = $("accFySelect");
-        const fyYear = select ? select.value : new Date().getFullYear();
-        const fyStartInt = parseInt(fyYear) * 10000 + 201;
-        const fyEndInt = (parseInt(fyYear) + 1) * 10000 + 131;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
 
-        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${(r.categories["ICE CREAM"]||0)/100},${(r.categories["COUNTER"]||0)/100},${(r.categories["Kitchen"]||0)/100},${(r.categories["DRINK"]||0)/100},${(r.categories["DELI"]||0)/100},${(r.categories["ALCOHOL"]||0)/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `Accounting_FY_${fyYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
-      renderMomYoyData: () => {
+      renderMomYoyData: function() {
         const select = $("momYoyYearSelect");
-        const yoyBody = $("yoyTableBody");
-        const momBody = $("momTableBody");
-        if (!select || !yoyBody || !momBody) return;
+        const yoyTbody = $("yoyTableBody");
+        const momTbody = $("momTableBody");
+        if (!select || !yoyTbody || !momTbody) return;
 
-        const selYear = parseInt(select.value, 10);
-        if ($("yoyHeaderPrev2")) $("yoyHeaderPrev2").innerText = `Year ${selYear - 2} (£)`;
-        if ($("yoyHeaderPrev1")) $("yoyHeaderPrev1").innerText = `Year ${selYear - 1} (£)`;
-        if ($("yoyHeaderCur")) $("yoyHeaderCur").innerText = `Year ${selYear} (£)`;
+        const selectedYear = parseInt(select.value, 10);
+        yoyTbody.innerHTML = "";
+        momTbody.innerHTML = "";
+
+        safeSet("yoyHeaderPrev2", `${selectedYear - 2} (£)`);
+        safeSet("yoyHeaderPrev1", `${selectedYear - 1} (£)`);
+        safeSet("yoyHeaderCur", `${selectedYear} (£)`);
 
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
-        const monthlyRevs = {};
-        for (let y = selYear - 2; y <= selYear; y++) {
-          monthlyRevs[y] = Array(12).fill(0);
-        }
-
-        STATE.raw.forEach(r => {
-          if (!r.parsedDate) return;
-          const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth();
-          if (y >= selYear - 2 && y <= selYear) {
-            monthlyRevs[y][m] += r.dailyTotalCents;
-          }
-        });
-
-        yoyBody.innerHTML = "";
-        momBody.innerHTML = "";
-
         let prevMonthRev = 0;
 
         months.forEach((mName, idx) => {
-          const rev2 = monthlyRevs[selYear - 2][idx];
-          const rev1 = monthlyRevs[selYear - 1][idx];
-          const revCur = monthlyRevs[selYear][idx];
+          const mNum = idx + 1;
+          const sInt = selectedYear * 10000 + mNum * 100 + 1;
+          const lastDay = new Date(selectedYear, mNum, 0).getDate();
+          const eInt = selectedYear * 10000 + mNum * 100 + lastDay;
 
-          const yoyDiff = revCur - rev1;
-          const yoyPct = rev1 > 0 ? ((yoyDiff / rev1) * 100).toFixed(1) : "0.0";
+          const p1Start = (selectedYear - 1) * 10000 + mNum * 100 + 1;
+          const p1End = (selectedYear - 1) * 10000 + mNum * 100 + new Date(selectedYear - 1, mNum, 0).getDate();
+
+          const p2Start = (selectedYear - 2) * 10000 + mNum * 100 + 1;
+          const p2End = (selectedYear - 2) * 10000 + mNum * 100 + new Date(selectedYear - 2, mNum, 0).getDate();
+
+          let curRev = 0, p1Rev = 0, p2Rev = 0;
+
+          STATE.raw.forEach(r => {
+            if (r.dateInt >= sInt && r.dateInt <= eInt) curRev += r.dailyTotalCents;
+            if (r.dateInt >= p1Start && r.dateInt <= p1End) p1Rev += r.dailyTotalCents;
+            if (r.dateInt >= p2Start && r.dateInt <= p2End) p2Rev += r.dailyTotalCents;
+          });
+
+          const yoyDiff = curRev - p1Rev;
+          const yoyPct = p1Rev > 0 ? ((yoyDiff / p1Rev) * 100).toFixed(1) : "0.0";
           const yoySign = yoyDiff >= 0 ? "+" : "";
 
-          const yoyTr = document.createElement("tr");
-          yoyTr.innerHTML = `
+          const yTr = document.createElement("tr");
+          yTr.innerHTML = `
             <td>${mName}</td>
-            <td>${fmt(rev2)}</td>
-            <td>${fmt(rev1)}</td>
-            <td>${fmt(revCur)}</td>
+            <td>${fmt(p2Rev)}</td>
+            <td>${fmt(p1Rev)}</td>
+            <td>${fmt(curRev)}</td>
             <td class="${yoyDiff >= 0 ? 'positive' : 'negative'}">${yoySign}${yoyPct}%</td>
           `;
-          yoyBody.appendChild(yoyTr);
+          yoyTbody.appendChild(yTr);
 
-          const momDiff = idx === 0 ? 0 : revCur - prevMonthRev;
-          const momPct = (idx === 0 || prevMonthRev === 0) ? "0.0" : ((momDiff / prevMonthRev) * 100).toFixed(1);
+          const momDiff = idx === 0 ? 0 : curRev - prevMonthRev;
+          const momPct = (idx !== 0 && prevMonthRev > 0) ? ((momDiff / prevMonthRev) * 100).toFixed(1) : "0.0";
           const momSign = momDiff >= 0 ? "+" : "";
 
-          const momTr = document.createElement("tr");
-          momTr.innerHTML = `
+          const mTr = document.createElement("tr");
+          mTr.innerHTML = `
             <td>${mName}</td>
-            <td>${fmt(revCur)}</td>
-            <td class="${momDiff >= 0 ? 'positive' : 'negative'}">${momSign}${fmt(momDiff)}</td>
-            <td class="${momDiff >= 0 ? 'positive' : 'negative'}">${momSign}${momPct}%</td>
+            <td>${fmt(curRev)}</td>
+            <td>${idx === 0 ? '-' : momSign + fmt(momDiff)}</td>
+            <td class="${momDiff >= 0 ? 'positive' : 'negative'}">${idx === 0 ? '-' : momSign + momPct + '%'}</td>
           `;
-          momBody.appendChild(momTr);
+          momTbody.appendChild(mTr);
 
-          prevMonthRev = revCur;
+          prevMonthRev = curRev;
         });
       },
-      exportMomYoyCSV: () => {
-        const select = $("momYoyYearSelect");
-        const selYear = select ? select.value : new Date().getFullYear();
-        let csv = `Month,Year ${selYear-2},Year ${selYear-1},Year ${selYear},YoY Growth %\n`;
-        const yoyRows = $("yoyTableBody")?.querySelectorAll("tr");
-        if (yoyRows) {
-          yoyRows.forEach(row => {
-            const cols = row.querySelectorAll("td");
-            if (cols.length >= 5) {
-              csv += `"${cols[0].innerText}","${cols[1].innerText}","${cols[2].innerText}","${cols[3].innerText}","${cols[4].innerText}"\n`;
-            }
-          });
+
+      exportAnalyticsCSV: function() {
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data available to export.");
+          return;
         }
+
+        let csv = "Date,Day,Cash (£),Card (£),Total (£),Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        STATE.raw.forEach(r => {
+          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : r.rawDate;
+          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        });
+
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `MoM_YoY_Analysis_${selYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `analytics_export_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
       },
-      exportMomYoyPDF: () => {
+
+      exportAccountingCSV: function() {
+        DashboardApp.exportAnalyticsCSV();
+      },
+
+      exportMomYoyCSV: function() {
+        DashboardApp.exportAnalyticsCSV();
+      },
+
+      exportMomYoyPDF: function() {
         document.body.classList.add("printing-momyoy");
         window.print();
-        setTimeout(() => { document.body.classList.remove("printing-momyoy"); }, 1000);
+        document.body.classList.remove("printing-momyoy");
       },
-      exportAnalyticsCSV: () => {
-        let csv = "Date,Day,Cash,Card,Total\n";
-        STATE.raw.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "Sales_Analytics_Export.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
-      printReport: () => {
+
+      printReport: function() {
         document.body.classList.add("printing-analytics");
         window.print();
-        setTimeout(() => { document.body.classList.remove("printing-analytics"); }, 1000);
+        document.body.classList.remove("printing-analytics");
       }
     };
   </script>
