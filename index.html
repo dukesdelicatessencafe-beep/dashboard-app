@@ -655,31 +655,6 @@
             <div class="monthly-buttons-bar" id="overviewMonthlyButtonsBar"></div>
           </div>
 
-          <!-- Weather Sections Added Here -->
-          <div class="entry-form-card" style="margin-bottom: 15px;">
-            <h2 style="font-size: 15px; color: var(--primary-gold); margin-top: 0; margin-bottom: 10px;">Eastbourne Weather (Open-Meteo)</h2>
-            <!-- Daily Summary Section -->
-            <div id="daily-stats-container" style="display: flex; gap: 15px; margin-bottom: 10px; font-size: 13px; color: var(--accent-gold);">
-                <p style="margin:0;">Max Temp: <span id="max-temp">--</span>°C</p>
-                <p style="margin:0;">Min Temp: <span id="min-temp">--</span>°C</p>
-                <p style="margin:0;">Precipitation: <span id="precipitation">--</span> mm</p>
-            </div>
-
-            <!-- Hourly Visual Representation Section -->
-            <div id="hourly-weather-container" style="display: flex; gap: 15px;">
-                <div class="weather-slot" style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444; flex: 1; text-align: center;">
-                    <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #aaa;">Current Hour</h4>
-                    <img id="current-icon" src="" alt="Current Weather Icon" style="width: 32px; height: 32px; display: none;">
-                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: var(--accent-gold);"><span id="current-temp">--</span>°C</p>
-                </div>
-                <div class="weather-slot" style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444; flex: 1; text-align: center;">
-                    <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #aaa;">Next Hour</h4>
-                    <img id="next-icon" src="" alt="Next Weather Icon" style="width: 32px; height: 32px; display: none;">
-                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: #fff;"><span id="next-temp">--</span>°C</p>
-                </div>
-            </div>
-          </div>
-
           <div class="entry-form-card" style="margin-bottom: 15px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
@@ -2098,31 +2073,6 @@
       DashboardApp.renderMomYoyData();
     }
 
-    // WEATHER UI UPDATE FUNCTION
-    async function updateWeatherUI() {
-      const lat = 50.768, lon = 0.280; // Eastbourne
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
-
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        // 1. Inject Daily Stats
-        document.getElementById('max-temp').innerText = data.daily.temperature_2m_max[0];
-        document.getElementById('min-temp').innerText = data.daily.temperature_2m_min[0];
-        document.getElementById('precipitation').innerText = data.daily.precipitation_sum[0];
-
-        // 2. Inject Current & Next Hour Data
-        const currentHourIndex = new Date().getHours();
-        
-        document.getElementById('current-temp').innerText = data.hourly.temperature_2m[currentHourIndex];
-        document.getElementById('next-temp').innerText = data.hourly.temperature_2m[currentHourIndex + 1];
-
-      } catch (error) {
-        console.error("Failed to fetch weather data:", error);
-      }
-    }
-
     // INSTANT LOCAL LOAD & BACKGROUND STALE-WHILE-REVALIDATE SYNCING
     async function load() {
       const now = getUKTime();
@@ -2292,7 +2242,6 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
-            updateWeatherUI();
             startBackgroundPolling();
           } else {
             alert("Incorrect Password. Access Denied.");
@@ -2304,7 +2253,6 @@
             $("nav").classList.remove("hidden");
             $("app").classList.remove("hidden");
             load();
-            updateWeatherUI();
             startBackgroundPolling();
           } else {
             alert("Authentication failed or incorrect password.");
@@ -2631,65 +2579,172 @@
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.setAttribute("href", url);
-        a.setAttribute("download", `accounting_fy_${fyYear}.csv`);
-        a.style.visibility = "hidden";
-        document.body.appendChild(a);
+        a.href = url;
+        a.download = `Accounting_FY_${fyYear}.csv`;
         a.click();
-        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       },
-      exportAnalyticsCSV: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        if (filtered.length === 0) {
-          alert("No data to export for selected range.");
-          return;
+      renderMomYoyData: () => {
+        const year = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        
+        const getMonthlyTotals = (targetYear) => {
+          const totals = new Array(12).fill(0);
+          if (!STATE.raw) return totals;
+          STATE.raw.forEach(r => {
+            if (!r.parsedDate) return;
+            const y = r.parsedDate.getFullYear();
+            const m = r.parsedDate.getMonth();
+            if (y === targetYear) {
+              totals[m] += r.dailyTotalCents;
+            }
+          });
+          return totals;
+        };
+
+        const curTotals = getMonthlyTotals(year);
+        const prev1Totals = getMonthlyTotals(year - 1);
+        const prev2Totals = getMonthlyTotals(year - 2);
+
+        safeSet("yoyHeaderPrev2", `${year - 2} (£)`);
+        safeSet("yoyHeaderPrev1", `${year - 1} (£)`);
+        safeSet("yoyHeaderCur", `${year} (£)`);
+
+        const yoyTbody = $("yoyTableBody");
+        if (yoyTbody) {
+          yoyTbody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          
+          for (let i = 0; i < 12; i++) {
+            const cur = curTotals[i];
+            const prev1 = prev1Totals[i];
+            const prev2 = prev2Totals[i];
+            const diff = cur - prev1;
+            const pct = prev1 > 0 ? ((diff / prev1) * 100).toFixed(1) : "0.0";
+            const isPos = diff >= 0;
+            const sign = isPos ? "+" : "";
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${monthNames[i]}</td>
+              <td>${fmt(prev2)}</td>
+              <td>${fmt(prev1)}</td>
+              <td>${fmt(cur)}</td>
+              <td class="${prev1 > 0 ? (isPos ? 'positive' : 'negative') : ''}">${prev1 > 0 ? `${sign}${pct}%` : '-'}</td>
+            `;
+            yoyTbody.appendChild(tr);
+          }
         }
 
-        let csv = "Date,Day,Cash,Card,Total\n";
-        filtered.forEach(r => {
-          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${displayDateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)}\n`;
-        });
+        const momTbody = $("momTableBody");
+        if (momTbody) {
+          momTbody.innerHTML = "";
+          const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          
+          let prevMonthVal = 0;
+          for (let i = 0; i < 12; i++) {
+            const cur = curTotals[i];
+            let momChange = 0;
+            let momPct = "0.0";
+            let isPos = true;
+
+            if (i === 0) {
+              momChange = 0;
+              momPct = "-";
+            } else {
+              momChange = cur - prevMonthVal;
+              momPct = prevMonthVal > 0 ? ((momChange / prevMonthVal) * 100).toFixed(1) : "0.0";
+              isPos = momChange >= 0;
+            }
+
+            const tr = document.createElement("tr");
+            const sign = momChange >= 0 ? "+" : "";
+            tr.innerHTML = `
+              <td>${monthNames[i]}</td>
+              <td>${fmt(cur)}</td>
+              <td>${i > 0 ? `${sign}${fmt(momChange)}` : '-'}</td>
+              <td class="${i > 0 ? (isPos ? 'positive' : 'negative') : ''}">${i > 0 ? `${sign}${momPct}%` : '-'}</td>
+            `;
+            momTbody.appendChild(tr);
+            prevMonthVal = cur;
+          }
+        }
+      },
+      exportMomYoyCSV: () => {
+        const year = parseInt($("momYoyYearSelect")?.value || new Date().getFullYear(), 10);
+        let csv = `Month,${year-2} (£),${year-1} (£),${year} (£),YoY Growth (%),MoM Revenue (£),MoM Change (£),MoM Growth (%)\n`;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const getMonthlyTotals = (targetYear) => {
+          const totals = new Array(12).fill(0);
+          if (!STATE.raw) return totals;
+          STATE.raw.forEach(r => {
+            if (!r.parsedDate) return;
+            if (r.parsedDate.getFullYear() === targetYear) {
+              totals[r.parsedDate.getMonth()] += r.dailyTotalCents;
+            }
+          });
+          return totals;
+        };
+
+        const curTotals = getMonthlyTotals(year);
+        const prev1Totals = getMonthlyTotals(year - 1);
+        const prev2Totals = getMonthlyTotals(year - 2);
+
+        let prevMonthVal = 0;
+        for (let i = 0; i < 12; i++) {
+          const cur = curTotals[i];
+          const prev1 = prev1Totals[i];
+          const prev2 = prev2Totals[i];
+          const diff = cur - prev1;
+          const pct = prev1 > 0 ? ((diff / prev1) * 100).toFixed(1) : "0.0";
+
+          let momChange = i > 0 ? cur - prevMonthVal : 0;
+          let momPct = (i > 0 && prevMonthVal > 0) ? ((momChange / prevMonthVal) * 100).toFixed(1) : "0.0";
+
+          csv += `"${monthNames[i]}",${(prev2/100).toFixed(2)},${(prev1/100).toFixed(2)},${(cur/100).toFixed(2)},${pct}%,${(cur/100).toFixed(2)},${(momChange/100).toFixed(2)},${momPct}%\n`;
+          prevMonthVal = cur;
+        }
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
-        const urlObj = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.setAttribute("href", urlObj);
-        a.setAttribute("download", `analytics_report.csv`);
-        a.style.visibility = "hidden";
-        document.body.appendChild(a);
+        a.href = url;
+        a.download = `MoM_YoY_Analysis_${year}.csv`;
         a.click();
-        document.body.removeChild(a);
-      },
-      printReport: () => {
-        document.body.classList.add("printing-analytics");
-        window.print();
-        setTimeout(() => document.body.classList.remove("printing-analytics"), 1000);
-      },
-      exportMomYoyCSV: () => {
-        alert("MoM & YoY CSV export coming soon.");
+        URL.revokeObjectURL(url);
       },
       exportMomYoyPDF: () => {
         document.body.classList.add("printing-momyoy");
         window.print();
         setTimeout(() => document.body.classList.remove("printing-momyoy"), 1000);
       },
-      renderMomYoyData: () => {
-        // placeholder
+      exportAnalyticsCSV: () => {
+        if (!STATE.raw || STATE.raw.length === 0) {
+          alert("No data to export.");
+          return;
+        }
+        let csv = "Date,Day,Cash,Card,Total\n";
+        STATE.raw.forEach(r => {
+          const displayDateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
+          csv += `"${displayDateStr}","${r.dayName}",${(r.cashCents/100).toFixed(2)},${(r.cardCents/100).toFixed(2)},${(r.dailyTotalCents/100).toFixed(2)}\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Sales_Analytics_Report.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      printReport: () => {
+        document.body.classList.add("printing-analytics");
+        window.print();
+        setTimeout(() => document.body.classList.remove("printing-analytics"), 1000);
       }
     };
 
-    // Run on page load
     window.addEventListener('DOMContentLoaded', () => {
-      // Auto login check or prompt if needed, init via DashboardApp
+      // Auto run login bypass check or show login
     });
   </script>
 </body>
