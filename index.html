@@ -1230,12 +1230,32 @@
           return { symbol: "🌤", name: "Fair" };
       }
     }
-
+// PASTE THIS NEW HELPER FUNCTION HERE:
+    function getWindDirection(degrees) {
+      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+      const index = Math.round((degrees % 360) / 22.5) % 16;
+      const compassText = directions[index];
+      
+      const arrowMap = {
+        'N': '⬇️ S', 'NNE': '↙️ SSW', 'NE': '↙️ SW', 'ENE': '⬅️ WSW',
+        'E': '⬅️ W', 'ESE': '↖️ WNW', 'SE': '↖️ NW', 'SSE': '⬆️ NNW',
+        'S': '⬆️ N', 'SSW': '↗️ NNE', 'SW': '↗️ NE', 'WSW': '➡️ ENE',
+        'W': '➡️️ E', 'WNW': '↘️ ESE', 'NW': '↘️ SE', 'NNW': '⬇️ SSE'
+      };
+      
+      return {
+        text: compassText,
+        icon: arrowMap[compassText] || '🧭',
+        degrees: degrees
+      };
+    }
+    
     // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME & EVENING SYMBOL SUPPORT
 async function updateWeatherUI() {
-      // Eastbourne Beach coordinates utilizing the UK Met Office model
       const lat = 50.768, lon = 0.280; // Eastbourne Beach
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
+      
+      // FIXED: Added wind_speed_10m and wind_direction_10m to the &hourly= parameter list
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe/London`;
 
       try {
         const response = await fetch(url);
@@ -1261,15 +1281,24 @@ async function updateWeatherUI() {
             const temp = data.hourly.temperature_2m[hourIdx];
             const code = data.hourly.weather_code[hourIdx];
             
+            // FIXED: Pulling hourly wind array values using hourIdx correctly
+            const windSpeed = data.hourly.wind_speed_10m[hourIdx];
+            const windDirData = getWindDirection(data.hourly.wind_direction_10m[hourIdx]);
+            
             const isNight = hourNum < 6 || hourNum > 19;
             const info = getWeatherSymbol(code, isNight);
 
             const slot = document.createElement('div');
             slot.className = 'weather-slot';
+            
+            // FIXED: Added wind icon and speed output into slot.innerHTML
             slot.innerHTML = `
               <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
               <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
               <p>${temp}°C</p>
+              <div class="wind-display" style="font-size: 0.85rem; margin-top: 4px;" title="Wind: ${windDirData.text} (${windDirData.degrees}°)">
+                ${windDirData.icon} ${windSpeed} mph
+              </div>
             `;
             hourlyContainer.appendChild(slot);
           }
