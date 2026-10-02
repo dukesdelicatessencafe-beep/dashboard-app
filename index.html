@@ -1145,7 +1145,7 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
-    // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
+ // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
     function getWeatherSymbol(code, isNight = false) {
       if (isNight) {
         switch (code) {
@@ -1156,7 +1156,7 @@
           case 2:
             return { symbol: "☁️", name: "Partly Cloudy Night" };
           case 3:
-            return { symbol: "☁️", name: "Overcast Night" };
+            return { symbol: "🌥️", name: "Overcast Night / Gloomy" };
           case 45:
           case 48:
             return { symbol: "🌫️", name: "Foggy Night" };
@@ -1232,9 +1232,10 @@
     }
 
     // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME & EVENING SYMBOL SUPPORT
-    async function updateWeatherUI() {
-      const lat = 50.768, lon = 0.280; // Eastbourne
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
+async function updateWeatherUI() {
+      // Eastbourne Beach coordinates utilizing the UK Met Office model
+      const lat = 50.768, lon = 0.280; // Eastbourne Beach
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe/London`;
 
       try {
         const response = await fetch(url);
