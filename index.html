@@ -1255,18 +1255,25 @@ async function updateWeatherUI() {
       const lat = 50.768, lon = 0.280; // Eastbourne Beach
       
       // Added wind_gusts_10m to both &current= and &hourly= parameter lists
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe/London`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&wind_speed_unit=mph&timezone=Europe/London`;
 
       try {
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.daily) {
-          safeSet('max-temp', data.daily.temperature_2m_max[0]);
-          safeSet('min-temp', data.daily.temperature_2m_min[0]);
-          safeSet('precipitation', data.daily.precipitation_sum[0]);
-        }
-
+  safeSet('max-temp', data.daily.temperature_2m_max[0]);
+  safeSet('min-temp', data.daily.temperature_2m_min[0]);
+  safeSet('precipitation', data.daily.precipitation_sum[0]);
+  
+  // Overall daily weather summary
+  const dailyCode = data.daily.weather_code[0];
+  const dailyInfo = getWeatherSymbol(dailyCode, false); // Pass false for daytime general summary
+  
+  // Update your DOM elements for overall daily condition
+  safeSet('daily-weather-name', dailyInfo.name);
+  safeSet('daily-weather-symbol', dailyInfo.symbol);
+}
         const currentHourIndex = new Date().getHours();
         const hourlyContainer = $('hourly-weather-container');
         if (hourlyContainer && data.hourly && data.hourly.time) {
