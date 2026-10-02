@@ -1317,6 +1317,33 @@ async function updateWeatherUI() {
       }
     }
 
+    window.markAsBanked = function(transactionId) {
+            if (!window.dashboardData || !window.dashboardData.transactions) {
+                console.error("Dashboard data or transactions array not found.");
+                return;
+            }
+
+            const transaction = window.dashboardData.transactions.find(t => t.id === transactionId);
+            if (transaction) {
+                transaction.isBanked = true;
+                transaction.bankedTimestamp = new Date().toISOString();
+
+                if (typeof saveDashboardState === 'function') {
+                    saveDashboardState();
+                }
+                if (typeof renderTransactionsTable === 'function') {
+                    renderTransactionsTable();
+                }
+                if (typeof updateDashboardMetrics === 'function') {
+                    updateDashboardMetrics();
+                }
+
+                console.log(`Transaction ID ${transactionId} successfully marked as banked.`);
+            } else {
+                console.warn(`Could not find transaction with ID: ${transactionId}`);
+            }
+        };
+    
     window.addEventListener('DOMContentLoaded', updateWeatherUI);
 
     function processRows(rows) {
