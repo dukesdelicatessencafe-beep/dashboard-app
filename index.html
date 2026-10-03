@@ -1053,26 +1053,33 @@
     return weatherMap[code] || "Variable conditions";
   }
 
-  async function fetchCurrentWeather() {
-    try {
-      const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=50.7684&longitude=0.2805&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto");
-      const result = await response.json();
+ async function fetchCurrentWeather() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=50.7684&longitude=0.2805&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    const result = await response.json();
+    
+    if (result && result.daily && result.daily.time && result.daily.time.length > 0) {
+      const maxTemp = result.daily.temperature_2m_max[0];
+      const minTemp = result.daily.temperature_2m_min[0];
+      const code = result.daily.weather_code[0];
       
-      if (result && result.daily && result.daily.time && result.daily.time.length > 0) {
-        const maxTemp = result.daily.temperature_2m_max[0];
-        const minTemp = result.daily.temperature_2m_min[0];
-        const code = result.daily.weather_code[0];
-        
-        return {
-          temperature: `${minTemp}°C - ${maxTemp}°C`,
-          condition: getWeatherDescription(code)
-        };
-      }
-    } catch (err) {
-      console.warn("Could not retrieve daily weather summary, proceeding without it:", err);
+      return {
+        temperature: `${minTemp}°C - ${maxTemp}°C`,
+        condition: getWeatherDescription(code)
+      };
     }
-    return { temperature: null, condition: "Unavailable" };
+  } catch (err) {
+    console.warn("Weather fetch skipped/timed out, proceeding without it:", err);
   }
+  return { temperature: "N/A", condition: "Unavailable" };
+}
     
     const STATE = {
       raw: [],
@@ -2816,46 +2823,35 @@ async function updateWeatherUI() {
           if ($("entryDay")) $("entryDay").value = days[d.getDay()];
         }
       },
-      stageDataEntry: async (e) => {
-    e.preventDefault();
-    const cash = parseFloat($("entryCash").value) || 0;
-    const card = parseFloat($("entryCard").value) || 0;
-    const combined = cash + card;
-    if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
-    
-    // Fetch the daily weather summary using your app structure
-    const dailyWeather = await fetchCurrentWeather();
+ stageDataEntry: async (e) => {
+      e.preventDefault();
+      const cash = parseFloat($("entryCash").value) || 0;
+      const card = parseFloat($("entryCard").value) || 0;
+      const combined = cash + card;
+      if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
+      
+      // Fetch the daily weather summary safely
+      const dailyWeather = await fetchCurrentWeather();
 
-    stageDataEntry: async (e) => {
-    e.preventDefault();
-    const cash = parseFloat($("entryCash").value) || 0;
-    const card = parseFloat($("entryCard").value) || 0;
-    const combined = cash + card;
-    if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
-    
-    // Fetch the daily weather summary using your app structure
-    const dailyWeather = await fetchCurrentWeather();
-    STATE.pendingPayload = {
-      type: "weatherStats", // Routes to your lightweight weather logger backend function
-      date: $("entryDate").value,
-      day: $("entryDay").value,
-      weather: dailyWeather, // Injects the daily temperature range and condition summary
-      cash: cash,
-      card: card,
-      categories: {
-        iceCream: parseFloat($("catIceCream").value) || 0,
-        counter: parseFloat($("catCounter").value) || 0,
-        kitchen: parseFloat($("catKitchen").value) || 0,
-        drink: parseFloat($("catDrink").value) || 0,
-        deli: parseFloat($("catDeli").value) || 0,
-        alcohol: parseFloat($("catAlcohol").value) || 0
-      }
-    };
-    
-    if ($("verifyModal")) $("verifyModal").classList.remove("hidden");
-},
-        $("verifyModal").classList.remove("hidden");
-      },
+      STATE.pendingPayload = {
+        type: "entry", // Must be "entry" so your submit handler processes the sales data correctly
+        date: $("entryDate").value,
+        day: $("entryDay").value,
+        weather: dailyWeather, // Bundles the weather summary to log into WeatherStats
+        cash: cash,
+        card: card,
+        categories: {
+          iceCream: parseFloat($("catIceCream").value) || 0,
+          counter: parseFloat($("catCounter").value) || 0,
+          kitchen: parseFloat($("catKitchen").value) || 0,
+          drink: parseFloat($("catDrink").value) || 0,
+          deli: parseFloat($("catDeli").value) || 0,
+          alcohol: parseFloat($("catAlcohol").value) || 0
+        }
+      };
+      
+      if ($("verifyModal")) $("verifyModal").classList.remove("hidden");
+    },
       closeVerifyModal: () => {
         $("verifyModal").classList.add("hidden");
         STATE.pendingPayload = null;
