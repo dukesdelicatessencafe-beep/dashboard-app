@@ -1188,7 +1188,7 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
- // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
+// EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
     function getWeatherSymbol(code, isNight = false) {
       if (isNight) {
         switch (code) {
@@ -1273,7 +1273,7 @@
           return { symbol: "🌤", name: "Fair" };
       }
     }
-// PASTE THIS NEW HELPER FUNCTION HERE:
+
     function getWindDirection(degrees) {
       const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
       const index = Math.round((degrees % 360) / 22.5) % 16;
@@ -1282,8 +1282,8 @@
       const arrowMap = {
         'N': '⬇️ S', 'NNE': '↙️ SSW', 'NE': '↙️ SW', 'ENE': '⬅️ WSW',
         'E': '⬅️ W', 'ESE': '↖️ WNW', 'SE': '↖️ NW', 'SSE': '⬆️ NNW',
-        'S': '⬆️ N', 'SSW': '↗️ NNE', 'SW': '↗️ NE', 'WSW': '➡️ ENE',
-        'W': '➡️️ E', 'WNW': '↘️ ESE', 'NW': '↘️ SE', 'NNW': '⬇️ SSE'
+        'S': '⬆️️ N', 'SSW': '↗️ NNE', 'SW': '↗️ NE', 'WSW': '➡️ ENE',
+        'W': '➡ E', 'WNW': '↘️ ESE', 'NW': '↘️ SE', 'NNW': '⬇️ SSE'
       };
       
       return {
@@ -1292,73 +1292,106 @@
         degrees: degrees
       };
     }
-    
-    // UPDATED WEATHER UI FUNCTION WITH NIGHTTIME & EVENING SYMBOL SUPPORT
-async function updateWeatherUI() {
-      const lat = 50.768, lon = 0.280; // Eastbourne Beach
-      
-      // Added wind_gusts_10m to both &current= and &hourly= parameter lists
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&wind_speed_unit=mph&timezone=Europe/London`;
 
-      try {
+    // Helper: Find the most frequent weather code in the array (Mode)
+    function getMostFrequentCode(arr) {
+      return arr.sort((a, b) =>
+        arr.filter(v => v === a).length - arr.filter(v => v === b).length
+      ).pop();
+    }
+    
+    // UPDATED WEATHER UI FUNCTION WITH 9:00 AM – 6:00 PM BUSINESS HOURS SNAPSHOT
+   // UNIFIED WEATHER UI FUNCTION (Supports Today + Past Date Backfilling + Hourly Cards)
+async function updateWeatherUI(targetDateStr) {
+    const lat = 50.768, lon = 0.280; // Eastbourne Beach
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateToFetch = targetDateStr || todayStr;
+    
+    let url = '';
+    
+    // Switch automatically between Archive API (past dates) and Forecast API (today)
+    if (dateToFetch < todayStr) {
+        url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
+    } else {
+        url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
+    }
+
+    try {
         const response = await fetch(url);
         const data = await response.json();
 
-        if (data.daily) {
-  safeSet('max-temp', data.daily.temperature_2m_max[0]);
-  safeSet('min-temp', data.daily.temperature_2m_min[0]);
-  safeSet('precipitation', data.daily.precipitation_sum[0]);
-  
-  // Overall daily weather summary
-  const dailyCode = data.daily.weather_code[0];
-  const dailyInfo = getWeatherSymbol(dailyCode, false); // Pass false for daytime general summary
-  
-  // Update your DOM elements for overall daily condition
-  safeSet('daily-weather-name', dailyInfo.name);
-  safeSet('daily-weather-symbol', dailyInfo.symbol);
-}
+        // --- 9:00 AM – 6:00 PM DAYTIME WINDOW PROCESSING ---
+        if (data.hourly && data.hourly.time) {
+            let daytimeTemps = [];
+            let daytimeCodes = [];
+            
+            data.hourly.time.forEach((timeStr, index) => {
+                if (timeStr.startsWith(dateToFetch)) {
+                    const hour = new Date(timeStr).getHours();
+                    if (hour >= 9 && hour <= 18) {
+                        daytimeTemps.push(data.hourly.temperature_2m[index]);
+                        daytimeCodes.push(data.hourly.weather_code[index]);
+                    }
+                }
+            });
+            
+            if (daytimeTemps.length > 0) {
+                const minTemp = Math.min(...daytimeTemps);
+                const maxTemp = Math.max(...daytimeTemps);
+                const representativeCode = getMostFrequentCode(daytimeCodes);
+                const daytimeInfo = getWeatherSymbol(representativeCode, false);
+                
+                // Safely write the true business hours summary to your UI elements
+                safeSet('min-temp', minTemp.toFixed(1));
+                safeSet('max-temp', maxTemp.toFixed(1));
+                safeSet('daily-weather-name', daytimeInfo.name);
+                safeSet('daily-weather-symbol', daytimeInfo.symbol);
+            }
+        }
+        // ----------------------------------------------------
+
+        // --- HOURLY FORECAST SLOTS RENDERER ---
         const currentHourIndex = new Date().getHours();
         const hourlyContainer = $('hourly-weather-container');
         if (hourlyContainer && data.hourly && data.hourly.time) {
-          hourlyContainer.innerHTML = '';
-          for (let i = 0; i <= 6; i++) {
-            const hourIdx = currentHourIndex + i;
-            if (hourIdx >= data.hourly.time.length) break;
+            hourlyContainer.innerHTML = '';
+            for (let i = 0; i <= 6; i++) {
+                const hourIdx = currentHourIndex + i;
+                if (hourIdx >= data.hourly.time.length) break;
 
-            const timeStr = data.hourly.time[hourIdx];
-            const hourNum = timeStr ? parseInt(timeStr.split('T')[1].split(':')[0], 10) : ((currentHourIndex + i) % 24);
-            const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourNum).padStart(2, '0')}:00`;
-            const temp = data.hourly.temperature_2m[hourIdx];
-            const code = data.hourly.weather_code[hourIdx];
-            
-            const windSpeed = data.hourly.wind_speed_10m[hourIdx];
-            const windDirData = getWindDirection(data.hourly.wind_direction_10m[hourIdx]);
-            // Extracted hourly wind gusts value
-            const windGusts = data.hourly.wind_gusts_10m[hourIdx];
-            
-            const isNight = hourNum < 6 || hourNum > 19;
-            const info = getWeatherSymbol(code, isNight);
+                const timeStr = data.hourly.time[hourIdx];
+                const hourNum = timeStr ? parseInt(timeStr.split('T')[1].split(':')[0], 10) : ((currentHourIndex + i) % 24);
+                const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourNum).padStart(2, '0')}:00`;
+                const temp = data.hourly.temperature_2m[hourIdx];
+                const code = data.hourly.weather_code[hourIdx];
+                
+                const windSpeed = data.hourly.wind_speed_10m[hourIdx];
+                const windDirData = getWindDirection(data.hourly.wind_direction_10m[hourIdx]);
+                const windGusts = data.hourly.wind_gusts_10m[hourIdx];
+                
+                const isNight = hourNum < 6 || hourNum > 19;
+                const info = getWeatherSymbol(code, isNight);
 
-            const slot = document.createElement('div');
-            slot.className = 'weather-slot';
-            
-            // Added wind gusts into the slot HTML display
-            slot.innerHTML = `
-              <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
-              <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
-              <p>${temp}°C</p>
-              <div class="wind-display" style="font-size: 0.85rem; margin-top: 4px;" title="Wind: ${windDirData.text} (${windDirData.degrees}°)">
-                ${windDirData.icon} ${windSpeed} mph (Gusts: ${windGusts} mph)
-              </div>
-            `;
-            hourlyContainer.appendChild(slot);
-          }
+                const slot = document.createElement('div');
+                slot.className = 'weather-slot';
+                
+                slot.innerHTML = `
+                    <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
+                    <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
+                    <p>${temp}°C</p>
+                    <div class="wind-display" style="font-size: 0.85rem; margin-top: 4px;" title="Wind: ${windDirData.text} (${windDirData.degrees}°)">
+                        ${windDirData.icon} ${windSpeed} mph (Gusts: ${windGusts} mph)
+                    </div>
+                `;
+                hourlyContainer.appendChild(slot);
+            }
         }
+        // ---------------------------------------
 
-      } catch (error) {
+    } catch (error) {
         console.error("Failed to fetch weather data:", error);
-      }
     }
+}
 
     window.markAsBanked = function(transactionId) {
             if (!window.dashboardData || !window.dashboardData.transactions) {
@@ -2830,46 +2863,58 @@ async function updateWeatherUI() {
       const combined = cash + card;
       if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
       
-      // Fetch the daily weather summary safely
-      const dailyWeather = await fetchCurrentWeather();
+// Get the selected date and update the weather for that specific day (Forecast or Archive)
+    const selectedDate = $("entryDate").value;
+    await updateWeatherUI(selectedDate);
 
-      STATE.pendingPayload = {
-        type: "entry", // Must be "entry" so your submit handler processes the sales data correctly
-        date: $("entryDate").value,
-        day: $("entryDay").value,
-        weather: dailyWeather, // Bundles the weather summary to log into WeatherStats
-        cash: cash,
-        card: card,
-        categories: {
-          iceCream: parseFloat($("catIceCream").value) || 0,
-          counter: parseFloat($("catCounter").value) || 0,
-          kitchen: parseFloat($("catKitchen").value) || 0,
-          drink: parseFloat($("catDrink").value) || 0,
-          deli: parseFloat($("catDeli").value) || 0,
-          alcohol: parseFloat($("catAlcohol").value) || 0
-        }
-      };
-      
-      if ($("verifyModal")) $("verifyModal").classList.remove("hidden");
-    },
-      closeVerifyModal: () => {
-        $("verifyModal").classList.add("hidden");
-        STATE.pendingPayload = null;
-      },
-      confirmAndSubmit: async () => {
-        $("verifyModal").classList.add("hidden");
-        if (!STATE.pendingPayload) return;
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Submitting sales entry...";
-          loader.classList.remove("hidden");
-        }
-        try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify(STATE.pendingPayload)
-          });
-          const json = await res.json();
+    // Extract the fresh weather summary from the DOM elements
+    const weatherSummary = {
+        minTemp: $("min-temp").textContent,
+        maxTemp: $("max-temp").textContent,
+        weatherName: $("daily-weather-name").textContent,
+        weatherSymbol: $("daily-weather-symbol").textContent,
+        formattedString: `${$("min-temp").textContent}°C - ${$("max-temp").textContent}°C ${$("daily-weather-symbol").textContent} ${$("daily-weather-name").textContent}`
+    };
+
+    STATE.pendingPayload = {
+      type: "entry", // Must be "entry" so your submit handler processes the sales data correctly
+      date: selectedDate,
+      day: $("entryDay").value,
+      weather: weatherSummary, // Bundles the accurate 9am-6pm weather data for the specific date
+      cash: cash,
+      card: card,
+      categories: {
+        iceCream: parseFloat($("catIceCream").value) || 0,
+        counter: parseFloat($("catCounter").value) || 0,
+        kitchen: parseFloat($("catKitchen").value) || 0,
+        drink: parseFloat($("catDrink").value) || 0,
+        deli: parseFloat($("catDeli").value) || 0,
+        alcohol: parseFloat($("catAlcohol").value) || 0
+      }
+    };
+    
+    if ($("verifyModal")) $("verifyModal").classList.remove("hidden");
+  },
+  
+  closeVerifyModal: () => {
+    $("verifyModal").classList.add("hidden");
+    STATE.pendingPayload = null;
+  },
+
+  confirmAndSubmit: async () => {
+    $("verifyModal").classList.add("hidden");
+    if (!STATE.pendingPayload) return;
+    const loader = $("loading");
+    if (loader) {
+      loader.innerText = "Submitting sales entry...";
+      loader.classList.remove("hidden");
+    }
+    try {
+      const res = await fetch(CONFIG.URL, {
+        method: "POST",
+        body: JSON.stringify(STATE.pendingPayload)
+      });
+      const json = await res.json();
           if (loader) loader.classList.add("hidden");
           if (json.status === "success") {
             toast("Sales successfully recorded!");
