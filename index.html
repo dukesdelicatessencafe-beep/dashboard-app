@@ -1398,12 +1398,21 @@ async function updateWeatherUI() {
       const parsedRecords = [];
       const maxRowLimit = rows.length;
 
+     function processRows(rows) {
+      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
+
+      const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date")));
+      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
+
+      const parsedRecords = [];
+      const maxRowLimit = rows.length;
+
       for (let i = startIndex; i < maxRowLimit; i++) {
         const row = rows[i];
         if (!row || !Array.isArray(row)) continue;
 
-        const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1] !== undefined ? row[1] : row[0];
+        const dayName = row[0] ? String(row[0]).trim() : ""; // Cell A: Day
+        const rawDate = row[1]; // Cell B: Date
 
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
@@ -1422,8 +1431,11 @@ async function updateWeatherUI() {
           continue;
         }
 
-        const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
+        const parsedDateInfo = parseDateString(rawDate);
         if (!parsedDateInfo) continue;
+
+        const cashCents = cleanCents(row[2]); // Cell C: Cash
+        const cardCents = cleanCents(row[3]); // Cell D: Card
 
         let catIceCream = cleanCents(row[4]);
         let catCounter  = cleanCents(row[5]);
@@ -1433,9 +1445,6 @@ async function updateWeatherUI() {
         let catAlcohol  = cleanCents(row[9]);
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-
-        const cashCents = cleanCents(row[2]);
-        const cardCents = cleanCents(row[3]);
         let dailyTotalCents = cashCents + cardCents;
 
         if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
