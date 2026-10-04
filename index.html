@@ -1402,8 +1402,8 @@ async function updateWeatherUI() {
         const row = rows[i];
         if (!row || !Array.isArray(row)) continue;
 
-        const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1] !== undefined ? row[1] : row[0];
+        const dayName = row[0] ? String(row[0]).trim() : ""; // Column A: Day
+        const rawDate = row[1]; // Column B: Date
 
         const lowerDay = String(dayName).toLowerCase();
         const lowerDate = String(rawDate).toLowerCase();
@@ -1422,8 +1422,11 @@ async function updateWeatherUI() {
           continue;
         }
 
-        const parsedDateInfo = parseDateString(rawDate) || parseDateString(dayName);
+        const parsedDateInfo = parseDateString(rawDate);
         if (!parsedDateInfo) continue;
+
+        const cashCents = cleanCents(row[2]); // Column C: Cash
+        const cardCents = cleanCents(row[3]); // Column D: Card
 
         let catIceCream = cleanCents(row[4]);
         let catCounter  = cleanCents(row[5]);
@@ -1433,9 +1436,6 @@ async function updateWeatherUI() {
         let catAlcohol  = cleanCents(row[9]);
 
         const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-
-        const cashCents = cleanCents(row[2]);
-        const cardCents = cleanCents(row[3]);
         let dailyTotalCents = cashCents + cardCents;
 
         if (dailyTotalCents === 0 && sumCategoriesCents > 0) {
