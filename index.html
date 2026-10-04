@@ -1255,25 +1255,18 @@ async function updateWeatherUI() {
       const lat = 50.768, lon = 0.280; // Eastbourne Beach
       
       // Added wind_gusts_10m to both &current= and &hourly= parameter lists
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&wind_speed_unit=mph&timezone=Europe/London`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe/London`;
 
       try {
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.daily) {
-  safeSet('max-temp', data.daily.temperature_2m_max[0]);
-  safeSet('min-temp', data.daily.temperature_2m_min[0]);
-  safeSet('precipitation', data.daily.precipitation_sum[0]);
-  
-  // Overall daily weather summary
-  const dailyCode = data.daily.weather_code[0];
-  const dailyInfo = getWeatherSymbol(dailyCode, false); // Pass false for daytime general summary
-  
-  // Update your DOM elements for overall daily condition
-  safeSet('daily-weather-name', dailyInfo.name);
-  safeSet('daily-weather-symbol', dailyInfo.symbol);
-}
+          safeSet('max-temp', data.daily.temperature_2m_max[0]);
+          safeSet('min-temp', data.daily.temperature_2m_min[0]);
+          safeSet('precipitation', data.daily.precipitation_sum[0]);
+        }
+
         const currentHourIndex = new Date().getHours();
         const hourlyContainer = $('hourly-weather-container');
         if (hourlyContainer && data.hourly && data.hourly.time) {
@@ -2664,69 +2657,64 @@ async function updateWeatherUI() {
         const currentDayEl = $("lastBankedDate");
         const bankingStartEl = $("bankingStartDate");
         if (currentDayEl && bankingStartEl) {
-            const currentSystemDateStr = formatDateLocal(getUKTime());
-            const bankedDate = currentDayEl.value || currentSystemDateStr;
-            
-            const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
-            const currentDayVal = currentDayEl.value || currentSystemDateStr;
-            const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10) || 0;
-            const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10) || 0;
+          const currentSystemDateStr = formatDateLocal(getUKTime());
+          const bankedDate = currentDayEl.value || currentSystemDateStr;
+          
+          const lastBankedVal = bankingStartEl.value || currentSystemDateStr;
+          const currentDayVal = currentDayEl.value || currentSystemDateStr;
+          const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10) || 0;
+          const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10) || 0;
 
-            let unbankedCashCents = 0;
-            if (STATE.raw && Array.isArray(STATE.raw)) {
-                STATE.raw.forEach(r => {
-                    if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
-                        unbankedCashCents += (r.cashCents || 0);
-                    }
-                });
+          let unbankedCashCents = 0;
+          STATE.raw.forEach(r => {
+            if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
+              unbankedCashCents += (r.cashCents || 0);
             }
-            const cashValue = unbankedCashCents / 100;
+          });
+          const cashValue = unbankedCashCents / 100;
 
-            const loader = $("loading");
-            if (loader) {
-                loader.innerText = "Writing banked record to Google Sheet...";
-                loader.classList.remove("hidden");
+          const loader = $("loading");
+          if (loader) {
+            loader.innerText = "Writing banked record to Google Sheet...";
+            loader.classList.remove("hidden");
+          }
+
+          try {
+            const res = await fetch(CONFIG.URL, {
+              method: "POST",
+              body: JSON.stringify({ 
+                type: "banking",
+                rawDate: bankedDate,
+                cashValue: cashValue 
+              })
+            });
+            const json = await res.json();
+            if (loader) loader.classList.add("hidden");
+
+            if (json.status === "success") {
+              const parsedDateInfo = parseDateString(bankedDate);
+              STATE.banked.push({
+                rawDate: bankedDate,
+                parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
+                cashCents: Math.round(cashValue * 100)
+              });
+              renderBankedTable();
+              localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
+
+              toast("Banked record successfully saved to Google Sheet!");
+            } else {
+              toast("Marked as banked locally.");
             }
+          } catch (err) {
+            if (loader) loader.classList.add("hidden");
+            toast("Marked as banked locally.");
+          }
 
-            try {
-                const res = await fetch(CONFIG.URL, {
-                    method: "POST",
-                    body: JSON.stringify({ 
-                        type: "banking",
-                        rawDate: bankedDate,
-                        cashValue: cashValue 
-                    })
-                });
-                const json = await res.json();
-                if (loader) loader.classList.add("hidden");
-
-                if (json.status === "success") {
-                    const parsedDateInfo = parseDateString(bankedDate);
-                    if (!STATE.banked) STATE.banked = [];
-                    STATE.banked.push({
-                        rawDate: bankedDate,
-                        parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
-                        cashCents: Math.round(cashValue * 100)
-                    });
-                    renderBankedTable();
-                    localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-
-                    toast("Banked record successfully saved to Google Sheet!");
-                } else {
-                    toast("Marked as banked locally.");
-                }
-            } catch (err) {
-                if (loader) loader.classList.add("hidden");
-                toast("Marked as banked locally.");
-            }
-
-            bankingStartEl.value = currentSystemDateStr;
-            localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
-            if (typeof DashboardApp !== 'undefined' && typeof DashboardApp.applyOverviewRange === 'function') {
-                DashboardApp.applyOverviewRange();
-            }
+          bankingStartEl.value = currentSystemDateStr;
+          localStorage.setItem("dash_bankingStartDate", currentSystemDateStr);
+          DashboardApp.applyOverviewRange();
         }
-    },
+      },
       resetOverviewDates: () => {
         const now = getUKTime();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
