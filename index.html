@@ -2086,7 +2086,7 @@ async function updateWeatherUI() {
           const tr = document.createElement("tr");
           const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
           tr.innerHTML = `
-            <td>${rec.dayName ? rec.dayName.substring(0,3) + ' - ' : ''}${displayDateStr}</td>
+            <td>${rec.dayName ? rec.dayName.replace(/\d.*$/, '') + ' - ' : ''}${displayDateStr}</td>
             <td>${fmt(rec.cashCents)}</td>
             <td>${fmt(rec.cardCents)}</td>
             <td>${fmt(rec.dailyTotalCents)}</td>
