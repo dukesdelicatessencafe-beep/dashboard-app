@@ -1299,6 +1299,52 @@
         arr.filter(v => v === a).length - arr.filter(v => v === b).length
       ).pop();
     }
+
+// --- INJECTION SPOT 1: Place this right near your updateWeatherUI function ---
+async function fetchWeatherPayload(dateToFetch) {
+    const lat = 50.768, lon = 0.280; // Eastbourne Beach
+    const nowLocal = typeof getUKTime === 'function' ? getUKTime() : new Date();
+    const todayStr = formatDateLocal ? formatDateLocal(nowLocal) : nowLocal.toISOString().split('T')[0];
+    
+    const url = dateToFetch < todayStr
+        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code&wind_speed_unit=mph&timezone=Europe/London`
+        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code&wind_speed_unit=mph&timezone=Europe/London`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let daytimeTemps = [];
+    let daytimeCodes = [];
+
+    if (data.hourly && data.hourly.time) {
+        data.hourly.time.forEach((timeStr, index) => {
+            if (timeStr.startsWith(dateToFetch)) {
+                const hour = new Date(timeStr).getHours();
+                if (hour >= 9 && hour <= 18) {
+                    daytimeTemps.push(data.hourly.temperature_2m[index]);
+                    daytimeCodes.push(data.hourly.weather_code[index]);
+                }
+            }
+        });
+    }
+
+    if (daytimeTemps.length > 0) {
+        const minTemp = Math.min(...daytimeTemps).toFixed(1);
+        const maxTemp = Math.max(...daytimeTemps).toFixed(1);
+        const representativeCode = getMostFrequentCode(daytimeCodes);
+        const info = getWeatherSymbol(representativeCode, false);
+
+        return {
+            minTemp: minTemp,
+            maxTemp: maxTemp,
+            weatherName: info.name,
+            weatherSymbol: info.symbol,
+            formattedString: `${minTemp}°C - ${maxTemp}°C ${info.symbol} ${info.name}`
+        };
+    }
+
+    return { minTemp: "0", maxTemp: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
+}
     
     // UPDATED WEATHER UI FUNCTION WITH 9:00 AM – 6:00 PM BUSINESS HOURS SNAPSHOT
    // UNIFIED WEATHER UI FUNCTION (Supports Today + Past Date Backfilling + Hourly Cards)
@@ -2856,7 +2902,8 @@ async function updateWeatherUI(targetDateStr) {
           if ($("entryDay")) $("entryDay").value = days[d.getDay()];
         }
       },
-stageDataEntry: async (e) => {
+// --- INJECTION SPOT 2: Replace stageDataEntry inside your DashboardApp object ---
+    stageDataEntry: async (e) => {
       if (e) typeof e.preventDefault === 'function' && e.preventDefault();
       
       const cash = parseFloat($("entryCash")?.value) || 0;
@@ -2866,30 +2913,20 @@ stageDataEntry: async (e) => {
       
       const selectedDate = $("entryDate")?.value || new Date().toISOString().split('T')[0];
       
+      // Fetch weather directly for the payload without DOM dependency
+      let weatherSummary;
       try {
-        if (typeof updateWeatherUI === 'function') {
-          await updateWeatherUI(selectedDate);
-        }
+        weatherSummary = await fetchWeatherPayload(selectedDate);
       } catch (err) {
-        console.warn("Weather update skipped or failed:", err);
+        console.warn("Could not fetch weather for payload:", err);
+        weatherSummary = { minTemp: "0", maxTemp: "0", weatherName: "", weatherSymbol: "", formattedString: "" };
       }
-
-      const minTemp = $("min-temp")?.textContent || "0";
-      const maxTemp = $("max-temp")?.textContent || "0";
-      const weatherName = $("daily-weather-name")?.textContent || "";
-      const weatherSymbol = $("daily-weather-symbol")?.textContent || "";
 
       STATE.pendingPayload = {
         type: "entry",
         date: selectedDate,
         day: $("entryDay")?.value || "",
-        weather: {
-          minTemp: minTemp,
-          maxTemp: maxTemp,
-          weatherName: weatherName,
-          weatherSymbol: weatherSymbol,
-          formattedString: `${minTemp}°C - ${maxTemp}°C ${weatherSymbol} ${weatherName}`
-        },
+        weather: weatherSummary,
         cash: cash,
         card: card,
         categories: {
