@@ -2856,50 +2856,65 @@ async function updateWeatherUI(targetDateStr) {
           if ($("entryDay")) $("entryDay").value = days[d.getDay()];
         }
       },
- stageDataEntry: async (e) => {
-      e.preventDefault();
-      const cash = parseFloat($("entryCash").value) || 0;
-      const card = parseFloat($("entryCard").value) || 0;
+stageDataEntry: async (e) => {
+      if (e) typeof e.preventDefault === 'function' && e.preventDefault();
+      
+      const cash = parseFloat($("entryCash")?.value) || 0;
+      const card = parseFloat($("entryCard")?.value) || 0;
       const combined = cash + card;
       if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
       
-// Get the selected date and update the weather for that specific day (Forecast or Archive)
-    const selectedDate = $("entryDate").value;
-    await updateWeatherUI(selectedDate);
-
-    // Extract the fresh weather summary from the DOM elements
-    const weatherSummary = {
-        minTemp: $("min-temp").textContent,
-        maxTemp: $("max-temp").textContent,
-        weatherName: $("daily-weather-name").textContent,
-        weatherSymbol: $("daily-weather-symbol").textContent,
-        formattedString: `${$("min-temp").textContent}°C - ${$("max-temp").textContent}°C ${$("daily-weather-symbol").textContent} ${$("daily-weather-name").textContent}`
-    };
-
-    STATE.pendingPayload = {
-      type: "entry", // Must be "entry" so your submit handler processes the sales data correctly
-      date: selectedDate,
-      day: $("entryDay").value,
-      weather: weatherSummary, // Bundles the accurate 9am-6pm weather data for the specific date
-      cash: cash,
-      card: card,
-      categories: {
-        iceCream: parseFloat($("catIceCream").value) || 0,
-        counter: parseFloat($("catCounter").value) || 0,
-        kitchen: parseFloat($("catKitchen").value) || 0,
-        drink: parseFloat($("catDrink").value) || 0,
-        deli: parseFloat($("catDeli").value) || 0,
-        alcohol: parseFloat($("catAlcohol").value) || 0
+      const selectedDate = $("entryDate")?.value || new Date().toISOString().split('T')[0];
+      
+      try {
+        if (typeof updateWeatherUI === 'function') {
+          await updateWeatherUI(selectedDate);
+        }
+      } catch (err) {
+        console.warn("Weather update skipped or failed:", err);
       }
-    };
+
+      const minTemp = $("min-temp")?.textContent || "0";
+      const maxTemp = $("max-temp")?.textContent || "0";
+      const weatherName = $("daily-weather-name")?.textContent || "";
+      const weatherSymbol = $("daily-weather-symbol")?.textContent || "";
+
+      STATE.pendingPayload = {
+        type: "entry",
+        date: selectedDate,
+        day: $("entryDay")?.value || "",
+        weather: {
+          minTemp: minTemp,
+          maxTemp: maxTemp,
+          weatherName: weatherName,
+          weatherSymbol: weatherSymbol,
+          formattedString: `${minTemp}°C - ${maxTemp}°C ${weatherSymbol} ${weatherName}`
+        },
+        cash: cash,
+        card: card,
+        categories: {
+          iceCream: parseFloat($("catIceCream")?.value) || 0,
+          counter: parseFloat($("catCounter")?.value) || 0,
+          kitchen: parseFloat($("catKitchen")?.value) || 0,
+          drink: parseFloat($("catDrink")?.value) || 0,
+          deli: parseFloat($("catDeli")?.value) || 0,
+          alcohol: parseFloat($("catAlcohol")?.value) || 0
+        }
+      };
+      
+      const verifyModal = $("verifyModal");
+      if (verifyModal) {
+        verifyModal.classList.remove("hidden");
+      } else {
+        console.error("verifyModal element not found in DOM.");
+      }
+    },
     
-    if ($("verifyModal")) $("verifyModal").classList.remove("hidden");
-  },
-  
-  closeVerifyModal: () => {
-    $("verifyModal").classList.add("hidden");
-    STATE.pendingPayload = null;
-  },
+    closeVerifyModal: () => {
+      const verifyModal = $("verifyModal");
+      if (verifyModal) verifyModal.classList.add("hidden");
+      STATE.pendingPayload = null;
+    },
 
   confirmAndSubmit: async () => {
     $("verifyModal").classList.add("hidden");
