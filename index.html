@@ -1447,11 +1447,6 @@ const CONFIG = {
         }
     }
 
-        } catch (error) {
-            console.error("Failed to fetch weather data:", error);
-        }
-    }
-
     window.markAsBanked = function(transactionId) {
             if (!window.dashboardData || !window.dashboardData.transactions) {
                 console.error("Dashboard data or transactions array not found.");
