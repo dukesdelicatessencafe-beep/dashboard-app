@@ -3152,5 +3152,61 @@ async function updateWeatherUI(targetDateStr) {
       }
     };
   </script>
+  <!-- MOBILE SWIPE GESTURES SCRIPT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      let touchstartX = 0;
+      let touchendX = 0;
+      let touchstartY = 0;
+      let touchendY = 0;
+
+      const swipeThreshold = 50; 
+      const verticalTolerance = 100; 
+
+      document.addEventListener('touchstart', function(e) {
+        touchstartX = e.changedTouches[0].screenX;
+        touchstartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      document.addEventListener('touchend', function(e) {
+        touchendX = e.changedTouches[0].screenX;
+        touchendY = e.changedTouches[0].screenY;
+        handleDashboardSwipe();
+      }, { passive: true });
+
+      function handleDashboardSwipe() {
+        var xDiff = touchendX - touchstartX;
+        var yDiff = touchendY - touchstartY;
+
+        if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(yDiff) < verticalTolerance) {
+          if (Math.abs(xDiff) < swipeThreshold) return;
+
+          const tabButtons = [];
+          for (let i = 0; i <= 5; i++) {
+            let btn = document.getElementById('navBtn-' + i);
+            if (btn) tabButtons.push(btn);
+          }
+          if (tabButtons.length === 0) return;
+
+          let currentIndex = tabButtons.findIndex(btn => 
+            btn.classList.contains('active') || 
+            btn.classList.contains('selected') ||
+            btn.getAttribute('aria-selected') === 'true'
+          );
+          
+          if (currentIndex === -1) currentIndex = 0;
+
+          if (xDiff < 0) {
+            let nextIndex = (currentIndex + 1) % tabButtons.length;
+            DashboardApp.switchTab(nextIndex);
+          } else {
+            let prevIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
+            DashboardApp.switchTab(prevIndex);
+          }
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
