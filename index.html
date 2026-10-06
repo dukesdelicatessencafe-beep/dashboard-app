@@ -3133,22 +3133,43 @@ const CONFIG = {
     };
   </script>
   <!-- MOBILE SWIPE GESTURES SCRIPT -->
+ <!-- MOBILE SWIPE GESTURES SCRIPT -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       let touchstartX = 0;
       let touchendX = 0;
       let touchstartY = 0;
       let touchendY = 0;
+      let ignoreSwipe = false;
 
       const swipeThreshold = 50; 
       const verticalTolerance = 100; 
 
       document.addEventListener('touchstart', function(e) {
+        ignoreSwipe = false;
+        
+        // Check if touch started inside a horizontally scrollable element or UI bar
+        let target = e.target;
+        while (target && target !== document.body) {
+          if (target.scrollWidth > target.clientWidth) {
+            const style = window.getComputedStyle(target);
+            if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
+              ignoreSwipe = true;
+              break;
+            }
+          }
+          target = target.parentElement;
+        }
+
+        if (ignoreSwipe) return;
+
         touchstartX = e.changedTouches[0].screenX;
         touchstartY = e.changedTouches[0].screenY;
       }, { passive: true });
 
       document.addEventListener('touchend', function(e) {
+        if (ignoreSwipe) return;
+
         touchendX = e.changedTouches[0].screenX;
         touchendY = e.changedTouches[0].screenY;
         handleDashboardSwipe();
