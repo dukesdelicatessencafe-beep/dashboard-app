@@ -1034,52 +1034,54 @@
 
   <!-- APP ENGINE SCRIPT -->
   <script>
-    const CONFIG = {
+const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
     };
 
     function getWeatherDescription(code) {
-    const weatherMap = {
-      0: "Clear sky",
-      1: "Mainly clear",
-      2: "Partly cloudy",
-      3: "Overcast",
-      45: "Foggy",
-      51: "Light drizzle",
-      61: "Slight rain",
-      71: "Slight snow",
-      95: "Thunderstorm"
-    };
-    return weatherMap[code] || "Variable conditions";
-  }
-
- async function fetchCurrentWeather() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=50.7684&longitude=0.2805&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto", {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    
-    const result = await response.json();
-    
-    if (result && result.daily && result.daily.time && result.daily.time.length > 0) {
-      const maxTemp = result.daily.temperature_2m_max[0];
-      const minTemp = result.daily.temperature_2m_min[0];
-      const code = result.daily.weather_code[0];
-      
-      return {
-        temperature: `${minTemp}°C - ${maxTemp}°C`,
-        condition: getWeatherDescription(code)
+      const weatherMap = {
+        0: "Clear sky",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Foggy",
+        51: "Light drizzle",
+        61: "Slight rain",
+        71: "Slight snow",
+        95: "Thunderstorm"
       };
+      return weatherMap[code] || "Variable conditions";
     }
-  } catch (err) {
-    console.warn("Weather fetch skipped/timed out, proceeding without it:", err);
-  }
-  return { temperature: "N/A", condition: "Unavailable" };
-}
+
+    async function fetchCurrentWeather() {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=50.7684&longitude=0.2805&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto", {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        const result = await response.json();
+        
+        if (result && result.daily && result.daily.time && result.daily.time.length > 0) {
+          const maxTemp = result.daily.temperature_2m_max[0];
+          const minTemp = result.daily.temperature_2m_min[0];
+          const precipitation = result.daily.precipitation_sum ? result.daily.precipitation_sum[0] : 0;
+          const code = result.daily.weather_code[0];
+          
+          return {
+            temperature: `${minTemp}°C - ${maxTemp}°C`,
+            precipitation: `${precipitation} mm`,
+            condition: getWeatherDescription(code)
+          };
+        }
+      } catch (err) {
+        console.warn("Weather fetch skipped/timed out, proceeding without it:", err);
+      }
+      return { temperature: "N/A", precipitation: "0 mm", condition: "Unavailable" };
+    }
     
     const STATE = {
       raw: [],
@@ -1188,7 +1190,7 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
-// EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
+    // EXPANDED WEATHER SYMBOL & ICON MAPPING FUNCTION WITH EVENING & NIGHT SUPPORT
     function getWeatherSymbol(code, isNight = false) {
       if (isNight) {
         switch (code) {
@@ -1282,8 +1284,8 @@
       const arrowMap = {
         'N': '⬇️ S', 'NNE': '↙️ SSW', 'NE': '↙️ SW', 'ENE': '⬅️ WSW',
         'E': '⬅️ W', 'ESE': '↖️ WNW', 'SE': '↖️ NW', 'SSE': '⬆️ NNW',
-        'S': '⬆️️ N', 'SSW': '↗️ NNE', 'SW': '↗️ NE', 'WSW': '➡️ ENE',
-        'W': '➡ E', 'WNW': '↘️ ESE', 'NW': '↘️ SE', 'NNW': '⬇️ SSE'
+        'S': '⬆ N', 'SSW': '↗️ NNE', 'SW': '↗️ NE', 'WSW': '➡️ ENE',
+        'W': '➡ E', 'WNW': '↘️ ESE', 'NW': '↘️ SE', 'NNW': '⬇️️ SSE'
       };
       
       return {
@@ -1300,144 +1302,155 @@
       ).pop();
     }
 
-// --- INJECTION SPOT 1: Place this right near your updateWeatherUI function ---
-async function fetchWeatherPayload(dateToFetch) {
-    const lat = 50.768, lon = 0.280; // Eastbourne Beach
-    const nowLocal = typeof getUKTime === 'function' ? getUKTime() : new Date();
-    const todayStr = formatDateLocal ? formatDateLocal(nowLocal) : nowLocal.toISOString().split('T')[0];
-    
-    const url = dateToFetch < todayStr
-        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code&wind_speed_unit=mph&timezone=Europe/London`
-        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code&wind_speed_unit=mph&timezone=Europe/London`;
+    // --- INJECTION SPOT 1: Place this right near your updateWeatherUI function ---
+    async function fetchWeatherPayload(dateToFetch) {
+        const lat = 50.768, lon = 0.280; // Eastbourne Beach
+        const nowLocal = typeof getUKTime === 'function' ? getUKTime() : new Date();
+        const todayStr = formatDateLocal ? formatDateLocal(nowLocal) : nowLocal.toISOString().split('T')[0];
+        
+        const url = dateToFetch < todayStr
+            ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code,precipitation&wind_speed_unit=mph&timezone=Europe/London`
+            : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation&wind_speed_unit=mph&timezone=Europe/London`;
 
-    const res = await fetch(url);
-    const data = await res.json();
+        const res = await fetch(url);
+        const data = await res.json();
 
-    let daytimeTemps = [];
-    let daytimeCodes = [];
+        let daytimeTemps = [];
+        let daytimeCodes = [];
+        let totalPrecip = 0;
 
-    if (data.hourly && data.hourly.time) {
-        data.hourly.time.forEach((timeStr, index) => {
-            if (timeStr.startsWith(dateToFetch)) {
-                const hour = new Date(timeStr).getHours();
-                if (hour >= 9 && hour <= 18) {
-                    daytimeTemps.push(data.hourly.temperature_2m[index]);
-                    daytimeCodes.push(data.hourly.weather_code[index]);
-                }
-            }
-        });
-    }
-
-    if (daytimeTemps.length > 0) {
-        const minTemp = Math.min(...daytimeTemps).toFixed(1);
-        const maxTemp = Math.max(...daytimeTemps).toFixed(1);
-        const representativeCode = getMostFrequentCode(daytimeCodes);
-        const info = getWeatherSymbol(representativeCode, false);
-
-        return {
-            minTemp: minTemp,
-            maxTemp: maxTemp,
-            weatherName: info.name,
-            weatherSymbol: info.symbol,
-            formattedString: `${minTemp}°C - ${maxTemp}°C ${info.symbol} ${info.name}`
-        };
-    }
-
-    return { minTemp: "0", maxTemp: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
-}
-    
-    // UPDATED WEATHER UI FUNCTION WITH 9:00 AM – 6:00 PM BUSINESS HOURS SNAPSHOT
-   // UNIFIED WEATHER UI FUNCTION (Supports Today + Past Date Backfilling + Hourly Cards)
-async function updateWeatherUI(targetDateStr) {
-    const lat = 50.768, lon = 0.280; // Eastbourne Beach
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dateToFetch = targetDateStr || todayStr;
-    
-    let url = '';
-    
-    // Switch automatically between Archive API (past dates) and Forecast API (today)
-    if (dateToFetch < todayStr) {
-        url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
-    } else {
-        url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
-    }
-
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        // --- 9:00 AM – 6:00 PM DAYTIME WINDOW PROCESSING ---
         if (data.hourly && data.hourly.time) {
-            let daytimeTemps = [];
-            let daytimeCodes = [];
-            
             data.hourly.time.forEach((timeStr, index) => {
                 if (timeStr.startsWith(dateToFetch)) {
                     const hour = new Date(timeStr).getHours();
                     if (hour >= 9 && hour <= 18) {
                         daytimeTemps.push(data.hourly.temperature_2m[index]);
                         daytimeCodes.push(data.hourly.weather_code[index]);
+                        totalPrecip += (data.hourly.precipitation[index] || 0);
                     }
                 }
             });
-            
-            if (daytimeTemps.length > 0) {
-                const minTemp = Math.min(...daytimeTemps);
-                const maxTemp = Math.max(...daytimeTemps);
-                const representativeCode = getMostFrequentCode(daytimeCodes);
-                const daytimeInfo = getWeatherSymbol(representativeCode, false);
-                
-                // Safely write the true business hours summary to your UI elements
-                safeSet('min-temp', minTemp.toFixed(1));
-                safeSet('max-temp', maxTemp.toFixed(1));
-                safeSet('daily-weather-name', daytimeInfo.name);
-                safeSet('daily-weather-symbol', daytimeInfo.symbol);
-            }
         }
-        // ----------------------------------------------------
 
-        // --- HOURLY FORECAST SLOTS RENDERER ---
-        const currentHourIndex = new Date().getHours();
-        const hourlyContainer = $('hourly-weather-container');
-        if (hourlyContainer && data.hourly && data.hourly.time) {
-            hourlyContainer.innerHTML = '';
-            for (let i = 0; i <= 6; i++) {
-                const hourIdx = currentHourIndex + i;
-                if (hourIdx >= data.hourly.time.length) break;
+        if (daytimeTemps.length > 0) {
+            const minTemp = Math.min(...daytimeTemps).toFixed(1);
+            const maxTemp = Math.max(...daytimeTemps).toFixed(1);
+            const representativeCode = getMostFrequentCode(daytimeCodes);
+            const info = getWeatherSymbol(representativeCode, false);
 
-                const timeStr = data.hourly.time[hourIdx];
-                const hourNum = timeStr ? parseInt(timeStr.split('T')[1].split(':')[0], 10) : ((currentHourIndex + i) % 24);
-                const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourNum).padStart(2, '0')}:00`;
-                const temp = data.hourly.temperature_2m[hourIdx];
-                const code = data.hourly.weather_code[hourIdx];
-                
-                const windSpeed = data.hourly.wind_speed_10m[hourIdx];
-                const windDirData = getWindDirection(data.hourly.wind_direction_10m[hourIdx]);
-                const windGusts = data.hourly.wind_gusts_10m[hourIdx];
-                
-                const isNight = hourNum < 6 || hourNum > 19;
-                const info = getWeatherSymbol(code, isNight);
-
-                const slot = document.createElement('div');
-                slot.className = 'weather-slot';
-                
-                slot.innerHTML = `
-                    <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
-                    <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
-                    <p>${temp}°C</p>
-                    <div class="wind-display" style="font-size: 0.85rem; margin-top: 4px;" title="Wind: ${windDirData.text} (${windDirData.degrees}°)">
-                        ${windDirData.icon} ${windSpeed} mph (Gusts: ${windGusts} mph)
-                    </div>
-                `;
-                hourlyContainer.appendChild(slot);
-            }
+            return {
+                minTemp: minTemp,
+                maxTemp: maxTemp,
+                precipitation: totalPrecip.toFixed(1),
+                weatherName: info.name,
+                weatherSymbol: info.symbol,
+                formattedString: `${minTemp}°C - ${maxTemp}°C ${info.symbol} ${info.name} (${totalPrecip.toFixed(1)}mm)`
+            };
         }
-        // ---------------------------------------
 
-    } catch (error) {
-        console.error("Failed to fetch weather data:", error);
+        return { minTemp: "0", maxTemp: "0", precipitation: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
     }
-}
+    
+    // UPDATED WEATHER UI FUNCTION WITH 9:00 AM – 6:00 PM BUSINESS HOURS SNAPSHOT
+    // UNIFIED WEATHER UI FUNCTION (Supports Today + Past Date Backfilling + Hourly Cards)
+    async function updateWeatherUI(targetDateStr) {
+        const lat = 50.768, lon = 0.280; // Eastbourne Beach
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dateToFetch = targetDateStr || todayStr;
+        
+        let url = '';
+        
+        // Switch automatically between Archive API (past dates) and Forecast API (today)
+        if (dateToFetch < todayStr) {
+            url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateToFetch}&end_date=${dateToFetch}&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
+        } else {
+            url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=mph&timezone=Europe/London`;
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // --- 9:00 AM – 6:00 PM DAYTIME WINDOW PROCESSING ---
+            if (data.hourly && data.hourly.time) {
+                let daytimeTemps = [];
+                let daytimeCodes = [];
+                let totalPrecip = 0;
+                
+                data.hourly.time.forEach((timeStr, index) => {
+                    if (timeStr.startsWith(dateToFetch)) {
+                        const hour = new Date(timeStr).getHours();
+                        if (hour >= 9 && hour <= 18) {
+                            daytimeTemps.push(data.hourly.temperature_2m[index]);
+                            daytimeCodes.push(data.hourly.weather_code[index]);
+                            totalPrecip += (data.hourly.precipitation[index] || 0);
+                        }
+                    }
+                });
+                
+                if (daytimeTemps.length > 0) {
+                    const minTemp = Math.min(...daytimeTemps);
+                    const maxTemp = Math.max(...daytimeTemps);
+                    const representativeCode = getMostFrequentCode(daytimeCodes);
+                    const daytimeInfo = getWeatherSymbol(representativeCode, false);
+                    
+                    // Safely write the true business hours summary to your UI elements
+                    safeSet('min-temp', minTemp.toFixed(1));
+                    safeSet('max-temp', maxTemp.toFixed(1));
+                    safeSet('precipitation', totalPrecip.toFixed(1));
+                    safeSet('daily-weather-name', daytimeInfo.name);
+                    safeSet('daily-weather-symbol', daytimeInfo.symbol);
+                }
+            }
+            // ----------------------------------------------------
+
+            // --- HOURLY FORECAST SLOTS RENDERER ---
+            const currentHourIndex = new Date().getHours();
+            const hourlyContainer = $('hourly-weather-container');
+            if (hourlyContainer && data.hourly && data.hourly.time) {
+                hourlyContainer.innerHTML = '';
+                for (let i = 0; i <= 6; i++) {
+                    const hourIdx = currentHourIndex + i;
+                    if (hourIdx >= data.hourly.time.length) break;
+
+                    const timeStr = data.hourly.time[hourIdx];
+                    const hourNum = timeStr ? parseInt(timeStr.split('T')[1].split(':')[0], 10) : ((currentHourIndex + i) % 24);
+                    const timeOnly = timeStr ? timeStr.split('T')[1] : `${String(hourNum).padStart(2, '0')}:00`;
+                    const temp = data.hourly.temperature_2m[hourIdx];
+                    const code = data.hourly.weather_code[hourIdx];
+                    
+                    const windSpeed = data.hourly.wind_speed_10m[hourIdx];
+                    const windDirData = getWindDirection(data.hourly.wind_direction_10m[hourIdx]);
+                    const windGusts = data.hourly.wind_gusts_10m[hourIdx];
+                    
+                    const isNight = hourNum < 6 || hourNum > 19;
+                    const info = getWeatherSymbol(code, isNight);
+
+                    const slot = document.createElement('div');
+                    slot.className = 'weather-slot';
+                    
+                    slot.innerHTML = `
+                        <h4>${i === 0 ? 'Current (' + timeOnly + ')' : timeOnly}</h4>
+                        <div class="weather-symbol-display" title="${info.name}">${info.symbol}</div>
+                        <p>${temp}°C</p>
+                        <div class="wind-display" style="font-size: 0.85rem; margin-top: 4px;" title="Wind: ${windDirData.text} (${windDirData.degrees}°)">
+                            ${windDirData.icon} ${windSpeed} mph (Gusts: ${windGusts} mph)
+                        </div>
+                    `;
+                    hourlyContainer.appendChild(slot);
+                }
+            }
+            // ---------------------------------------
+
+        } catch (error) {
+            console.error("Failed to fetch weather data:", error);
+        }
+    }
+
+        } catch (error) {
+            console.error("Failed to fetch weather data:", error);
+        }
+    }
 
     window.markAsBanked = function(transactionId) {
             if (!window.dashboardData || !window.dashboardData.transactions) {
