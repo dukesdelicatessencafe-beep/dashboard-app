@@ -2698,11 +2698,13 @@ const CONFIG = {
           }
         }
       },
-  switchTab: (index) => {
+switchTab: (index) => {
     const tabs = $("tabs");
     if (tabs) {
       tabs.style.transform = `translateX(-${index * 14.2857}%)`;
     }
+
+    // 1. Update active nav buttons (0 to 6)
     for (let i = 0; i <= 6; i++) {
       const btn = $(`navBtn-${i}`);
       if (btn) {
@@ -2714,7 +2716,30 @@ const CONFIG = {
       }
     }
 
-    // SAFE WEATHER TRIGGER FOR TAB 6
+    // 2. Show/hide KPI section based on tab
+    const kpiSection = $("kpiSection");
+    if (kpiSection) {
+      if (index === 0) {
+        kpiSection.classList.remove("hidden");
+      } else {
+        kpiSection.classList.add("hidden");
+      }
+    }
+
+    // 3. Tab-specific initializations (Indices 2, 3, and 5)
+    if (index === 2) {
+      const todayStr = formatDateLocal(getUKTime());
+      if ($("entryDate")) {
+        $("entryDate").value = todayStr;
+        DashboardApp.onEntryDateChange();
+      }
+    } else if (index === 3) {
+      initAccountingFySelect();
+    } else if (index === 5) {
+      initMomYoyYearSelect();
+    }
+
+    // 4. Safe weather trigger for Tab 6
     if (index === 6) {
       try {
         const todayStr = new Date().toISOString().split('T')[0];
@@ -2727,28 +2752,8 @@ const CONFIG = {
         console.error("Weather update error:", err);
       }
     }
-  },   
-        const kpiSection = $("kpiSection");
-        if (kpiSection) {
-          if (index === 0) {
-            kpiSection.classList.remove("hidden");
-          } else {
-            kpiSection.classList.add("hidden");
-          }
-        }
-
-        if (index === 2) {
-          const todayStr = formatDateLocal(getUKTime());
-          if ($("entryDate")) {
-            $("entryDate").value = todayStr;
-            DashboardApp.onEntryDateChange();
-          }
-        } else if (index === 3) {
-          initAccountingFySelect();
-        } else if (index === 5) {
-          initMomYoyYearSelect();
-        }
-      },
+  },
+      
       applyOverviewRange: () => {
         const sVal = $("overviewStartDate")?.value;
         const eVal = $("overviewEndDate")?.value;
