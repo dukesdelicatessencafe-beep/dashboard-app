@@ -334,15 +334,15 @@
       display: flex;
       flex-wrap: nowrap;
       transition: transform 0.3s ease;
-      width: 700%;
+      width: 700vw;
     }
 
     .tab-content {
-      flex: 0 0 14.287%;
-      width: 14.2857%;
+      flex: 0 0 100vw;
+      width: 100vw;
       min-width: 0;
       box-sizing: border-box;
-      padding: 0 2px;
+      padding: 0 12px;
     }
 
     .entry-form-card {
@@ -2708,7 +2708,7 @@ const CONFIG = {
 switchTab: (index) => {
     const tabs = $("tabs");
     if (tabs) {
-      tabs.style.transform = `translateX(calc(-${index} * 100% / 7))`;
+      tabs.style.transform = `translateX(-${index * 100}vw)`;
     }
 
     // 1. Update active nav buttons (0 to 6)
