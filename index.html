@@ -626,459 +626,473 @@
     <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
   </div>
 
-  <!-- MAIN APP WRAPPER -->
-  <div id="app" class="hidden">
+ <!-- MAIN APP WRAPPER -->
+<div id="app" class="hidden">
 
-    <!-- KPI SUMMARY HEADER (Overview Tab Only) -->
-    <div id="kpiSection" class="kpi-row">
-      <div class="kpi-card" style="border-left-color: var(--pos-green);">
-        <h3>BANKING CONSOLIDATION</h3>
-        <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
-        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
-          </div>
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
-          </div>
-          <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
+  <!-- KPI SUMMARY HEADER (Overview Tab Only) -->
+  <div id="kpiSection" class="kpi-row">
+    <div class="kpi-card" style="border-left-color: var(--pos-green);">
+      <h3>BANKING CONSOLIDATION</h3>
+      <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
+          <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
         </div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>DATE RANGE TOTAL VALUE</h3>
-        <div class="val" id="rangeTotalVal">Syncing...</div>
-        <div class="subtext" id="rangeSpanSub">Syncing...</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
-        <div class="val" id="todayTargetVal">Syncing...</div>
-        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
-      </div>
-
-      <div class="kpi-card" style="border-left-color: var(--primary-gold);">
-        <h3>ESTIMATED MONTH-END TOTAL</h3>
-        <div class="val" id="projectedMonthVal">Syncing...</div>
-        <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>ROLLING 12-MONTH TOTAL</h3>
-        <div class="val" id="rollingTotal">Syncing...</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" id="vatBar"></div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
+          <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
         </div>
-        <div class="subtext" id="vatStatus">Loading history...</div>
-      </div>
-
-      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
-        <h3>CASH VS CARD SPLIT</h3>
-        <div class="val" id="cashCardVal">Syncing...</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>FINANCIAL YTD VS PREV FYTD</h3>
-        <div class="val" id="fytdCompVal">Syncing...</div>
-        <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CALENDAR YTD (JAN 1)</h3>
-        <div class="val" id="ytdSales">Syncing...</div>
-        <div class="subtext">Jan 1 - Today</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CURRENT MONTH VS PREV YR (%)</h3>
-        <div class="val" id="mthPctCompVal">Syncing...</div>
-        <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CURRENT MONTH TARGET (+10%)</h3>
-        <div class="val" id="mthTargetVal">Syncing...</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" id="mthTargetBar"></div>
-        </div>
-        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>ACTIVE DAYS / RECORDS</h3>
-        <div class="val" id="products">Syncing...</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>TOP CATEGORY</h3>
-        <div class="val" id="top">Syncing...</div>
+        <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
       </div>
     </div>
 
-    <!-- TABS CONTAINER (6 tabs: 600%) -->
-    <div id="tabsWrapper">
-      <div id="tabs" style="width: 600%;">
-        
-        <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 16.6667%;">
-          
-          <!-- EXPANDED WEATHER SECTION -->
-          <div class="weather-dashboard-section">
-            <h3>Eastbourne Weather Forecast</h3>
-            <!-- Daily Summary Section -->
-            <div id="daily-stats-container">
-                <p>Max Temp: <span id="max-temp">--</span>°C</p>
-                <p>Min Temp: <span id="min-temp">--</span>°C</p>
-                <p>Precipitation: <span id="precipitation">--</span> mm</p>
-            </div>
+    <div class="kpi-card">
+      <h3>DATE RANGE TOTAL VALUE</h3>
+      <div class="val" id="rangeTotalVal">Syncing...</div>
+      <div class="subtext" id="rangeSpanSub">Syncing...</div>
+    </div>
 
-            <!-- Hourly Visual Representation Section (Current Hour + Next 6 Hours) -->
-            <div id="hourly-weather-container">
-                <div class="weather-slot">
-                    <h4>Current</h4>
-                    <div class="weather-symbol-display">☀️</div>
-                    <p>--°C</p>
-                </div>
-            </div>
-          </div>
+    <div class="kpi-card">
+      <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
+      <div class="val" id="todayTargetVal">Syncing...</div>
+      <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
+    </div>
 
-          <div class="controls">
-            <div class="controls-top-row">
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
-                <input type="date" id="overviewStartDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
-              </div>
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
-                <input type="date" id="overviewEndDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
-              </div>
-              <button type="button" onclick="DashboardApp.resetOverviewDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
-              <div class="week-buttons-container" id="overviewWeekButtonsContainer"></div>
-            </div>
-            <div class="monthly-buttons-bar" id="overviewMonthlyButtonsBar"></div>
-          </div>
+    <div class="kpi-card" style="border-left-color: var(--primary-gold);">
+      <h3>ESTIMATED MONTH-END TOTAL</h3>
+      <div class="val" id="projectedMonthVal">Syncing...</div>
+      <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
+    </div>
 
-          <div class="entry-form-card" style="margin-bottom: 15px;">
-            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
-              <span>Weekly Performance Breakdown (Mon - Sun)</span>
-              <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">This Week Total</div>
-                <div id="wkCurrentTotal" style="font-size: 16px; font-weight: bold; color: var(--accent-gold);">£0.00</div>
-              </div>
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">Last Week Total</div>
-                <div id="wkPrevTotal" style="font-size: 16px; font-weight: bold; color: #fff;">£0.00</div>
-              </div>
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">Week-on-Week Diff</div>
-                <div id="wkDiffTotal" style="font-size: 16px; font-weight: bold;">£0.00</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="chart-container">
-            <canvas id="barChart"></canvas>
-          </div>
-        </div>
-
-        <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
-          <div class="controls">
-            <div class="controls-top-row">
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
-                <input type="date" id="analyticsStartDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
-              </div>
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
-                <input type="date" id="analyticsEndDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
-              </div>
-              <button type="button" onclick="DashboardApp.resetAnalyticsDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
-              <div class="week-buttons-container" id="analyticsWeekButtonsContainer"></div>
-            </div>
-            <div class="monthly-buttons-bar" id="analyticsMonthlyButtonsBar"></div>
-          </div>
-
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-        <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
-            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
-          </div>
-          <div class="chart-container">
-            <canvas id="salesChart"></canvas>
-          </div>
-
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Category / Description</th>
-                  <th style="text-align: right;">Proportion / Split</th>
-                  <th style="text-align: right;">Total Amount (£)</th>
-                </tr>
-              </thead>
-              <tbody id="printCashCardTable"></tbody>
-            </table>
-          </div>
-
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Category Name</th>
-                  <th>Total Revenue (£)</th>
-                </tr>
-              </thead>
-              <tbody id="printCategoryTable"></tbody>
-            </table>
-          </div>
-
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date / Entry</th>
-                  <th>Cash (£)</th>
-                  <th>Card (£)</th>
-                  <th>Total (£)</th>
-                </tr>
-              </thead>
-              <tbody id="productTable"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 16.6667%;">
-          <div class="entry-form-card">
-            <h2>SALES ENTRY SHEET</h2>
-            <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label for="entryDate">Entry Date</label>
-                  <input type="date" id="entryDate" onchange="DashboardApp.onEntryDateChange()" required>
-                </div>
-                <div class="form-group">
-                  <label for="entryDay">Day of Week</label>
-                  <input type="text" id="entryDay" readonly style="background: #2a2a2a; border: 1px solid #444; color: #aaa; cursor: not-allowed;" required>
-                </div>
-                <div class="form-group">
-                  <label for="entryCash">Cash Total (£)</label>
-                  <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
-                </div>
-                <div class="form-group">
-                  <label for="entryCard">Card Total (£)</label>
-                  <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
-                </div>
-                <div class="form-group">
-                  <label for="catIceCream">Ice Cream (£)</label>
-                  <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catCounter">Counter (£)</label>
-                  <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catKitchen">Kitchen (£)</label>
-                  <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catDrink">Drink (£)</label>
-                  <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catDeli">Deli (£)</label>
-                  <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catAlcohol">Alcohol (£)</label>
-                  <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-              </div>
-              <button type="submit" style="width: 100%; padding: 12px; font-size: 15px; margin-top: 5px;">Save & Submit to Spreadsheet</button>
-            </form>
-          </div>
-        </div>
-
-        <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 16.6667%;">
-          <div class="entry-form-card">
-            <h2>Accounting & Financial Year Export</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
-            
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 220px;">
-                <label for="accFySelect">Select Financial Year</label>
-                <select id="accFySelect" onchange="DashboardApp.renderAccountingData()"></select>
-              </div>
-              <div style="display: flex; align-items: flex-end; width: 100%;">
-                <button type="button" onclick="DashboardApp.exportAccountingCSV()" style="padding: 10px 16px; width: 100%;">Download Accountant CSV</button>
-              </div>
-            </div>
-
-            <div class="table-responsive" style="max-height: 380px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Day</th>
-                    <th>Cash (£)</th>
-                    <th>Card (£)</th>
-                    <th>Total (£)</th>
-                    <th>Ice Cream</th>
-                    <th>Counter</th>
-                    <th>Kitchen</th>
-                    <th>Drink</th>
-                    <th>Deli</th>
-                    <th>Alcohol</th>
-                  </tr>
-                </thead>
-                <tbody id="accountingTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: BANKED -->
-        <div class="tab-content" style="width: 16.6667%;">
-          <div class="entry-form-card">
-            <h2>Banked Cash Log</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
-            
-            <div class="table-responsive" style="max-height: 400px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Banked Date</th>
-                    <th>Cash Value (£)</th>
-                  </tr>
-                </thead>
-                <tbody id="bankedTableBody">
-                  <tr><td colspan="2" style="text-align: center; color: #aaa;">Loading banked records...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 5: MOM & YOY ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
-          <div class="entry-form-card">
-            <h2>Month-over-Month & Year-over-Year Analysis</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
-            
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 220px;">
-                <label for="momYoyYearSelect">Select Analysis Year</label>
-                <select id="momYoyYearSelect" onchange="DashboardApp.renderMomYoyData()"></select>
-              </div>
-              <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; width: 100%;">
-                <button type="button" onclick="DashboardApp.exportMomYoyCSV()" style="padding: 10px 16px; flex: 1; min-width: 180px;">📊 Export MoM & YoY CSV</button>
-                <button type="button" onclick="DashboardApp.exportMomYoyPDF()" style="padding: 10px 16px; flex: 1; min-width: 180px;">🖨️ Print / Export MoM & YoY PDF</button>
-              </div>
-            </div>
-
-            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
-            <div class="table-responsive yoy-container" style="max-height: 380px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th id="yoyHeaderPrev2">Year -2 (£)</th>
-                    <th id="yoyHeaderPrev1">Year -1 (£)</th>
-                    <th id="yoyHeaderCur">Selected Year (£)</th>
-                    <th>YoY Growth (%)</th>
-                  </tr>
-                </thead>
-                <tbody id="yoyTableBody"></tbody>
-              </table>
-            </div>
-            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
-            <div class="table-responsive mom-container" style="max-height: 380px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Revenue (£)</th>
-                    <th>MoM Change (£)</th>
-                    <th>MoM Growth (%)</th>
-                  </tr>
-                </thead>
-                <tbody id="momTableBody"></tbody>
-              </table>
-            </div>
-          </div> <!-- CLOSES TAB 5 .entry-form-card -->
-        </div> <!-- CLOSES TAB 5 .tab-content -->
-
-      </div> <!-- CLOSES #tabs -->
-
-      <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
-      <div id="tabPanel-6" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; overflow-y: auto; background: #1a1a1a; padding: 15px; box-sizing: border-box;">
-        <div class="entry-form-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin: 0;">Weather & Live Radar</h2>
-            <!-- Close button so you don't get trapped if JS isn't linked yet -->
-            <button type="button" onclick="document.getElementById('tabPanel-6').style.display='none'" style="padding: 6px 12px; background: #2a2a2a; color: var(--accent-gold); border: 1px solid var(--primary-gold); cursor: pointer; border-radius: 4px; font-size: 12px;">Close ✖</button>
-          </div>
-          <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
-          
-          <!-- Current Weather KPIs Card -->
-          <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Current Weather & Forecast</h3>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                  <div>
-                      <span id="daily-weather-symbol" style="font-size: 1.8rem;">🌤</span>
-                      <span id="daily-weather-name" style="font-weight: 600; margin-left: 8px; color: #333;">Loading...</span>
-                  </div>
-                  <div style="color: #333; font-size: 14px;">
-                      <span>Temp: <strong id="min-temp">--</strong>°C to <strong id="max-temp">--</strong>°C</span> | 
-                      <span>Precip: <strong id="precipitation">--</strong> mm</span>
-                  </div>
-              </div>
-              
-              <!-- Hourly Slots Container -->
-              <div id="hourly-weather-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
-                  <!-- Dynamically populated hourly weather slots appear here -->
-              </div>
-          </div>
-
-          <!-- Live Rain Radar Card -->
-          <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Live Eastbourne Rain Radar</h3>
-              <div style="width: 100%; border-radius: 8px; overflow: hidden;">
-                  <iframe width="100%" height="400" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=11&overlay=radar&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.756&detailLon=0.297&detail=true&message=true" frameborder="0" allow="geolocation"></iframe>
-              </div>
-          </div>
-        </div>
-      </div> <!-- CLOSES TAB 6 -->
-
-    </div> <!-- CLOSES #tabsWrapper -->
-  </div> <!-- CLOSES #app -->
-
-  <!-- VERIFICATION MODAL -->
-  <div id="verifyModal" class="hidden">
-    <div class="modal-card">
-      <h3>Verify Combined Total</h3>
-      <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Combined Cash & Card Total:</div>
-      <div class="modal-total-display" id="modalCombinedTotal">£0.00</div>
-      <div style="font-size: 11px; color: #888; margin-bottom: 15px;">If this doesn't match your final total, click Cancel to go back and edit.</div>
-      <div class="modal-buttons">
-        <button type="button" onclick="DashboardApp.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Cancel</button>
-        <button type="button" onclick="DashboardApp.confirmAndSubmit()">Sales Verified</button>
+    <div class="kpi-card">
+      <h3>ROLLING 12-MONTH TOTAL</h3>
+      <div class="val" id="rollingTotal">Syncing...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="vatBar"></div>
       </div>
+      <div class="subtext" id="vatStatus">Loading history...</div>
+    </div>
+
+    <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+      <h3>CASH VS CARD SPLIT</h3>
+      <div class="val" id="cashCardVal">Syncing...</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>FINANCIAL YTD VS PREV FYTD</h3>
+      <div class="val" id="fytdCompVal">Syncing...</div>
+      <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>CALENDAR YTD (JAN 1)</h3>
+      <div class="val" id="ytdSales">Syncing...</div>
+      <div class="subtext">Jan 1 - Today</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>CURRENT MONTH VS PREV YR (%)</h3>
+      <div class="val" id="mthPctCompVal">Syncing...</div>
+      <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>CURRENT MONTH TARGET (+10%)</h3>
+      <div class="val" id="mthTargetVal">Syncing...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="mthTargetBar"></div>
+      </div>
+      <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>ACTIVE DAYS / RECORDS</h3>
+      <div class="val" id="products">Syncing...</div>
+    </div>
+
+    <div class="kpi-card">
+      <h3>TOP CATEGORY</h3>
+      <div class="val" id="top">Syncing...</div>
     </div>
   </div>
 
-  <div id="loading" class="hidden">Verifying secure credentials...</div>
-  <div id="toast"></div>
+  <!-- TABS CONTAINER (6 tabs: 600%) -->
+  <div id="tabsWrapper">
+    <div id="tabs" style="width: 600%;">
+      
+      <!-- TAB 0: OVERVIEW -->
+      <div class="tab-content" style="width: 16.6667%;">
+        
+        <!-- EXPANDED WEATHER SECTION -->
+        <div class="weather-dashboard-section">
+          <h3>Eastbourne Weather Forecast</h3>
+          <!-- Daily Summary Section -->
+          <div id="daily-stats-container">
+              <p>Max Temp: <span id="max-temp">--</span>°C</p>
+              <p>Min Temp: <span id="min-temp">--</span>°C</p>
+              <p>Precipitation: <span id="precipitation">--</span> mm</p>
+          </div>
 
+          <!-- Hourly Visual Representation Section (Current Hour + Next 6 Hours) -->
+          <div id="hourly-weather-container">
+              <div class="weather-slot">
+                  <h4>Current</h4>
+                  <div class="weather-symbol-display">☀️</div>
+                  <p>--°C</p>
+              </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="controls-top-row">
+            <div class="control-group">
+              <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
+              <input type="date" id="overviewStartDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
+            </div>
+            <div class="control-group">
+              <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
+              <input type="date" id="overviewEndDate" onchange="DashboardApp.applyOverviewRange()" style="width: 100%;">
+            </div>
+            <button type="button" onclick="DashboardApp.resetOverviewDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
+            <div class="week-buttons-container" id="overviewWeekButtonsContainer"></div>
+          </div>
+          <div class="monthly-buttons-bar" id="overviewMonthlyButtonsBar"></div>
+        </div>
+
+        <div class="entry-form-card" style="margin-bottom: 15px;">
+          <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
+            <span>Weekly Performance Breakdown (Mon - Sun)</span>
+            <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
+          </h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+            <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+              <div style="font-size: 11px; color: #aaa;">This Week Total</div>
+              <div id="wkCurrentTotal" style="font-size: 16px; font-weight: bold; color: var(--accent-gold);">£0.00</div>
+            </div>
+            <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+              <div style="font-size: 11px; color: #aaa;">Last Week Total</div>
+              <div id="wkPrevTotal" style="font-size: 16px; font-weight: bold; color: #fff;">£0.00</div>
+            </div>
+            <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
+              <div style="font-size: 11px; color: #aaa;">Week-on-Week Diff</div>
+              <div id="wkDiffTotal" style="font-size: 16px; font-weight: bold;">£0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <!-- TAB 1: ANALYTICS -->
+      <div class="tab-content" style="width: 16.6667%;">
+        <div class="controls">
+          <div class="controls-top-row">
+            <div class="control-group">
+              <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
+              <input type="date" id="analyticsStartDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
+            </div>
+            <div class="control-group">
+              <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
+              <input type="date" id="analyticsEndDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
+            </div>
+            <button type="button" onclick="DashboardApp.resetAnalyticsDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
+            <div class="week-buttons-container" id="analyticsWeekButtonsContainer"></div>
+          </div>
+          <div class="monthly-buttons-bar" id="analyticsMonthlyButtonsBar"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+          <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
+          <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="salesChart"></canvas>
+        </div>
+
+        <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Category / Description</th>
+                <th style="text-align: right;">Proportion / Split</th>
+                <th style="text-align: right;">Total Amount (£)</th>
+              </tr>
+            </thead>
+            <tbody id="printCashCardTable"></tbody>
+          </table>
+        </div>
+
+        <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Total Revenue (£)</th>
+              </tr>
+            </thead>
+            <tbody id="printCategoryTable"></tbody>
+          </table>
+        </div>
+
+        <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Entry</th>
+                <th>Cash (£)</th>
+                <th>Card (£)</th>
+                <th>Total (£)</th>
+              </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: SALES ENTRY SHEET -->
+      <div class="tab-content" style="width: 16.6667%;">
+        <div class="entry-form-card">
+          <h2>SALES ENTRY SHEET</h2>
+          <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="entryDate">Entry Date</label>
+                <input type="date" id="entryDate" onchange="DashboardApp.onEntryDateChange()" required>
+              </div>
+              <div class="form-group">
+                <label for="entryDay">Day of Week</label>
+                <input type="text" id="entryDay" readonly style="background: #2a2a2a; border: 1px solid #444; color: #aaa; cursor: not-allowed;" required>
+              </div>
+              <div class="form-group">
+                <label for="entryCash">Cash Total (£)</label>
+                <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
+              </div>
+              <div class="form-group">
+                <label for="entryCard">Card Total (£)</label>
+                <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
+              </div>
+              <div class="form-group">
+                <label for="catIceCream">Ice Cream (£)</label>
+                <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+              <div class="form-group">
+                <label for="catCounter">Counter (£)</label>
+                <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+              <div class="form-group">
+                <label for="catKitchen">Kitchen (£)</label>
+                <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+              <div class="form-group">
+                <label for="catDrink">Drink (£)</label>
+                <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+              <div class="form-group">
+                <label for="catDeli">Deli (£)</label>
+                <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+              <div class="form-group">
+                <label for="catAlcohol">Alcohol (£)</label>
+                <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
+              </div>
+            </div>
+            <button type="submit" style="width: 100%; padding: 12px; font-size: 15px; margin-top: 5px;">Save & Submit to Spreadsheet</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 3: ACCOUNTING -->
+      <div class="tab-content" style="width: 16.6667%;">
+        <div class="entry-form-card">
+          <h2>Accounting & Financial Year Export</h2>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
+          
+          <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 220px;">
+              <label for="accFySelect">Select Financial Year</label>
+              <select id="accFySelect" onchange="DashboardApp.renderAccountingData()"></select>
+            </div>
+            <div style="display: flex; align-items: flex-end; width: 100%;">
+              <button type="button" onclick="DashboardApp.exportAccountingCSV()" style="padding: 10px 16px; width: 100%;">Download Accountant CSV</button>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="max-height: 380px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day</th>
+                  <th>Cash (£)</th>
+                  <th>Card (£)</th>
+                  <th>Total (£)</th>
+                  <th>Ice Cream</th>
+                  <th>Counter</th>
+                  <th>Kitchen</th>
+                  <th>Drink</th>
+                  <th>Deli</th>
+                  <th>Alcohol</th>
+                </tr>
+              </thead>
+              <tbody id="accountingTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: BANKED -->
+      <div class="tab-content" style="width: 16.6667%;">
+        <div class="entry-form-card">
+          <h2>Banked Cash Log</h2>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
+          
+          <div class="table-responsive" style="max-height: 400px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Banked Date</th>
+                  <th>Cash Value (£)</th>
+                </tr>
+              </thead>
+              <tbody id="bankedTableBody">
+                <tr><td colspan="2" style="text-align: center; color: #aaa;">Loading banked records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: MOM & YOY ANALYTICS -->
+      <div class="tab-content" style="width: 16.6667%;">
+        <div class="entry-form-card">
+          <h2>Month-over-Month & Year-over-Year Analysis</h2>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
+          
+          <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 220px;">
+              <label for="momYoyYearSelect">Select Analysis Year</label>
+              <select id="momYoyYearSelect" onchange="DashboardApp.renderMomYoyData()"></select>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; width: 100%;">
+              <button type="button" onclick="DashboardApp.exportMomYoyCSV()" style="padding: 10px 16px; flex: 1; min-width: 180px;">📊 Export MoM & YoY CSV</button>
+              <button type="button" onclick="DashboardApp.exportMomYoyPDF()" style="padding: 10px 16px; flex: 1; min-width: 180px;">🖨️ Print / Export MoM & YoY PDF</button>
+            </div>
+          </div>
+
+          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
+          <div class="table-responsive yoy-container" style="max-height: 380px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th id="yoyHeaderPrev2">Year -2 (£)</th>
+                  <th id="yoyHeaderPrev1">Year -1 (£)</th>
+                  <th id="yoyHeaderCur">Selected Year (£)</th>
+                  <th>YoY Growth (%)</th>
+                </tr>
+              </thead>
+              <tbody id="yoyTableBody"></tbody>
+            </table>
+          </div>
+
+          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
+          <div class="table-responsive mom-container" style="max-height: 380px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Revenue (£)</th>
+                  <th>MoM Change (£)</th>
+                  <th>MoM Growth (%)</th>
+                </tr>
+              </thead>
+              <tbody id="momTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- CLOSES #tabs -->
+
+    <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
+    <div id="tabPanel-6" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; overflow-y: auto; background: #1a1a1a; padding: 15px; box-sizing: border-box;">
+      <div class="entry-form-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="margin: 0;">Weather & Live Radar</h2>
+          <button type="button" onclick="document.getElementById('tabPanel-6').style.display='none'" style="padding: 6px 12px; background: #2a2a2a; color: var(--accent-gold); border: 1px solid var(--primary-gold); cursor: pointer; border-radius: 4px; font-size: 12px;">Close ✖</button>
+        </div>
+        <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
+        
+        <!-- Current Weather KPIs Card (Unique Tab 6 IDs) -->
+        <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Current Weather & Forecast</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <span id="daily-weather-symbol-tab6" style="font-size: 1.8rem;">🌤</span>
+                    <span id="daily-weather-name-tab6" style="font-weight: 600; margin-left: 8px; color: #333;">Loading...</span>
+                </div>
+                <div style="color: #333; font-size: 14px;">
+                    <span>Temp: <strong id="min-temp-tab6">--</strong>°C to <strong id="max-temp-tab6">--</strong>°C</span> | 
+                    <span>Precip: <strong id="precipitation-tab6">--</strong> mm</span>
+                </div>
+            </div>
+            
+            <!-- Hourly Slots Container -->
+            <div id="hourly-weather-container-tab6" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                <!-- Dynamically populated hourly weather slots appear here -->
+            </div>
+        </div>
+
+        <!-- Live Rain Radar Card -->
+        <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Live Eastbourne Rain Radar</h3>
+            <div style="width: 100%; border-radius: 8px; overflow: hidden;">
+                <iframe width="100%" height="400" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=11&overlay=radar&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.756&detailLon=0.297&detail=true&message=true" frameborder="0" allow="geolocation"></iframe>
+            </div>
+        </div>
+      </div>
+    </div> <!-- CLOSES TAB 6 -->
+
+  </div> <!-- CLOSES #tabsWrapper -->
+</div> <!-- CLOSES #app -->
+
+<!-- VERIFICATION MODAL -->
+<div id="verifyModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="verifyModalTitle">
+  <div class="modal-card" style="background: #1a1a1a; border: 1px solid var(--primary-gold, #D4AF37); border-radius: 8px; padding: 20px; max-width: 400px; width: 90%; margin: 0 auto; color: #fff;">
+    
+    <h3 id="verifyModalTitle" style="color: var(--primary-gold, #D4AF37); margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 8px;">Verify Combined Sales Total</h3>
+    
+    <!-- Sub-totals breakdown for instant visual audit -->
+    <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px; color: var(--accent-gold, #F9E3B4);">
+      <span>Cash Total: <strong id="modalCashTotal">£0.00</strong></span>
+      <span>Card Total: <strong id="modalCardTotal">£0.00</strong></span>
+    </div>
+
+    <div style="font-size: 12px; color: #aaa; margin-top: 15px; margin-bottom: 4px;">Combined Cash &amp; Card Total:</div>
+    <div class="modal-total-display" id="modalCombinedTotal" style="font-size: 28px; font-weight: bold; color: var(--primary-gold, #D4AF37); margin-bottom: 12px;">£0.00</div>
+    
+    <div style="font-size: 11px; color: #888; margin-bottom: 20px; line-height: 1.4;">
+      Please verify these figures match your register slip. Click <strong>Cancel</strong> to return and edit entry values.
+    </div>
+    
+    <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button type="button" onclick="DashboardApp.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold, #D4AF37); color: var(--accent-gold, #F9E3B4); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Cancel</button>
+      <button type="button" onclick="DashboardApp.confirmAndSubmit()" style="background: var(--primary-gold, #D4AF37); border: 1px solid var(--primary-gold, #D4AF37); color: #000; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Sales Verified ✓</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- LOADING OVERLAY & TOAST NOTIFICATION CONTAINERS -->
+<div id="loading" class="hidden">Verifying secure credentials...</div>
+<div id="toast"></div>
+  
   <!-- APP ENGINE SCRIPT -->
   <script>
 const CONFIG = {
