@@ -2705,7 +2705,7 @@ const CONFIG = {
           }
         }
       },
-switchTab: (index) => {
+const switchTab = (index) => {
     const tabs = document.getElementById("tabs");
     if (tabs) {
       tabs.style.transform = `translateX(calc(-${index} * 100% / 7))`;
@@ -2722,7 +2722,7 @@ switchTab: (index) => {
         }
       }
     }
-  }
+  };
 
     // 2. Show/hide KPI section based on tab
     const kpiSection = $("kpiSection");
