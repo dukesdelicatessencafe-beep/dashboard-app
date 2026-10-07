@@ -2699,28 +2699,36 @@ const CONFIG = {
           }
         }
       },
-      switchTab: (index) => {
-        const tabs = $("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${index * 14.2857}%)`;
-        }
-        for (let i = 0; i <= 6; i++) {
-          const btn = $(`navBtn-${i}`);
-          if (btn) {
-            if (i === index) {
-              btn.classList.add("active");
-            } else {
-              btn.classList.remove("active");
-            }
-          }
-        }
-// TRIGGER WEATHER UPDATE WHEN SWITCHING TO TAB 6
-    if (index === 6 && typeof updateWeatherUI === 'function') {
-      const todayStr = new Date().toISOString().split('T')[0];
-      updateWeatherUI(todayStr);
+  switchTab: (index) => {
+    const tabs = $("tabs");
+    if (tabs) {
+      tabs.style.transform = `translateX(-${index * 14.2857}%)`;
     }
-  }
- },       
+    for (let i = 0; i <= 6; i++) {
+      const btn = $(`navBtn-${i}`);
+      if (btn) {
+        if (i === index) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      }
+    }
+
+    // SAFE WEATHER TRIGGER FOR TAB 6
+    if (index === 6) {
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (typeof updateWeatherUI === 'function') {
+          updateWeatherUI(todayStr);
+        } else if (typeof DashboardApp.updateWeatherUI === 'function') {
+          DashboardApp.updateWeatherUI(todayStr);
+        }
+      } catch (err) {
+        console.error("Weather update error:", err);
+      }
+    }
+  },   
         const kpiSection = $("kpiSection");
         if (kpiSection) {
           if (index === 0) {
