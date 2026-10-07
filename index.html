@@ -1014,54 +1014,54 @@
                 <tbody id="momTableBody"></tbody>
               </table>
             </div>
+          </div> <!-- CLOSES TAB 5 .entry-form-card -->
+        </div> <!-- CLOSES TAB 5 .tab-content -->
+
+      </div> <!-- CLOSES #tabs -->
+
+      <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
+      <div id="tabPanel-6" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; overflow-y: auto; background: #1a1a1a; padding: 15px; box-sizing: border-box;">
+        <div class="entry-form-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">Weather & Live Radar</h2>
+            <!-- Close button so you don't get trapped if JS isn't linked yet -->
+            <button type="button" onclick="document.getElementById('tabPanel-6').style.display='none'" style="padding: 6px 12px; background: #2a2a2a; color: var(--accent-gold); border: 1px solid var(--primary-gold); cursor: pointer; border-radius: 4px; font-size: 12px;">Close ✖</button>
+          </div>
+          <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
+          
+          <!-- Current Weather KPIs Card -->
+          <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Current Weather & Forecast</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                  <div>
+                      <span id="daily-weather-symbol" style="font-size: 1.8rem;">🌤</span>
+                      <span id="daily-weather-name" style="font-weight: 600; margin-left: 8px; color: #333;">Loading...</span>
+                  </div>
+                  <div style="color: #333; font-size: 14px;">
+                      <span>Temp: <strong id="min-temp">--</strong>°C to <strong id="max-temp">--</strong>°C</span> | 
+                      <span>Precip: <strong id="precipitation">--</strong> mm</span>
+                  </div>
+              </div>
+              
+              <!-- Hourly Slots Container -->
+              <div id="hourly-weather-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                  <!-- Dynamically populated hourly weather slots appear here -->
+              </div>
+          </div>
+
+          <!-- Live Rain Radar Card -->
+          <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Live Eastbourne Rain Radar</h3>
+              <div style="width: 100%; border-radius: 8px; overflow: hidden;">
+                  <iframe width="100%" height="400" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=11&overlay=radar&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.756&detailLon=0.297&detail=true&message=true" frameborder="0" allow="geolocation"></iframe>
+              </div>
           </div>
         </div>
+      </div> <!-- CLOSES TAB 6 -->
 
-      </div>
-    </div>
+    </div> <!-- CLOSES #tabsWrapper -->
+  </div> <!-- CLOSES #app -->
 
-  </div>
-
-<!-- TAB 6: WEATHER & LIVE RADAR (INSERT HERE) -->
-        <div id="tabPanel-6" class="tab-content" style="width: 100%;">
-          <div class="entry-form-card">
-            <h2>Weather & Live Radar</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
-            
-            <!-- Current Weather KPIs Card -->
-            <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Current Weather & Forecast</h3>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div>
-                        <span id="daily-weather-symbol" style="font-size: 1.8rem;">🌤</span>
-                        <span id="daily-weather-name" style="font-weight: 600; margin-left: 8px;">Loading...</span>
-                    </div>
-                    <div>
-                        <span>Temp: <strong id="min-temp">--</strong>°C to <strong id="max-temp">--</strong>°C</span> | 
-                        <span>Precip: <strong id="precipitation">--</strong> mm</span>
-                    </div>
-                </div>
-                
-                <!-- Hourly Slots Container -->
-                <div id="hourly-weather-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
-                    <!-- Dynamically populated hourly weather slots appear here -->
-                </div>
-            </div>
-         <!-- Live Rain Radar Card -->
-    <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Live Eastbourne Rain Radar</h3>
-        <div style="width: 100%; border-radius: 8px; overflow: hidden;">
-            <iframe width="100%" height="400" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=11&overlay=radar&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.756&detailLon=0.297&detail=true&message=true" frameborder="0" allow="geolocation"></iframe>
-        </div>
-    </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-  
   <!-- VERIFICATION MODAL -->
   <div id="verifyModal" class="hidden">
     <div class="modal-card">
