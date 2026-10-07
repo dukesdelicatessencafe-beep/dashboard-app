@@ -332,7 +332,7 @@
     #tabs {
       display: flex;
       transition: transform 0.3s ease;
-      width: 600%;
+      width: 700%;
     }
 
     .tab-content {
@@ -2714,7 +2714,13 @@ const CONFIG = {
             }
           }
         }
-
+// TRIGGER WEATHER UPDATE WHEN SWITCHING TO TAB 6
+    if (index === 6 && typeof updateWeatherUI === 'function') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      updateWeatherUI(todayStr);
+    }
+  }
+        
         const kpiSection = $("kpiSection");
         if (kpiSection) {
           if (index === 0) {
