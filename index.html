@@ -337,8 +337,9 @@
       transition: transform 0.3s ease;
     }
 
-    .tab-content {
-      width: 100%;
+   .tab-content {
+      flex: 0 0 calc(100% / 7);
+      width: calc(100% / 7);
       min-width: 0;
       box-sizing: border-box;
       padding: 0 2px;
@@ -2707,8 +2708,8 @@ const CONFIG = {
 switchTab: (index) => {
     const tabs = $("tabs");
     if (tabs) {
-      // Shift by clean 100% increments with zero rounding drift
-      tabs.style.transform = `translateX(-${index * 100}%)`;
+      // Native browser division eliminates cumulative rounding drift across all tabs
+      tabs.style.transform = `translateX(calc(-${index} * 100% / 7))`;
     }
 
     // 1. Update active nav buttons (0 to 6)
