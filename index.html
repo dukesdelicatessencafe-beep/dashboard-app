@@ -2704,25 +2704,33 @@ const CONFIG = {
             alert("Authentication failed or incorrect password.");
           }
         }
-      },
-    switchTab(index) {
-      const tabs = document.getElementById("tabs");
-      if (tabs) {
-        // Shift by clean whole-number percentages (0%, -100%, -200%, etc.)
-        tabs.style.transform = `translateX(-${index * 100}%)`;
-      }
+      },switchTab(index) {
+  const tabs = document.getElementById("tabs");
+  const tab6 = document.getElementById("tabPanel-6");
 
-      // 1. Update active nav buttons (0 to 6)
-      for (let i = 0; i <= 6; i++) {
-        const btn = document.getElementById(`navBtn-${i}`);
-        if (btn) {
-          if (i === index) {
-            btn.classList.add("active");
-          } else {
-            btn.classList.remove("active");
-          }
-        }
+  // Handle Tab 6 overlay vs Tabs 0-5 slider
+  if (index === 6) {
+    if (tab6) tab6.style.display = "block";
+  } else {
+    if (tab6) tab6.style.display = "none";
+    if (tabs) {
+      // Shift by clean whole-number percentages (0%, -100%, -200%, etc.)
+      tabs.style.transform = `translateX(-${index * 100}%)`;
+    }
+  }
+
+  // 1. Update active nav buttons (0 to 6)
+  for (let i = 0; i <= 6; i++) {
+    const btn = document.getElementById(`navBtn-${i}`);
+    if (btn) {
+      if (i === index) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
       }
+    }
+  }
+}
 
     // 2. Show/hide KPI section based on tab
     const kpiSection = $("kpiSection");
