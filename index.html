@@ -615,6 +615,7 @@
     <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
     <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
     <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
+    <button id="navBtn-6" onclick="DashboardApp.switchTab(6)">WEATHER</button>
     <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
   </div>
 
@@ -797,7 +798,7 @@
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-            <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
+        <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
             <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
           </div>
           <div class="chart-container">
@@ -992,7 +993,6 @@
                 <tbody id="yoyTableBody"></tbody>
               </table>
             </div>
-
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
             <div class="table-responsive mom-container" style="max-height: 380px;">
               <table>
@@ -1015,6 +1015,47 @@
 
   </div>
 
+<!-- TAB 6: WEATHER & LIVE RADAR (INSERT HERE) -->
+        <div id="tabPanel-6" class="tab-content" style="display: none; width: 16.6667%;">
+          <div class="entry-form-card">
+            <h2>Weather & Live Radar</h2>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
+            
+            <!-- Current Weather KPIs Card -->
+            <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Current Weather & Forecast</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <span id="daily-weather-symbol" style="font-size: 1.8rem;">🌤</span>
+                        <span id="daily-weather-name" style="font-weight: 600; margin-left: 8px;">Loading...</span>
+                    </div>
+                    <div>
+                        <span>Temp: <strong id="min-temp">--</strong>°C to <strong id="max-temp">--</strong>°C</span> | 
+                        <span>Precip: <strong id="precipitation">--</strong> mm</span>
+                    </div>
+                </div>
+                
+                <!-- Hourly Slots Container -->
+                <div id="hourly-weather-container" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                    <!-- Dynamically populated hourly weather slots appear here -->
+                </div>
+            </div>
+
+            <!-- Live Rain Radar Card -->
+            <div class="dashboard-card" style="background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: #333;">Live Eastbourne Rain Radar</h3>
+                <div style="width: 100%; border-radius: 8px; overflow: hidden;">
+                    <iframe width="100%" height="400" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=default&metricTemp=default&metricWind=default&zoom=11&overlay=radar&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.756&detailLon=0.297&detail=true&message=true" frameborder="0"></iframe>
+                </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  
   <!-- VERIFICATION MODAL -->
   <div id="verifyModal" class="hidden">
     <div class="modal-card">
@@ -3183,7 +3224,7 @@ const CONFIG = {
           if (Math.abs(xDiff) < swipeThreshold) return;
 
           const tabButtons = [];
-          for (let i = 0; i <= 5; i++) {
+          for (let i = 0; i <= 6; i++) {
             let btn = document.getElementById('navBtn-' + i);
             if (btn) tabButtons.push(btn);
           }
