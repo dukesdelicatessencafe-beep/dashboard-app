@@ -2706,15 +2706,14 @@ const CONFIG = {
         }
       },
 switchTab: (index) => {
-    const tabs = $("tabs");
+    const tabs = document.getElementById("tabs");
     if (tabs) {
-      // Native browser division eliminates cumulative rounding drift across all tabs
       tabs.style.transform = `translateX(calc(-${index} * 100% / 7))`;
     }
 
     // 1. Update active nav buttons (0 to 6)
     for (let i = 0; i <= 6; i++) {
-      const btn = $(`navBtn-${i}`);
+      const btn = document.getElementById(`navBtn-${i}`);
       if (btn) {
         if (i === index) {
           btn.classList.add("active");
