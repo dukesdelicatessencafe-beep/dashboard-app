@@ -3327,15 +3327,16 @@ document.addEventListener('DOMContentLoaded', function() {
   let forecastSliderInterval = null;
   let activeCardIndex = 0;
 
-  // Helper to start the smooth hourly slider animation
+  // Helper to start the smooth hourly slider animation (Container-only horizontal scroll)
   function startHourlySlider() {
     stopHourlySlider(); // Clear any existing timer
     const cards = document.querySelectorAll('.hourly-card-item');
-    if (!cards.length) return;
+    const container = document.getElementById('hourly-weather-container-tab6');
+    if (!cards.length || !container) return;
 
     activeCardIndex = 0;
     
-    // Function to highlight next card
+    // Function to highlight next card and scroll container horizontally
     function updateHighlight() {
       cards.forEach((card, idx) => {
         if (idx === activeCardIndex) {
@@ -3343,7 +3344,10 @@ document.addEventListener('DOMContentLoaded', function() {
           card.style.boxShadow = '0 0 15px rgba(212, 175, 55, 0.6)';
           card.style.transform = 'scale(1.05)';
           card.style.background = '#252525';
-          card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          
+          // Smoothly scroll container horizontally without shifting the page vertically
+          const scrollOffset = card.offsetLeft - container.offsetLeft - (container.clientWidth / 2) + (card.clientWidth / 2);
+          container.scrollTo({ left: scrollOffset, behavior: 'smooth' });
         } else {
           card.style.border = '1px solid #444';
           card.style.boxShadow = 'none';
@@ -3355,7 +3359,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     updateHighlight();
-    // Advance every 2500ms (2.5 seconds) - change this number to make it slower or faster!
+    // Advance every 2.5 seconds
     forecastSliderInterval = setInterval(updateHighlight, 2500);
   }
 
