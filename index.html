@@ -622,7 +622,7 @@
     <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
     <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
     <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
-    <button id="navBtn-6" onclick="DashboardApp.switchTab(6)">WEATHER</button>
+    <button id="navBtn-6" type="button">WEATHER</button>
     <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
   </div>
 
@@ -3275,89 +3275,92 @@ const CONFIG = {
     });
   </script>
 <script>
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof window.DashboardApp === 'undefined') return;
+document.addEventListener('DOMContentLoaded', function() {
+  const weatherBtn = document.getElementById('navBtn-6');
+  const tab6 = document.getElementById('tabPanel-6');
 
-    // Preserve original switchTab implementation
-    const originalSwitchTab = window.DashboardApp.switchTab;
+  // Direct click handler for WEATHER button (Tab 6)
+  if (weatherBtn && tab6) {
+    weatherBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      tab6.style.display = 'block';
 
-    // Intercept switchTab to handle Tab 6 Weather Overlay
-    window.DashboardApp.switchTab = function(index) {
-      const tab6 = document.getElementById('tabPanel-6');
-
-      if (index === 6) {
-        if (tab6) tab6.style.display = 'block';
-        window.DashboardApp.fetchEastbourneWeather();
-      } else {
-        if (tab6) tab6.style.display = 'none';
-        if (typeof originalSwitchTab === 'function') {
-          originalSwitchTab.call(window.DashboardApp, index);
-        }
-      }
-
+      // Set active highlight on navBtn-6
       for (let i = 0; i <= 6; i++) {
-        const btn = document.getElementById(`navBtn-${i}`);
-        if (btn) btn.classList.toggle('active', i === index);
+        const btn = document.getElementById('navBtn-' + i);
+        if (btn) btn.classList.toggle('active', i === 6);
       }
-    };
 
-    // Live weather data fetch for Eastbourne (Open-Meteo)
-    window.DashboardApp.fetchEastbourneWeather = async function() {
-      try {
-        const res = await fetch(
-          'https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon'
-        );
-        const data = await res.json();
-        if (!data || !data.daily) return;
+      fetchEastbourneWeatherDirect();
+    });
+  }
 
-        const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
-        const minTemp = Math.round(data.daily.temperature_2m_min[0]);
-        const precip = data.daily.precipitation_sum[0];
-
-        ['max-temp', 'max-temp-tab6'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = maxTemp;
-        });
-        ['min-temp', 'min-temp-tab6'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = minTemp;
-        });
-        ['precipitation', 'precipitation-tab6'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = precip;
-        });
-
-        const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
-        if (hourlyContainer && data.hourly) {
-          const currentHour = new Date().getHours();
-          let hourlyHTML = '';
-          for (let i = currentHour; i < currentHour + 7; i++) {
-            const hourLabel = i === currentHour ? 'Now' : `${i % 24}:00`;
-            const temp = Math.round(data.hourly.temperature_2m[i] || 0);
-            hourlyHTML += `
-              <div style="background: #1a1a1a; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; text-align: center; min-width: 70px;">
-                <div style="font-size: 11px; color: #aaa;">${hourLabel}</div>
-                <div style="font-size: 18px; margin: 4px 0;">🌤</div>
-                <div style="font-size: 13px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
-              </div>
-            `;
-          }
-          hourlyContainer.innerHTML = hourlyHTML;
+  // Hide weather overlay whenever any other tab (0-5) is clicked
+  for (let i = 0; i <= 5; i++) {
+    const tabBtn = document.getElementById('navBtn-' + i);
+    if (tabBtn) {
+      tabBtn.addEventListener('click', function() {
+        if (tab6) tab6.style.display = 'none';
+        for (let j = 0; j <= 6; j++) {
+          const btn = document.getElementById('navBtn-' + j);
+          if (btn) btn.classList.toggle('active', j === i);
         }
+      });
+    }
+  }
 
-        const nameTab6 = document.getElementById('daily-weather-name-tab6');
-        if (nameTab6) nameTab6.textContent = 'Eastbourne Live Sync';
+  // Direct weather data fetcher for Eastbourne (Open-Meteo)
+  window.fetchEastbourneWeatherDirect = async function() {
+    try {
+      const res = await fetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon'
+      );
+      const data = await res.json();
+      if (!data || !data.daily) return;
 
-      } catch (err) {
-        console.error('Weather fetch error:', err);
+      const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+      const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+      const precip = data.daily.precipitation_sum[0];
+
+      ['max-temp', 'max-temp-tab6'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = maxTemp;
+      });
+      ['min-temp', 'min-temp-tab6'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = minTemp;
+      });
+      ['precipitation', 'precipitation-tab6'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = precip;
+      });
+
+      const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
+      if (hourlyContainer && data.hourly) {
+        const currentHour = new Date().getHours();
+        let hourlyHTML = '';
+        for (let i = currentHour; i < currentHour + 7; i++) {
+          const hourLabel = i === currentHour ? 'Now' : `${i % 24}:00`;
+          const temp = Math.round(data.hourly.temperature_2m[i] || 0);
+          hourlyHTML += `
+            <div style="background: #1a1a1a; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; text-align: center; min-width: 70px;">
+              <div style="font-size: 11px; color: #aaa;">${hourLabel}</div>
+              <div style="font-size: 18px; margin: 4px 0;">🌤</div>
+              <div style="font-size: 13px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
+            </div>
+          `;
+        }
+        hourlyContainer.innerHTML = hourlyHTML;
       }
-    };
 
-    // Initialize weather data fetch
-    window.DashboardApp.fetchEastbourneWeather();
-  });
-})();
+      const nameTab6 = document.getElementById('daily-weather-name-tab6');
+      if (nameTab6) nameTab6.textContent = 'Eastbourne Live Sync';
+
+    } catch (err) {
+      console.error('Weather fetch error:', err);
+    }
+  };
+});
 </script>
 </body>
 </html>
