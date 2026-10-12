@@ -3314,7 +3314,6 @@ document.addEventListener('DOMContentLoaded', function() {
     closeBtn.addEventListener('click', function(e) {
       e.preventDefault();
       closeWeatherTab();
-      // Trigger default tab 0 if DashboardApp is active
       if (window.DashboardApp && typeof window.DashboardApp.switchTab === 'function') {
         window.DashboardApp.switchTab(0);
       }
@@ -3329,19 +3328,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Direct weather data fetcher for Eastbourne (Open-Meteo)
+  // Direct weather data fetcher for Eastbourne (Open-Meteo) with date matching
   window.fetchEastbourneWeatherDirect = async function() {
     try {
       const res = await fetch(
         'https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon'
       );
       const data = await res.json();
-      if (!data || !data.daily) return;
+      if (!data || !data.daily || !data.hourly) return;
 
-      const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
-      const minTemp = Math.round(data.daily.temperature_2m_min[0]);
-      const precip = data.daily.precipitation_sum[0];
+      // Get exact local date string (YYYY-MM-DD) to locate today's matching index
+      const todayStr = new Date().toISOString().split('T')[0];
+      let todayIndex = data.daily.time ? data.daily.time.findIndex(dateStr => dateStr === todayStr) : 0;
+      if (todayIndex === -1) todayIndex = 0;
 
+      const maxTemp = Math.round(data.daily.temperature_2m_max[todayIndex]);
+      const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
+      const precip = data.daily.precipitation_sum[todayIndex];
+
+      // Simultaneously update both Tab 0 and Tab 6 elements
       ['max-temp', 'max-temp-tab6'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = maxTemp;
@@ -3355,13 +3360,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.textContent = precip;
       });
 
+      // Populate hourly weather slots matching current local hour forward
       const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
-      if (hourlyContainer && data.hourly) {
-        const currentHour = new Date().getHours();
+      if (hourlyContainer && data.hourly.time) {
+        const now = new Date();
+        const currentHourStr = now.toISOString().slice(0, 13);
+        
+        let startHourIdx = data.hourly.time.findIndex(timeStr => timeStr.startsWith(currentHourStr));
+        if (startHourIdx === -1) startHourIdx = now.getHours();
+
         let hourlyHTML = '';
-        for (let i = currentHour; i < currentHour + 7; i++) {
-          const hourLabel = i === currentHour ? 'Now' : `${i % 24}:00`;
+        for (let i = startHourIdx; i < startHourIdx + 7; i++) {
+          if (!data.hourly.time[i]) break;
+          const hourTime = new Date(data.hourly.time[i]);
+          const hourLabel = (i === startHourIdx) ? 'Now' : `${hourTime.getHours()}:00`;
           const temp = Math.round(data.hourly.temperature_2m[i] || 0);
+
           hourlyHTML += `
             <div style="background: #1a1a1a; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; text-align: center; min-width: 70px;">
               <div style="font-size: 11px; color: #aaa;">${hourLabel}</div>
@@ -3376,6 +3390,9 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Weather fetch error:', err);
     }
   };
+
+  // Run weather fetch on initial page load so Tab 0 updates right away
+  fetchEastbourneWeatherDirect();
 });
 </script>
 </body>
