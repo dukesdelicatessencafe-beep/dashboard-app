@@ -1019,49 +1019,87 @@
 
       </div> <!-- CLOSES #tabs -->
 
-    <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
-<div id="tabPanel-6" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; display: none; overflow-y: auto; background: #1a1a1a; padding: 15px; box-sizing: border-box;">
-  <div class="entry-form-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h2 style="margin: 0; color: var(--primary-gold, #D4AF37);">Weather & Live Radar</h2>
-      <button type="button" id="closeTab6Btn" style="padding: 8px 16px; background: #2a2a2a; color: var(--accent-gold, #F9E3B4); border: 1px solid var(--primary-gold, #D4AF37); cursor: pointer; border-radius: 4px; font-size: 13px; font-weight: bold;">Close ✖</button>
+ <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
+<div id="tabPanel-6" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 15, 15, 0.96); backdrop-filter: blur(12px); z-index: 9999; overflow-y: auto; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; box-sizing: border-box;">
+
+  <!-- Header Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-gold, #D4AF37); padding-bottom: 15px; margin-bottom: 25px;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span style="font-size: 2rem;">🌊</span>
+      <div>
+        <h2 style="margin: 0; font-size: 1.8rem; letter-spacing: 1px; color: var(--accent-gold, #F9E3B4); text-transform: uppercase;">Eastbourne Live Sync & Radar</h2>
+        <span style="font-size: 0.85rem; color: #888;">50.717° N, 0.297° E • Dynamic Meteorological Sync</span>
+      </div>
     </div>
-    <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Live meteorological metrics and real-time rain radar for Eastbourne.</p>
+    <button id="closeTab6Btn" style="background: linear-gradient(135deg, #D4AF37, #AA7C11); border: none; color: #000; font-weight: bold; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 1rem; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); transition: all 0.2s ease-in-out;">
+      ✕ Close Overlay
+    </button>
+  </div>
+
+  <!-- Main KPI Stat Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 25px;">
     
-    <!-- Current Weather KPIs Card -->
-    <div class="dashboard-card" style="background: #2a2a2a; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #444;">
-        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: var(--primary-gold, #D4AF37);">Current Weather & Forecast</h3>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-            <div>
-                <span id="daily-weather-symbol-tab6" style="font-size: 1.8rem;">🌤</span>
-                <span id="daily-weather-name-tab6" style="font-weight: 600; margin-left: 8px; color: #fff;">Eastbourne Live Sync</span>
-            </div>
-            <div style="color: #ccc; font-size: 14px;">
-                <span>Temp: <strong id="min-temp-tab6" style="color: var(--accent-gold, #F9E3B4);">--</strong>°C to <strong id="max-temp-tab6" style="color: var(--accent-gold, #F9E3B4);">--</strong>°C</span> | 
-                <span>Precip: <strong id="precipitation-tab6" style="color: var(--accent-gold, #F9E3B4);">--</strong> mm</span>
-            </div>
-        </div>
-        
-        <!-- Hourly Slots Container -->
-        <div id="hourly-weather-container-tab6" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
-            <!-- Dynamically populated hourly weather slots appear here -->
-        </div>
+    <!-- Current Condition -->
+    <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
+      <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Condition</div>
+      <div id="daily-weather-symbol-tab6" style="font-size: 2.4rem; margin: 5px 0;">🌤</div>
+      <div id="daily-weather-name-tab6" style="font-size: 1rem; font-weight: bold; color: var(--accent-gold, #F9E3B4);">Loading...</div>
     </div>
 
-<!-- Live Eastbourne Rain Forecast Card -->
-<div class="dashboard-card" style="background: #2a2a2a; border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #444;">
-    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem; color: var(--primary-gold, #D4AF37);">Live Eastbourne Rain Forecast</h3>
-    <div style="width: 100%; border-radius: 8px; overflow: hidden; position: relative;">
-        <iframe 
-            width="100%" 
-            height="500" 
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=mph&zoom=10&overlay=rain&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.717&detailLon=0.297&marker=true&calendar=now" 
-            frameborder="0" 
-            allow="geolocation">
-        </iframe>
+    <!-- Max Temp -->
+    <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
+      <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Max Temp</div>
+      <div style="font-size: 2.2rem; font-weight: bold; color: #D4AF37; margin: 5px 0;"><span id="max-temp-tab6">--</span>°C</div>
+      <div style="font-size: 0.75rem; color: #666;">High Peak Today</div>
     </div>
-</div>
+
+    <!-- Min Temp -->
+    <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
+      <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Min Temp</div>
+      <div style="font-size: 2.2rem; font-weight: bold; color: #88c0d0; margin: 5px 0;"><span id="min-temp-tab6">--</span>°C</div>
+      <div style="font-size: 0.75rem; color: #666;">Overnight Low</div>
+    </div>
+
+    <!-- Total Rain -->
+    <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
+      <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">24h Rainfall</div>
+      <div style="font-size: 2.2rem; font-weight: bold; color: #F9E3B4; margin: 5px 0;"><span id="precipitation-tab6">--</span> <span style="font-size: 1rem;">mm</span></div>
+      <div style="font-size: 0.75rem; color: #666;">Accumulated Forecast</div>
+    </div>
+
   </div>
+
+  <!-- 7-Hour Forecast Trend Slot -->
+  <div style="background: linear-gradient(145deg, #181818, #111); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 12px; padding: 18px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);">
+    <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-gold, #D4AF37); display: flex; align-items: center; gap: 8px;">
+      <span>⏱</span> Hourly Forecast Trend (Eastbourne)
+    </h3>
+    <div id="hourly-weather-container-tab6" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+      <!-- JavaScript injects dynamic cards here -->
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div style="background: #181818; border: 1px solid var(--primary-gold, #D4AF37); border-radius: 14px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px;">
+      <span style="font-size: 0.9rem; font-weight: bold; color: var(--accent-gold, #F9E3B4); text-transform: uppercase; letter-spacing: 0.5px;">
+        📍 Live Radar & Cloud Cover Map
+      </span>
+      <span style="font-size: 0.75rem; background: rgba(212, 175, 55, 0.15); border: 1px solid #D4AF37; padding: 3px 8px; border-radius: 4px; color: #F9E3B4;">
+        Centered on Eastbourne
+      </span>
+    </div>
+    <div style="width: 100%; height: 520px; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid #333;">
+      <iframe 
+        width="100%" 
+        height="100%" 
+        src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=mph&zoom=10&overlay=rain&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.717&detailLon=0.297&marker=true" 
+        frameborder="0" 
+        allow="geolocation">
+      </iframe>
+    </div>
+  </div>
+
 </div>
 
     </div> <!-- CLOSES #tabsWrapper -->
