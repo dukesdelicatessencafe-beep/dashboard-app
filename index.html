@@ -1275,7 +1275,7 @@ const CONFIG = {
         }
       }
 
-     switch (code) {
+   switch (code) {
   case 0: return { symbol: "☀️", name: "Sunny / Clear" };
   case 1:
   case 2: return { symbol: "⛅", name: "Sunny Intervals" };
@@ -1304,7 +1304,6 @@ const CONFIG = {
   case 99: return { symbol: "⛈️", name: "Thunderstorm" };
   default: return { symbol: "🌤", name: "Fair" };
 }
-      }
     }
 
     function getWindDirection(degrees) {
