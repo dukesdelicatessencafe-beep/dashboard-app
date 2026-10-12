@@ -3324,6 +3324,48 @@ document.addEventListener('DOMContentLoaded', function() {
   const closeBtn = document.getElementById('closeTab6Btn');
   const tab6 = document.getElementById('tabPanel-6');
 
+  let forecastSliderInterval = null;
+  let activeCardIndex = 0;
+
+  // Helper to start the smooth hourly slider animation
+  function startHourlySlider() {
+    stopHourlySlider(); // Clear any existing timer
+    const cards = document.querySelectorAll('.hourly-card-item');
+    if (!cards.length) return;
+
+    activeCardIndex = 0;
+    
+    // Function to highlight next card
+    function updateHighlight() {
+      cards.forEach((card, idx) => {
+        if (idx === activeCardIndex) {
+          card.style.border = '2px solid var(--primary-gold, #D4AF37)';
+          card.style.boxShadow = '0 0 15px rgba(212, 175, 55, 0.6)';
+          card.style.transform = 'scale(1.05)';
+          card.style.background = '#252525';
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          card.style.border = '1px solid #444';
+          card.style.boxShadow = 'none';
+          card.style.transform = 'scale(1)';
+          card.style.background = '#1a1a1a';
+        }
+      });
+      activeCardIndex = (activeCardIndex + 1) % cards.length;
+    }
+
+    updateHighlight();
+    // Advance every 2500ms (2.5 seconds) - change this number to make it slower or faster!
+    forecastSliderInterval = setInterval(updateHighlight, 2500);
+  }
+
+  function stopHourlySlider() {
+    if (forecastSliderInterval) {
+      clearInterval(forecastSliderInterval);
+      forecastSliderInterval = null;
+    }
+  }
+
   // Helper to open Tab 6 Overlay
   function openWeatherTab() {
     if (tab6) tab6.style.display = 'block';
@@ -3331,12 +3373,15 @@ document.addEventListener('DOMContentLoaded', function() {
       const btn = document.getElementById('navBtn-' + i);
       if (btn) btn.classList.toggle('active', i === 6);
     }
-    fetchEastbourneWeatherDirect();
+    fetchEastbourneWeatherDirect().then(() => {
+      startHourlySlider();
+    });
   }
 
   // Helper to close Tab 6 Overlay
   function closeWeatherTab() {
     if (tab6) tab6.style.display = 'none';
+    stopHourlySlider();
   }
 
   // 1. WEATHER button click listener
@@ -3366,7 +3411,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Shared Weather Symbol Mapping (Tab 0 Match)
+  // Shared Weather Symbol Mapping
   function getWeatherSymbol(code, isNight = false) {
     if (isNight) {
       switch (code) {
@@ -3376,59 +3421,27 @@ document.addEventListener('DOMContentLoaded', function() {
         case 3: return { symbol: "🌥️", name: "Overcast Night / Gloomy" };
         case 45:
         case 48: return { symbol: "🌫️", name: "Foggy Night" };
-        case 51:
-        case 53:
-        case 55:
-        case 56:
-        case 57: return { symbol: "🌧", name: "Drizzle Night" };
-        case 61:
-        case 63:
-        case 65:
-        case 66:
-        case 67: return { symbol: "🌧️", name: "Rain Night" };
-        case 71:
-        case 73:
-        case 75:
-        case 77: return { symbol: "❄️", name: "Snow Night" };
-        case 80:
-        case 81:
-        case 82: return { symbol: "🌦", name: "Showers Night" };
-        case 95:
-        case 96:
-        case 99: return { symbol: "⛈️", name: "Thunderstorm Night" };
+        case 51: case 53: case 55: case 56: case 57: return { symbol: "🌧", name: "Drizzle Night" };
+        case 61: case 63: case 65: case 66: case 67: return { symbol: "🌧️", name: "Rain Night" };
+        case 71: case 73: case 75: case 77: return { symbol: "❄️", name: "Snow Night" };
+        case 80: case 81: case 82: return { symbol: "🌦", name: "Showers Night" };
+        case 95: case 96: case 99: return { symbol: "⛈️", name: "Thunderstorm Night" };
         default: return { symbol: "🌙", name: "Night" };
       }
     }
 
     switch (code) {
-  case 0: return { symbol: "☀️", name: "Sunny / Clear" };
-  case 1:
-  case 2: return { symbol: "⛅", name: "Sunny Intervals" };
-  case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
-  case 45:
-  case 48: return { symbol: "🌫", name: "Foggy" };
-  case 51:
-  case 53:
-  case 55:
-  case 56:
-  case 57: return { symbol: "🌧", name: "Drizzle" };
-  case 61:
-  case 63:
-  case 65:
-  case 66:
-  case 67: return { symbol: "🌧️", name: "Rain" };
-  case 71:
-  case 73:
-  case 75:
-  case 77: return { symbol: "❄️", name: "Snow" };
-  case 80:
-  case 81:
-  case 82: return { symbol: "🌦", name: "Showers" };
-  case 95:
-  case 96:
-  case 99: return { symbol: "⛈️", name: "Thunderstorm" };
-  default: return { symbol: "🌤", name: "Fair" };
-}
+      case 0: return { symbol: "☀️", name: "Sunny / Clear" };
+      case 1: case 2: return { symbol: "⛅", name: "Sunny Intervals" };
+      case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
+      case 45: case 48: return { symbol: "🌫", name: "Foggy" };
+      case 51: case 53: case 55: case 56: case 57: return { symbol: "🌧", name: "Drizzle" };
+      case 61: case 63: case 65: case 66: case 67: return { symbol: "🌧️", name: "Rain" };
+      case 71: case 73: case 75: case 77: return { symbol: "❄️", name: "Snow" };
+      case 80: case 81: case 82: return { symbol: "🌦", name: "Showers" };
+      case 95: case 96: case 99: return { symbol: "⛈️", name: "Thunderstorm" };
+      default: return { symbol: "🌤", name: "Fair" };
+    }
   }
 
   // Direct weather data fetcher for Eastbourne (Open-Meteo)
@@ -3440,7 +3453,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await res.json();
       if (!data || !data.daily || !data.hourly) return;
 
-      // Get exact local date string (YYYY-MM-DD) to locate today's index
       const todayStr = new Date().toISOString().split('T')[0];
       let todayIndex = data.daily.time ? data.daily.time.findIndex(dateStr => dateStr === todayStr) : 0;
       if (todayIndex === -1) todayIndex = 0;
@@ -3449,7 +3461,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
       const precip = data.daily.precipitation_sum[todayIndex];
 
-      // Update basic numbers across both Tab 0 and Tab 6
       ['max-temp', 'max-temp-tab6'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = maxTemp;
@@ -3463,7 +3474,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.textContent = precip;
       });
 
-      // Update Current Weather Symbol & Name
       if (data.current_weather) {
         const currentHour = new Date().getHours();
         const isNightNow = currentHour >= 20 || currentHour < 6;
@@ -3489,23 +3499,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startHourIdx === -1) startHourIdx = now.getHours();
 
         let hourlyHTML = '';
-        for (let i = startHourIdx; i < startHourIdx + 7; i++) {
+        for (let i = startHourIdx; i < startHourIdx + 12; i++) {
           if (!data.hourly.time[i]) break;
           const hourTime = new Date(data.hourly.time[i]);
           const hour = hourTime.getHours();
           const hourLabel = (i === startHourIdx) ? 'Now' : `${hour}:00`;
           const temp = Math.round(data.hourly.temperature_2m[i] || 0);
 
-          // Check night status for each specific hour
           const isHourlyNight = hour >= 20 || hour < 6;
           const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
           const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
 
           hourlyHTML += `
-            <div style="background: #1a1a1a; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; text-align: center; min-width: 70px;">
-              <div style="font-size: 11px; color: #aaa;">${hourLabel}</div>
-              <div style="font-size: 18px; margin: 4px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
-              <div style="font-size: 13px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
+            <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 85px; transition: all 0.5s ease; flex-shrink: 0;">
+              <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
+              <div style="font-size: 22px; margin: 6px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
+              <div style="font-size: 15px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
             </div>
           `;
         }
@@ -3516,7 +3525,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
-  // Run weather fetch on initial page load
   fetchEastbourneWeatherDirect();
 });
 </script>
