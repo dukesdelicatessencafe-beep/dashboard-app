@@ -1275,34 +1275,35 @@ const CONFIG = {
         }
       }
 
-      switch (code) {
-        case 0: return { symbol: "🌇", name: "Sunny / Sunset" };
-        case 1:
-        case 2: return { symbol: "⛅", name: "Sunny Intervals" };
-        case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
-        case 45:
-        case 48: return { symbol: "🌫", name: "Foggy" };
-        case 51:
-        case 53:
-        case 55:
-        case 56:
-        case 57: return { symbol: "🌧", name: "Drizzle" };
-        case 61:
-        case 63:
-        case 65:
-        case 66:
-        case 67: return { symbol: "🌧️", name: "Rain" };
-        case 71:
-        case 73:
-        case 75:
-        case 77: return { symbol: "❄️", name: "Snow" };
-        case 80:
-        case 81:
-        case 82: return { symbol: "🌦", name: "Showers" };
-        case 95:
-        case 96:
-        case 99: return { symbol: "⛈️", name: "Thunderstorm" };
-        default: return { symbol: "🌤", name: "Fair" };
+     switch (code) {
+  case 0: return { symbol: "☀️", name: "Sunny / Clear" };
+  case 1:
+  case 2: return { symbol: "⛅", name: "Sunny Intervals" };
+  case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
+  case 45:
+  case 48: return { symbol: "🌫", name: "Foggy" };
+  case 51:
+  case 53:
+  case 55:
+  case 56:
+  case 57: return { symbol: "🌧", name: "Drizzle" };
+  case 61:
+  case 63:
+  case 65:
+  case 66:
+  case 67: return { symbol: "🌧️", name: "Rain" };
+  case 71:
+  case 73:
+  case 75:
+  case 77: return { symbol: "❄️", name: "Snow" };
+  case 80:
+  case 81:
+  case 82: return { symbol: "🌦", name: "Showers" };
+  case 95:
+  case 96:
+  case 99: return { symbol: "⛈️", name: "Thunderstorm" };
+  default: return { symbol: "🌤", name: "Fair" };
+}
       }
     }
 
@@ -3363,34 +3364,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     switch (code) {
-      case 0: return { symbol: "🌇", name: "Sunny / Sunset" };
-      case 1:
-      case 2: return { symbol: "⛅", name: "Sunny Intervals" };
-      case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
-      case 45:
-      case 48: return { symbol: "🌫", name: "Foggy" };
-      case 51:
-      case 53:
-      case 55:
-      case 56:
-      case 57: return { symbol: "🌧", name: "Drizzle" };
-      case 61:
-      case 63:
-      case 65:
-      case 66:
-      case 67: return { symbol: "🌧️", name: "Rain" };
-      case 71:
-      case 73:
-      case 75:
-      case 77: return { symbol: "❄️", name: "Snow" };
-      case 80:
-      case 81:
-      case 82: return { symbol: "🌦", name: "Showers" };
-      case 95:
-      case 96:
-      case 99: return { symbol: "⛈️", name: "Thunderstorm" };
-      default: return { symbol: "🌤", name: "Fair" };
-    }
+  case 0: return { symbol: "☀️", name: "Sunny / Clear" };
+  case 1:
+  case 2: return { symbol: "⛅", name: "Sunny Intervals" };
+  case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
+  case 45:
+  case 48: return { symbol: "🌫", name: "Foggy" };
+  case 51:
+  case 53:
+  case 55:
+  case 56:
+  case 57: return { symbol: "🌧", name: "Drizzle" };
+  case 61:
+  case 63:
+  case 65:
+  case 66:
+  case 67: return { symbol: "🌧️", name: "Rain" };
+  case 71:
+  case 73:
+  case 75:
+  case 77: return { symbol: "❄️", name: "Snow" };
+  case 80:
+  case 81:
+  case 82: return { symbol: "🌦", name: "Showers" };
+  case 95:
+  case 96:
+  case 99: return { symbol: "⛈️", name: "Thunderstorm" };
+  default: return { symbol: "🌤", name: "Fair" };
+}
   }
 
   // Direct weather data fetcher for Eastbourne (Open-Meteo)
