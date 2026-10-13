@@ -3527,7 +3527,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   fetchEastbourneWeatherDirect();
 
-  // 5. Native Swipe Integration with Tab 6 Triggers
+  // 5. Clean Sequential & Edge-Trigger Swipe Integration
   let touchstartX = 0;
   let touchendX = 0;
   let touchstartY = 0;
@@ -3586,28 +3586,49 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (currentIndex === -1) currentIndex = 0;
 
-      // --- CUSTOM TAB 6 TRIGGERS ---
-      // Left swipe from Tab 0 opens Tab 6
-      if (currentIndex === 0 && xDiff < 0) {
-        window.openWeatherTab();
-        return;
+      function triggerWeatherOverlay() {
+        if (typeof window.openWeatherTab === 'function') {
+          window.openWeatherTab();
+        } else if (typeof openWeatherTab === 'function') {
+          openWeatherTab();
+        } else if (typeof DashboardApp !== 'undefined' && typeof DashboardApp.switchTab === 'function') {
+          DashboardApp.switchTab(6);
+        }
       }
-      // Right swipe from Tab 5 opens Tab 6
-      if (currentIndex === 5 && xDiff > 0) {
-        window.openWeatherTab();
-        return;
-      }
-      // -----------------------------
 
-      // Standard dashboard navigation for all other tabs
+      // --- TAB 0 BOUNDARY ---
+      if (currentIndex === 0) {
+        if (xDiff < 0) {
+          triggerWeatherOverlay();
+        } else {
+          if (typeof DashboardApp !== 'undefined' && typeof DashboardApp.switchTab === 'function') {
+            DashboardApp.switchTab(1);
+          }
+        }
+        return;
+      }
+
+      // --- TAB 5 BOUNDARY ---
+      if (currentIndex === 5) {
+        if (xDiff < 0) {
+          if (typeof DashboardApp !== 'undefined' && typeof DashboardApp.switchTab === 'function') {
+            DashboardApp.switchTab(4);
+          }
+        } else {
+          triggerWeatherOverlay();
+        }
+        return;
+      }
+
+      // --- STRICT SEQUENTIAL NAVIGATION (TABS 1 TO 4) ---
       if (xDiff < 0) {
-        let nextIndex = (currentIndex + 1) % tabButtons.length;
-        if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
+        let nextIndex = currentIndex + 1;
+        if (nextIndex <= 5 && typeof DashboardApp !== 'undefined' && typeof DashboardApp.switchTab === 'function') {
           DashboardApp.switchTab(nextIndex);
         }
       } else {
-        let prevIndex = (currentIndex - 1 + tabButtons.length) % tabButtons.length;
-        if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
+        let prevIndex = currentIndex - 1;
+        if (prevIndex >= 0 && typeof DashboardApp !== 'undefined' && typeof DashboardApp.switchTab === 'function') {
           DashboardApp.switchTab(prevIndex);
         }
       }
