@@ -3430,7 +3430,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   fetchEastbourneWeatherDirect();
 
-  // 5. Exclusive Capturing Swipe Handler (Blocks conflicting listeners)
+  // 5. Corrected Directional Swipe Handler
   let touchstartX = 0;
   let touchendX = 0;
   let touchstartY = 0;
@@ -3457,7 +3457,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return 0;
   }
 
-  // Capturing Phase: Intercept touch start before DashboardApp sees it
   window.addEventListener('touchstart', function(e) {
     ignoreSwipe = false;
     let target = e.target;
@@ -3475,11 +3474,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     touchstartX = e.changedTouches[0].screenX;
     touchstartY = e.changedTouches[0].screenY;
-    // Snapshot active tab at the exact moment user touches screen
     activeTabAtTouchStart = getActiveTab();
   }, { capture: true, passive: true });
 
-  // Capturing Phase: Execute single tab switch & kill duplicate events
   window.addEventListener('touchend', function(e) {
     if (ignoreSwipe) return;
 
@@ -3492,7 +3489,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(yDiff) < verticalTolerance) {
       if (Math.abs(xDiff) < swipeThreshold) return;
 
-      // Stop any other dashboard scripts from receiving this swipe!
       e.stopImmediatePropagation();
 
       const currentIndex = activeTabAtTouchStart;
@@ -3505,41 +3501,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      // TAB 0 BOUNDARY
-      if (currentIndex === 0) {
-        if (xDiff < 0) {
-          triggerWeatherOverlay();
-        } else {
-          if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-            DashboardApp.switchTab(1);
-          }
-        }
-        return;
-      }
-
-      // TAB 5 BOUNDARY
-      if (currentIndex === 5) {
-        if (xDiff < 0) {
-          if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-            DashboardApp.switchTab(4);
-          }
-        } else {
-          triggerWeatherOverlay();
-        }
-        return;
-      }
-
-      // SEQUENTIAL NAVIGATION (TABS 1 TO 4)
+      // --- SWIPE LEFT (xDiff < 0) -> MOVE FORWARD ---
       if (xDiff < 0) {
-        let nextIndex = currentIndex + 1;
-        if (nextIndex <= 5 && window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-          DashboardApp.switchTab(nextIndex);
+        if (currentIndex === 5) {
+          // Left swipe on Tab 5 opens Weather Tab (Tab 6)
+          triggerWeatherOverlay();
+        } else if (currentIndex < 5) {
+          // Left swipe advances: Tab 0 -> Tab 1, Tab 1 -> Tab 2, ..., Tab 4 -> Tab 5
+          let nextIndex = currentIndex + 1;
+          if (window.DashboardApp && typeof window.DashboardApp.switchTab === 'function') {
+            DashboardApp.switchTab(nextIndex);
+          }
         }
-      } else {
-        let prevIndex = currentIndex - 1;
-        if (prevIndex >= 0 && window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-          DashboardApp.switchTab(prevIndex);
+        return;
+      }
+
+      // --- SWIPE RIGHT (xDiff > 0) -> MOVE BACKWARD ---
+      if (xDiff > 0) {
+        if (currentIndex === 0) {
+          // Right swipe on Tab 0 opens Weather Tab (Tab 6)
+          triggerWeatherOverlay();
+        } else if (currentIndex <= 5 && currentIndex > 0) {
+          // Right swipe retreats: Tab 5 -> Tab 4, Tab 4 -> Tab 3, ..., Tab 1 -> Tab 0
+          let prevIndex = currentIndex - 1;
+          if (window.DashboardApp && typeof window.DashboardApp.switchTab === 'function') {
+            DashboardApp.switchTab(prevIndex);
+          }
         }
+        return;
       }
     }
   }, { capture: true, passive: true });
