@@ -3473,29 +3473,43 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   fetchEastbourneWeatherDirect();
-
-  // 5. Directional Swipe Handler with Forecast Touch Isolation
-  let touchstartX = 0;
-  let touchendX = 0;
-  let touchstartY = 0;
-  let touchendY = 0;
+// 5. Universal Directional Swipe & Mouse-Drag Handler (Desktop, Laptop & Mobile)
+  let startX = 0;
+  let startY = 0;
+  let endX = 0;
+  let endY = 0;
+  let isDragging = false;
   let isScrollableInteraction = false;
 
-  document.addEventListener('touchstart', function(e) {
-    isScrollableInteraction = !!e.target.closest('#hourly-weather-container-tab6');
-    touchstartX = e.changedTouches[0].screenX;
-    touchstartY = e.changedTouches[0].screenY;
+  // Handles both mousedown (laptop/desktop) and touchstart (mobile)
+  document.addEventListener('pointerdown', function(e) {
+    // Ignore drag gestures originating inside scrollable hourly forecast ticker or interactive inputs/buttons
+    if (e.target.closest('#hourly-weather-container-tab6') || e.target.closest('button, input, select, a')) {
+      isScrollableInteraction = true;
+      return;
+    }
+
+    isScrollableInteraction = false;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
   }, { passive: true });
 
-  document.addEventListener('touchend', function(e) {
-    if (isScrollableInteraction) return;
+  // Handles mouseup, touchend, and trackpad gestures
+  document.addEventListener('pointerup', function(e) {
+    if (!isDragging || isScrollableInteraction) {
+      isDragging = false;
+      return;
+    }
 
-    touchendX = e.changedTouches[0].screenX;
-    touchendY = e.changedTouches[0].screenY;
-    
-    const xDiff = touchendX - touchstartX;
-    const yDiff = touchendY - touchstartY;
+    isDragging = false;
+    endX = e.clientX;
+    endY = e.clientY;
 
+    const xDiff = endX - startX;
+    const yDiff = endY - startY;
+
+    // Minimum swipe/drag threshold of 40px with horizontal priority
     if (Math.abs(xDiff) > 40 && Math.abs(xDiff) > Math.abs(yDiff)) {
       const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
 
@@ -3523,22 +3537,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      // SWIPE LEFT (xDiff < 0) -> MOVE LEFT
+      // SWIPE / DRAG LEFT (xDiff < 0) -> MOVE LEFT
       if (xDiff < 0) {
         if (currentIndex === 6) {
-          switchTab(5);
+          switchTab(5); // Swiping/dragging left on Weather returns to Tab 5
         } else if (currentIndex === 0) {
-          switchTab(6);
+          switchTab(6); // Swiping/dragging left on Tab 0 opens Weather
         } else if (currentIndex > 0 && currentIndex <= 5) {
           switchTab(currentIndex - 1);
         }
       } 
-      // SWIPE RIGHT (xDiff > 0) -> MOVE RIGHT
+      // SWIPE / DRAG RIGHT (xDiff > 0) -> MOVE RIGHT
       else {
         if (currentIndex === 6) {
-          switchTab(0);
+          switchTab(0); // Swiping/dragging right on Weather returns to Tab 0
         } else if (currentIndex === 5) {
-          switchTab(6);
+          switchTab(6); // Swiping/dragging right on Tab 5 opens Weather
         } else if (currentIndex < 5) {
           switchTab(currentIndex + 1);
         }
