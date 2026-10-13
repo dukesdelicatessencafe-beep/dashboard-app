@@ -3356,63 +3356,77 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   window.fetchEastbourneWeatherDirect = async function() {
-    try {
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon');
-      const data = await res.json();
-      if (!data || !data.daily || !data.hourly) return;
+  try {
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon');
+    const data = await res.json();
+    if (!data || !data.daily || !data.hourly) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
-      let todayIndex = data.daily.time ? data.daily.time.findIndex(dateStr => dateStr === todayStr) : 0;
-      if (todayIndex === -1) todayIndex = 0;
+    // Use local UK date matching
+    const now = new Date();
+    const localYear = now.getFullYear();
+    const localMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const localDay = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${localYear}-${localMonth}-${localDay}`;
 
-      const maxTemp = Math.round(data.daily.temperature_2m_max[todayIndex]);
-      const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
-      const precip = data.daily.precipitation_sum[todayIndex];
+    let todayIndex = data.daily.time ? data.daily.time.findIndex(dateStr => dateStr === todayStr) : 0;
+    if (todayIndex === -1) todayIndex = 0;
 
-      ['max-temp', 'max-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = maxTemp; });
-      ['min-temp', 'min-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = minTemp; });
-      ['precipitation', 'precipitation-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = precip; });
+    const maxTemp = Math.round(data.daily.temperature_2m_max[todayIndex]);
+    const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
+    const precip = data.daily.precipitation_sum[todayIndex];
 
-      if (data.current_weather) {
-        const currentHour = new Date().getHours();
-        const isNightNow = currentHour >= 20 || currentHour < 6;
-        const currentCond = getWeatherSymbol(data.current_weather.weathercode, isNightNow);
-        ['daily-weather-symbol', 'daily-weather-symbol-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.symbol; });
-        ['daily-weather-name', 'daily-weather-name-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.name; });
-      }
+    ['max-temp', 'max-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = maxTemp; });
+    ['min-temp', 'min-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = minTemp; });
+    ['precipitation', 'precipitation-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = precip; });
 
-      const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
-      if (hourlyContainer && data.hourly.time) {
-        const now = new Date();
-        const currentHourStr = now.toISOString().slice(0, 13);
-        let startHourIdx = data.hourly.time.findIndex(timeStr => timeStr.startsWith(currentHourStr));
-        if (startHourIdx === -1) startHourIdx = now.getHours();
-
-        let hourlyHTML = '';
-        for (let i = startHourIdx; i < startHourIdx + 12; i++) {
-          if (!data.hourly.time[i]) break;
-          const hourTime = new Date(data.hourly.time[i]);
-          const hour = hourTime.getHours();
-          const hourLabel = (i === startHourIdx) ? 'Now' : `${hour}:00`;
-          const temp = Math.round(data.hourly.temperature_2m[i] || 0);
-          const isHourlyNight = hour >= 20 || hour < 6;
-          const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
-          const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
-
-          hourlyHTML += `
-            <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 85px; transition: all 0.5s ease; flex-shrink: 0;">
-              <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
-              <div style="font-size: 22px; margin: 6px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
-              <div style="font-size: 15px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
-            </div>
-          `;
-        }
-        hourlyContainer.innerHTML = hourlyHTML;
-      }
-    } catch (err) {
-      console.error('Weather fetch error:', err);
+    if (data.current_weather) {
+      const currentHour = now.getHours();
+      const isNightNow = currentHour >= 20 || currentHour < 6;
+      const currentCond = getWeatherSymbol(data.current_weather.weathercode, isNightNow);
+      ['daily-weather-symbol', 'daily-weather-symbol-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.symbol; });
+      ['daily-weather-name', 'daily-weather-name-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.name; });
     }
-  };
+
+    const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
+    if (hourlyContainer && data.hourly.time) {
+      // Build ISO string in local time format: YYYY-MM-DDTHH:00
+      const localHourStr = String(now.getHours()).padStart(2, '0');
+      const targetHourIso = `${todayStr}T${localHourStr}:00`;
+
+      let startHourIdx = data.hourly.time.findIndex(timeStr => timeStr === targetHourIso);
+      if (startHourIdx === -1) {
+        startHourIdx = data.hourly.time.findIndex(timeStr => timeStr.startsWith(todayStr)) + now.getHours();
+      }
+      if (startHourIdx < 0 || startHourIdx >= data.hourly.time.length) {
+        startHourIdx = 0;
+      }
+
+      let hourlyHTML = '';
+      for (let i = startHourIdx; i < startHourIdx + 12; i++) {
+        if (!data.hourly.time[i]) break;
+        
+        const slotDate = new Date(data.hourly.time[i]);
+        const hour = slotDate.getHours();
+        const hourLabel = (i === startHourIdx) ? 'Now' : `${String(hour).padStart(2, '0')}:00`;
+        const temp = Math.round(data.hourly.temperature_2m[i] || 0);
+        const isHourlyNight = hour >= 20 || hour < 6;
+        const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
+        const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
+
+        hourlyHTML += `
+          <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 85px; transition: all 0.5s ease; flex-shrink: 0;">
+            <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
+            <div style="font-size: 22px; margin: 6px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
+            <div style="font-size: 15px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
+          </div>
+        `;
+      }
+      hourlyContainer.innerHTML = hourlyHTML;
+    }
+  } catch (err) {
+    console.error('Weather fetch error:', err);
+  }
+};
 
   fetchEastbourneWeatherDirect();
 
