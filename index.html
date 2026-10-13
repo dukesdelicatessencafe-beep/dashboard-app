@@ -3292,7 +3292,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // 2. Weather Tab Control (Exposed Globally)
+  // 2. Weather Tab Control
   window.openWeatherTab = function() {
     if (tab6) tab6.style.display = 'block';
     for (let i = 0; i <= 6; i++) {
@@ -3338,7 +3338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // 4. Weather Data Fetcher & Symbol Mapping
+  // 4. Weather Symbol & Data Fetcher
   function getWeatherSymbol(code, isNight = false) {
     if (isNight) {
       switch (code) {
@@ -3430,17 +3430,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
   fetchEastbourneWeatherDirect();
 
-  // 5. Robust Swipe Gesture Detection & Routing
+  // 5. Exclusive Capturing Swipe Handler (Blocks conflicting listeners)
   let touchstartX = 0;
   let touchendX = 0;
   let touchstartY = 0;
   let touchendY = 0;
+  let activeTabAtTouchStart = 0;
   let ignoreSwipe = false;
 
   const swipeThreshold = 50; 
-  const verticalTolerance = 100; 
+  const verticalTolerance = 80; 
 
-  document.addEventListener('touchstart', function(e) {
+  function getActiveTab() {
+    for (let i = 0; i <= 6; i++) {
+      const panel = document.getElementById('tabPanel-' + i) || document.getElementById('tab-' + i);
+      if (panel && window.getComputedStyle(panel).display !== 'none') {
+        return i;
+      }
+    }
+    for (let i = 0; i <= 6; i++) {
+      const btn = document.getElementById('navBtn-' + i);
+      if (btn && (btn.classList.contains('active') || btn.classList.contains('selected') || btn.getAttribute('aria-selected') === 'true')) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  // Capturing Phase: Intercept touch start before DashboardApp sees it
+  window.addEventListener('touchstart', function(e) {
     ignoreSwipe = false;
     let target = e.target;
     while (target && target !== document.body) {
@@ -3457,44 +3475,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     touchstartX = e.changedTouches[0].screenX;
     touchstartY = e.changedTouches[0].screenY;
-  }, { passive: true });
+    // Snapshot active tab at the exact moment user touches screen
+    activeTabAtTouchStart = getActiveTab();
+  }, { capture: true, passive: true });
 
-  document.addEventListener('touchend', function(e) {
+  // Capturing Phase: Execute single tab switch & kill duplicate events
+  window.addEventListener('touchend', function(e) {
     if (ignoreSwipe) return;
 
     touchendX = e.changedTouches[0].screenX;
     touchendY = e.changedTouches[0].screenY;
-    handleDashboardSwipe();
-  }, { passive: true });
 
-  // Bulletproof Active Tab Detector
-  function getCurrentActiveTabIndex() {
-    // Check visible tab panels first
-    for (let i = 0; i <= 6; i++) {
-      const panel = document.getElementById('tabPanel-' + i) || document.getElementById('tab-' + i);
-      if (panel && window.getComputedStyle(panel).display !== 'none') {
-        return i;
-      }
-    }
-    // Check buttons with active states
-    for (let i = 0; i <= 6; i++) {
-      const btn = document.getElementById('navBtn-' + i);
-      if (btn && (btn.classList.contains('active') || btn.classList.contains('selected') || btn.getAttribute('aria-selected') === 'true')) {
-        return i;
-      }
-    }
-    return 0; // Fallback
-  }
-
-  function handleDashboardSwipe() {
     var xDiff = touchendX - touchstartX;
     var yDiff = touchendY - touchstartY;
 
     if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(yDiff) < verticalTolerance) {
       if (Math.abs(xDiff) < swipeThreshold) return;
 
-      let currentIndex = getCurrentActiveTabIndex();
-      console.log("Swipe detected. Current Tab Index:", currentIndex, "xDiff:", xDiff);
+      // Stop any other dashboard scripts from receiving this swipe!
+      e.stopImmediatePropagation();
+
+      const currentIndex = activeTabAtTouchStart;
 
       function triggerWeatherOverlay() {
         if (typeof window.openWeatherTab === 'function') {
@@ -3504,13 +3505,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      // --- TAB 0 BOUNDARY ---
+      // TAB 0 BOUNDARY
       if (currentIndex === 0) {
         if (xDiff < 0) {
-          // Swipe Left -> Open Weather
           triggerWeatherOverlay();
         } else {
-          // Swipe Right -> Step to Tab 1
           if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
             DashboardApp.switchTab(1);
           }
@@ -3518,21 +3517,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // --- TAB 5 BOUNDARY ---
+      // TAB 5 BOUNDARY
       if (currentIndex === 5) {
         if (xDiff < 0) {
-          // Swipe Left -> Step to Tab 4
           if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
             DashboardApp.switchTab(4);
           }
         } else {
-          // Swipe Right -> Open Weather
           triggerWeatherOverlay();
         }
         return;
       }
 
-      // --- TABS 1 TO 4 SEQUENTIAL NAVIGATION ---
+      // SEQUENTIAL NAVIGATION (TABS 1 TO 4)
       if (xDiff < 0) {
         let nextIndex = currentIndex + 1;
         if (nextIndex <= 5 && window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
@@ -3545,7 +3542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
-  }
+  }, { capture: true, passive: true });
 });
 </script>
 </body>
