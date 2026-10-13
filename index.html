@@ -3416,18 +3416,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   fetchEastbourneWeatherDirect();
 
-  // 5. Universal Directional Swipe Handler (Includes Weather Tab Navigation)
+  // 5. Directional Swipe Handler with Forecast Touch Isolation
   let touchstartX = 0;
   let touchendX = 0;
   let touchstartY = 0;
   let touchendY = 0;
+  let isScrollableInteraction = false;
 
   document.addEventListener('touchstart', function(e) {
+    // Check if touch originated within the hourly weather ticker or any scrollable element
+    isScrollableInteraction = !!e.target.closest('#hourly-weather-container-tab6');
+    
     touchstartX = e.changedTouches[0].screenX;
     touchstartY = e.changedTouches[0].screenY;
   }, { passive: true });
 
   document.addEventListener('touchend', function(e) {
+    // Ignore swipe tab switching if user was dragging/interacting with the hourly forecast
+    if (isScrollableInteraction) return;
+
     touchendX = e.changedTouches[0].screenX;
     touchendY = e.changedTouches[0].screenY;
     
@@ -3437,7 +3444,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Minimum swipe threshold of 40px with horizontal priority
     if (Math.abs(xDiff) > 40 && Math.abs(xDiff) > Math.abs(yDiff)) {
       
-      // Check if Weather Overlay is open
       const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
 
       let currentIndex = 0;
@@ -3467,9 +3473,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // SWIPE LEFT (xDiff < 0) -> MOVE LEFT
       if (xDiff < 0) {
         if (currentIndex === 6) {
-          switchTab(5); // Swiping Left on Weather returns to Tab 5
+          switchTab(5);
         } else if (currentIndex === 0) {
-          switchTab(6); // Swiping Left on Tab 0 opens Weather
+          switchTab(6);
         } else if (currentIndex > 0 && currentIndex <= 5) {
           switchTab(currentIndex - 1);
         }
@@ -3477,9 +3483,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // SWIPE RIGHT (xDiff > 0) -> MOVE RIGHT
       else {
         if (currentIndex === 6) {
-          switchTab(0); // Swiping Right on Weather returns to Tab 0
+          switchTab(0);
         } else if (currentIndex === 5) {
-          switchTab(6); // Swiping Right on Tab 5 opens Weather
+          switchTab(6);
         } else if (currentIndex < 5) {
           switchTab(currentIndex + 1);
         }
