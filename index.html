@@ -3473,147 +3473,110 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   fetchEastbourneWeatherDirect();
-// 5. Directional Swipe Handler with Forecast Touch Isolation
 
-  let touchstartX = 0;
-
-  let touchendX = 0;
-
-  let touchstartY = 0;
-
-  let touchendY = 0;
-
+  // 5. Cross-Platform Swipe & Mouse Drag Handler
+  let startX = 0;
+  let startY = 0;
+  let isDragging = false;
   let isScrollableInteraction = false;
 
+  function handleStart(clientX, clientY, target) {
+    if (target.closest('#hourly-weather-container-tab6') || target.closest('button, input, select, a, textarea')) {
+      isScrollableInteraction = true;
+      return;
+    }
+    isScrollableInteraction = false;
+    isDragging = true;
+    startX = clientX;
+    startY = clientY;
+  }
 
+  function handleEnd(clientX, clientY) {
+    if (!isDragging || isScrollableInteraction) {
+      isDragging = false;
+      return;
+    }
+    isDragging = false;
 
-  document.addEventListener('touchstart', function(e) {
-
-    isScrollableInteraction = !!e.target.closest('#hourly-weather-container-tab6');
-
-    touchstartX = e.changedTouches[0].screenX;
-
-    touchstartY = e.changedTouches[0].screenY;
-
-  }, { passive: true });
-
-
-
-  document.addEventListener('touchend', function(e) {
-
-    if (isScrollableInteraction) return;
-
-
-
-    touchendX = e.changedTouches[0].screenX;
-
-    touchendY = e.changedTouches[0].screenY;
-
-    
-
-    const xDiff = touchendX - touchstartX;
-
-    const yDiff = touchendY - touchstartY;
-
-
+    const xDiff = clientX - startX;
+    const yDiff = clientY - startY;
 
     if (Math.abs(xDiff) > 40 && Math.abs(xDiff) > Math.abs(yDiff)) {
-
       const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
 
-
-
       let currentIndex = 0;
-
       if (isWeatherOpen) {
-
         currentIndex = 6;
-
       } else {
-
         for (let i = 0; i <= 5; i++) {
-
           const btn = document.getElementById('navBtn-' + i);
-
           if (btn && (btn.classList.contains('active') || btn.classList.contains('selected') || btn.getAttribute('aria-selected') === 'true')) {
-
             currentIndex = i;
-
             break;
-
           }
-
         }
-
       }
-
-
 
       function switchTab(idx) {
-
         if (idx === 6) {
-
           window.openWeatherTab();
-
         } else {
-
           window.closeWeatherTab();
-
           if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-
             DashboardApp.switchTab(idx);
-
           }
-
         }
-
       }
-
-
 
       // SWIPE LEFT (xDiff < 0) -> MOVE LEFT
-
       if (xDiff < 0) {
-
         if (currentIndex === 6) {
-
           switchTab(5);
-
         } else if (currentIndex === 0) {
-
           switchTab(6);
-
         } else if (currentIndex > 0 && currentIndex <= 5) {
-
           switchTab(currentIndex - 1);
-
         }
-
       } 
-
       // SWIPE RIGHT (xDiff > 0) -> MOVE RIGHT
-
       else {
-
         if (currentIndex === 6) {
-
           switchTab(0);
-
         } else if (currentIndex === 5) {
-
           switchTab(6);
-
         } else if (currentIndex < 5) {
-
           switchTab(currentIndex + 1);
-
         }
-
       }
-
     }
+  }
 
-  }, { passive: true }); 
+  // Mobile Touch Listeners
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches && e.touches.length === 1) {
+      handleStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (e.changedTouches && e.changedTouches.length === 1) {
+      handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }
+  }, { passive: true });
+
+  // Desktop Mouse Listeners
+  document.addEventListener('mousedown', function(e) {
+    if (e.button === 0) {
+      handleStart(e.clientX, e.clientY, e.target);
+    }
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (e.button === 0) {
+      handleEnd(e.clientX, e.clientY);
+    }
+  });
+});
 </script>
 </body>
 </html>
