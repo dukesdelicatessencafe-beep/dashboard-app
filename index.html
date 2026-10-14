@@ -257,9 +257,10 @@
     #daily-stats-container span { color: var(--accent-gold); font-weight: bold; }
 
     #hourly-weather-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      display: flex;
       gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
 
     .weather-slot {
@@ -539,9 +540,10 @@
           <div class="weather-dashboard-section">
             <h3>Eastbourne Weather Forecast</h3>
             <div id="daily-stats-container">
-                <p>Max Temp: <span id="max-temp">--</span>°C</p>
-                <p>Min Temp: <span id="min-temp">--</span>°C</p>
-                <p>Precipitation: <span id="precipitation">--</span> mm</p>
+                <p><span id="daily-weather-symbol" style="font-size:1.2rem;">🌤</span> <span id="daily-weather-name" style="color:var(--accent-gold); font-weight:bold;">Loading...</span></p>
+                <p>Max: <span id="max-temp">--</span>°C</p>
+                <p>Min: <span id="min-temp">--</span>°C</p>
+                <p>Rain: <span id="precipitation">--</span> mm</p>
             </div>
             <div id="hourly-weather-container">
                 <div class="weather-slot">
@@ -552,7 +554,7 @@
             </div>
           </div>
 
-          <!-- CURRENT MONTH OVERVIEW BANNER (Replaces Date Pickers) -->
+          <!-- CURRENT MONTH OVERVIEW BANNER -->
           <div class="entry-form-card" style="margin-bottom: 15px; border-left: 4px solid var(--primary-gold);">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 15px;">
               <span>Current Calendar Month Total</span>
@@ -885,8 +887,7 @@
 
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
-
-  <!-- APP ENGINE SCRIPT -->
+<!-- APP ENGINE SCRIPT -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1032,7 +1033,7 @@
     }
 
     async function fetchWeatherPayload(dateToFetch) {
-      const lat = 50.768, lon = 0.280;
+      const lat = 50.717, lon = 0.297;
       const nowLocal = getUKTime();
       const todayStr = formatDateLocal(nowLocal);
       const target = dateToFetch || todayStr;
@@ -2819,8 +2820,10 @@
             ['daily-weather-name', 'daily-weather-name-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.name; });
           }
 
-          const hourlyContainer = document.getElementById('hourly-weather-container-tab6');
-          if (hourlyContainer && data.hourly.time) {
+          const containerTab0 = document.getElementById('hourly-weather-container');
+          const containerTab6 = document.getElementById('hourly-weather-container-tab6');
+
+          if ((containerTab0 || containerTab6) && data.hourly.time) {
             const localHourStr = String(now.getHours()).padStart(2, '0');
             const targetHourIso = `${todayStr}T${localHourStr}:00`;
 
@@ -2832,7 +2835,9 @@
               startHourIdx = 0;
             }
 
-            let hourlyHTML = '';
+            let hourlyHTMLTab0 = '';
+            let hourlyHTMLTab6 = '';
+
             for (let i = startHourIdx; i < startHourIdx + 12; i++) {
               if (!data.hourly.time[i]) break;
               
@@ -2844,7 +2849,15 @@
               const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
               const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
 
-              hourlyHTML += `
+              hourlyHTMLTab0 += `
+                <div class="weather-slot" style="flex: 0 0 75px; padding: 6px; text-align: center; background: #2a2a2a; border: 1px solid #444; border-radius: 6px;">
+                  <h4 style="margin:0; font-size:11px; color:var(--accent-gold);">${hourLabel}</h4>
+                  <div class="weather-symbol-display" style="font-size:18px; margin:2px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
+                  <p style="margin:0; font-size:13px; font-weight:bold; color:#fff;">${temp}°C</p>
+                </div>
+              `;
+
+              hourlyHTMLTab6 += `
                 <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 85px; transition: all 0.5s ease; flex-shrink: 0;">
                   <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
                   <div style="font-size: 22px; margin: 6px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
@@ -2852,7 +2865,9 @@
                 </div>
               `;
             }
-            hourlyContainer.innerHTML = hourlyHTML;
+
+            if (containerTab0) containerTab0.innerHTML = hourlyHTMLTab0;
+            if (containerTab6) containerTab6.innerHTML = hourlyHTMLTab6;
           }
 
           const timestampEl = document.getElementById('weather-last-updated-tab6');
