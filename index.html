@@ -544,6 +544,7 @@
                 <p>Max: <span id="max-temp">--</span>°C</p>
                 <p>Min: <span id="min-temp">--</span>°C</p>
                 <p>Rain: <span id="precipitation">--</span> mm</p>
+                <p>Wind: <span id="wind-speed">--</span> mph</p>
             </div>
             <div id="hourly-weather-container">
                 <div class="weather-slot">
@@ -852,8 +853,8 @@
           <div style="font-size: 2.2rem; font-weight: bold; color: #88c0d0; margin: 5px 0;"><span id="min-temp-tab6">--</span>°C</div>
         </div>
         <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center;">
-          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">24h Rainfall</div>
-          <div style="font-size: 2.2rem; font-weight: bold; color: #F9E3B4; margin: 5px 0;"><span id="precipitation-tab6">--</span> mm</div>
+          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Wind Speed</div>
+          <div style="font-size: 2.2rem; font-weight: bold; color: #F9E3B4; margin: 5px 0;"><span id="wind-speed-tab6">--</span> mph</div>
         </div>
       </div>
 
@@ -887,7 +888,7 @@
 
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
-<!-- APP ENGINE SCRIPT -->
+  <!-- APP ENGINE SCRIPT -->
   <script>
     const CONFIG = {
       URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
@@ -1039,14 +1040,15 @@
       const target = dateToFetch || todayStr;
       
       const url = target < todayStr
-        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${target}&end_date=${target}&hourly=temperature_2m,weather_code,precipitation&wind_speed_unit=mph&timezone=Europe/London`
-        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation&wind_speed_unit=mph&timezone=Europe/London`;
+        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${target}&end_date=${target}&hourly=temperature_2m,weather_code,precipitation,windspeed_10m&wind_speed_unit=mph&timezone=Europe/London`
+        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation,windspeed_10m&wind_speed_unit=mph&timezone=Europe/London`;
 
       const res = await fetch(url);
       const data = await res.json();
 
       let daytimeTemps = [];
       let daytimeCodes = [];
+      let daytimeWinds = [];
       let totalPrecip = 0;
 
       if (data.hourly && data.hourly.time) {
@@ -1057,6 +1059,9 @@
             if (hour >= 9 && hour <= 18) {
               daytimeTemps.push(data.hourly.temperature_2m[index]);
               daytimeCodes.push(data.hourly.weather_code[index]);
+              if (data.hourly.windspeed_10m) {
+                daytimeWinds.push(data.hourly.windspeed_10m[index] || 0);
+              }
               totalPrecip += (data.hourly.precipitation[index] || 0);
             }
           }
@@ -1066,19 +1071,21 @@
       if (daytimeTemps.length > 0) {
         const minTemp = Math.min(...daytimeTemps).toFixed(1);
         const maxTemp = Math.max(...daytimeTemps).toFixed(1);
+        const avgWind = daytimeWinds.length > 0 ? Math.round(daytimeWinds.reduce((a,b)=>a+b,0) / daytimeWinds.length) : 0;
         const representativeCode = getMostFrequentCode(daytimeCodes);
         const info = getWeatherSymbol(representativeCode, false);
 
         return {
           minTemp: minTemp,
           maxTemp: maxTemp,
+          windSpeed: avgWind,
           precipitation: totalPrecip.toFixed(1),
           weatherName: info.name,
           weatherSymbol: info.symbol,
-          formattedString: `${minTemp}°C - ${maxTemp}°C ${info.symbol} ${info.name} (${totalPrecip.toFixed(1)}mm)`
+          formattedString: `${minTemp}°C - ${maxTemp}°C, Wind: ${avgWind} mph, ${info.symbol} ${info.name} (${totalPrecip.toFixed(1)}mm)`
         };
       }
-      return { minTemp: "0", maxTemp: "0", precipitation: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
+      return { minTemp: "0", maxTemp: "0", windSpeed: "0", precipitation: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
     }
 
     function processRows(rows) {
@@ -2450,7 +2457,7 @@
           weatherSummary = await fetchWeatherPayload(selectedDate);
         } catch (err) {
           console.warn("Could not fetch weather for payload:", err);
-          weatherSummary = { minTemp: "0", maxTemp: "0", weatherName: "", weatherSymbol: "", formattedString: "" };
+          weatherSummary = { minTemp: "0", maxTemp: "0", windSpeed: "0", weatherName: "", weatherSymbol: "", formattedString: "" };
         }
 
         STATE.pendingPayload = {
@@ -2791,7 +2798,7 @@
         }
 
         try {
-          const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FLondon');
+          const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe%2FLondon');
           const data = await res.json();
           if (!data || !data.daily || !data.hourly) return;
 
@@ -2807,10 +2814,12 @@
           const maxTemp = Math.round(data.daily.temperature_2m_max[todayIndex]);
           const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
           const precip = data.daily.precipitation_sum[todayIndex];
+          const windSpeed = data.current_weather ? Math.round(data.current_weather.windspeed) : 0;
 
           ['max-temp', 'max-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = maxTemp; });
           ['min-temp', 'min-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = minTemp; });
           ['precipitation', 'precipitation-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = precip; });
+          ['wind-speed', 'wind-speed-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = windSpeed; });
 
           if (data.current_weather) {
             const currentHour = now.getHours();
