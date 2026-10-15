@@ -269,6 +269,7 @@
       padding: 8px;
       border-radius: 6px;
       text-align: center;
+      flex: 0 0 95px;
     }
 
     .weather-slot h4 {
@@ -280,8 +281,8 @@
       text-overflow: ellipsis;
     }
 
-    .weather-slot p { margin: 4px 0 0 0; font-size: 15px; font-weight: bold; color: #fff; }
-    .weather-symbol-display { font-size: 24px; margin: 2px 0; display: block; }
+    .weather-slot p { margin: 2px 0; font-size: 14px; font-weight: bold; color: #fff; }
+    .weather-symbol-display { font-size: 22px; margin: 2px 0; display: block; }
 
     #tabsWrapper { overflow: hidden; width: 100%; position: relative; }
     #tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; transition: transform 0.3s ease; }
@@ -888,6 +889,7 @@
 
   <div id="loading" class="hidden">Verifying secure credentials...</div>
   <div id="toast"></div>
+
   <!-- APP ENGINE SCRIPT -->
   <script>
     const CONFIG = {
@@ -1029,6 +1031,13 @@
       }
     }
 
+    function getWindDirectionText(degrees) {
+      if (degrees === undefined || degrees === null) return "N";
+      const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      const val = Math.floor((degrees / 22.5) + 0.5);
+      return directions[(val % 16)];
+    }
+
     function getMostFrequentCode(arr) {
       return arr.sort((a, b) => arr.filter(v => v === a).length - arr.filter(v => v === b).length).pop();
     }
@@ -1040,8 +1049,8 @@
       const target = dateToFetch || todayStr;
       
       const url = target < todayStr
-        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${target}&end_date=${target}&hourly=temperature_2m,weather_code,precipitation,windspeed_10m&wind_speed_unit=mph&timezone=Europe/London`
-        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation,windspeed_10m&wind_speed_unit=mph&timezone=Europe/London`;
+        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${target}&end_date=${target}&hourly=temperature_2m,weather_code,precipitation,windspeed_10m,winddirection_10m&wind_speed_unit=mph&timezone=Europe/London`
+        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation,windspeed_10m,winddirection_10m&wind_speed_unit=mph&timezone=Europe/London`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -2798,7 +2807,7 @@
         }
 
         try {
-          const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe%2FLondon');
+          const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode,precipitation,windspeed_10m,winddirection_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe%2FLondon');
           const data = await res.json();
           if (!data || !data.daily || !data.hourly) return;
 
@@ -2854,23 +2863,35 @@
               const hour = slotDate.getHours();
               const hourLabel = (i === startHourIdx) ? 'Now' : `${String(hour).padStart(2, '0')}:00`;
               const temp = Math.round(data.hourly.temperature_2m[i] || 0);
+              const hWindSpeed = Math.round(data.hourly.windspeed_10m ? data.hourly.windspeed_10m[i] : 0);
+              const hWindDeg = data.hourly.winddirection_10m ? data.hourly.winddirection_10m[i] : 0;
+              const hWindText = getWindDirectionText(hWindDeg);
+
               const isHourlyNight = hour >= 20 || hour < 6;
               const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
               const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
 
               hourlyHTMLTab0 += `
-                <div class="weather-slot" style="flex: 0 0 75px; padding: 6px; text-align: center; background: #2a2a2a; border: 1px solid #444; border-radius: 6px;">
+                <div class="weather-slot" style="flex: 0 0 95px; padding: 6px; text-align: center; background: #2a2a2a; border: 1px solid #444; border-radius: 6px;">
                   <h4 style="margin:0; font-size:11px; color:var(--accent-gold);">${hourLabel}</h4>
-                  <div class="weather-symbol-display" style="font-size:18px; margin:2px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
+                  <div class="weather-symbol-display" style="font-size:20px; margin:2px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
                   <p style="margin:0; font-size:13px; font-weight:bold; color:#fff;">${temp}°C</p>
+                  <div style="font-size:10px; color:#aaa; margin-top:2px; display:flex; align-items:center; justify-content:center; gap:3px;">
+                    <span>💨 ${hWindSpeed}mph</span>
+                    <span style="transform: rotate(${hWindDeg}deg); display: inline-block; font-size:9px;" title="Wind from ${hWindText}">⬆️</span>
+                  </div>
                 </div>
               `;
 
               hourlyHTMLTab6 += `
-                <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; text-align: center; min-width: 85px; transition: all 0.5s ease; flex-shrink: 0;">
+                <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 100px; transition: all 0.5s ease; flex-shrink: 0;">
                   <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
-                  <div style="font-size: 22px; margin: 6px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
-                  <div style="font-size: 15px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
+                  <div style="font-size: 22px; margin: 4px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
+                  <div style="font-size: 14px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
+                  <div style="font-size: 11px; color: #ccc; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <span>💨 ${hWindSpeed}mph</span>
+                    <span style="transform: rotate(${hWindDeg}deg); display: inline-block; font-size:10px;" title="Wind from ${hWindText}">⬆️</span>
+                  </div>
                 </div>
               `;
             }
