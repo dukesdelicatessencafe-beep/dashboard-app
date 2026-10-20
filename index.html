@@ -665,6 +665,7 @@
         <div class="tab-content" style="width: 16.6667%;">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
+            <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">💡 Select any past date to automatically load existing Cash & Card totals from your sheet.</p>
             <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
               <div class="form-grid">
                 <div class="form-group">
@@ -2449,6 +2450,32 @@
         if (!isNaN(d.getTime())) {
           const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
           if ($("entryDay")) $("entryDay").value = days[d.getDay()];
+        }
+
+        // AUTO-LOOKUP EXISTING SHEET DATA FOR PAST DATES
+        const parsed = parseDateString(entryDateVal);
+        if (parsed && STATE.raw && STATE.raw.length > 0) {
+          const existing = STATE.raw.find(r => r.dateInt === parsed.dateInt);
+          if (existing) {
+            if ($("entryCash")) $("entryCash").value = (existing.cashCents / 100).toFixed(2);
+            if ($("entryCard")) $("entryCard").value = (existing.cardCents / 100).toFixed(2);
+            if ($("catIceCream")) $("catIceCream").value = ((existing.categories["ICE CREAM"] || 0) / 100).toFixed(2);
+            if ($("catCounter")) $("catCounter").value = ((existing.categories["COUNTER"] || 0) / 100).toFixed(2);
+            if ($("catKitchen")) $("catKitchen").value = ((existing.categories["Kitchen"] || 0) / 100).toFixed(2);
+            if ($("catDrink")) $("catDrink").value = ((existing.categories["DRINK"] || 0) / 100).toFixed(2);
+            if ($("catDeli")) $("catDeli").value = ((existing.categories["DELI"] || 0) / 100).toFixed(2);
+            if ($("catAlcohol")) $("catAlcohol").value = ((existing.categories["ALCOHOL"] || 0) / 100).toFixed(2);
+            toast("Loaded existing record for " + entryDateVal);
+          } else {
+            if ($("entryCash")) $("entryCash").value = "0.00";
+            if ($("entryCard")) $("entryCard").value = "0.00";
+            if ($("catIceCream")) $("catIceCream").value = "0.00";
+            if ($("catCounter")) $("catCounter").value = "0.00";
+            if ($("catKitchen")) $("catKitchen").value = "0.00";
+            if ($("catDrink")) $("catDrink").value = "0.00";
+            if ($("catDeli")) $("catDeli").value = "0.00";
+            if ($("catAlcohol")) $("catAlcohol").value = "0.00";
+          }
         }
       },
       stageDataEntry: async (e) => {
