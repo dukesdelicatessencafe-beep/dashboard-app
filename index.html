@@ -38,6 +38,7 @@
       margin: 0;
       padding: 12px;
       -webkit-text-size-adjust: 100%;
+      touch-action: pan-y; /* PRIORITIZE VERTICAL SCROLLING */
     }
 
     .hidden { display: none !important; }
@@ -105,6 +106,7 @@
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
       margin-bottom: 15px;
+      touch-action: pan-y;
     }
 
     .kpi-card {
@@ -112,6 +114,7 @@
       border-left: 4px solid var(--primary-gold);
       padding: 14px;
       border-radius: 4px;
+      touch-action: pan-y;
     }
 
     .kpi-card h3 {
@@ -204,6 +207,7 @@
       padding-top: 8px;
       border-top: 1px solid #333;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
     }
 
     .month-btn {
@@ -231,6 +235,7 @@
       border-radius: 8px;
       padding: 14px;
       margin-bottom: 15px;
+      touch-action: pan-y;
     }
 
     .weather-dashboard-section h3 {
@@ -261,6 +266,7 @@
       gap: 8px;
       overflow-x: auto;
       padding-bottom: 4px;
+      touch-action: pan-x;
     }
 
     .weather-slot {
@@ -284,7 +290,7 @@
     .weather-slot p { margin: 2px 0; font-size: 14px; font-weight: bold; color: #fff; }
     .weather-symbol-display { font-size: 22px; margin: 2px 0; display: block; }
 
-    #tabsWrapper { overflow: hidden; width: 100%; position: relative; }
+    #tabsWrapper { overflow: hidden; width: 100%; position: relative; touch-action: pan-y; }
     #tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; transition: transform 0.3s ease; }
 
     .tab-content {
@@ -293,6 +299,7 @@
       min-width: 0;
       box-sizing: border-box;
       padding: 0 2px;
+      touch-action: pan-y;
     }
 
     .entry-form-card {
@@ -303,6 +310,7 @@
       width: 100%;
       max-width: 100%;
       margin: 0 auto 15px auto;
+      touch-action: pan-y;
     }
 
     .entry-form-card h2 {
@@ -377,6 +385,7 @@
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 15px;
+      touch-action: pan-y;
     }
 
     .table-responsive {
@@ -387,6 +396,7 @@
       border: 1px solid #333;
       border-radius: 6px;
       background: var(--card-bg);
+      touch-action: pan-x pan-y;
     }
 
     table { width: 100%; border-collapse: collapse; background: var(--card-bg); font-size: 13px; white-space: nowrap; }
@@ -2966,7 +2976,7 @@
       let isScrollableInteraction = false;
 
       function handleStart(clientX, clientY, target) {
-        if (target.closest('#hourly-weather-container-tab6') || target.closest('button, input, select, a, textarea')) {
+        if (target.closest('#hourly-weather-container') || target.closest('#hourly-weather-container-tab6') || target.closest('.monthly-buttons-bar') || target.closest('button, input, select, a, textarea')) {
           isScrollableInteraction = true;
           return;
         }
@@ -2986,8 +2996,11 @@
         const xDiff = clientX - startX;
         const yDiff = clientY - startY;
 
-        // Less sensitive threshold: increased from 40px to 90px minimum horizontal distance
-        if (Math.abs(xDiff) > 90 && Math.abs(xDiff) > (Math.abs(yDiff) * 1.5)) {
+        // IGNORE SWIPES IF SIGNIFICANT VERTICAL SCROLL OCCURRED
+        if (Math.abs(yDiff) > 30) return;
+
+        // STRICT HORIZONTAL CHECK: 100px MIN DISTANCE & MUST BE 3X MORE HORIZONTAL THAN VERTICAL
+        if (Math.abs(xDiff) > 100 && Math.abs(xDiff) > (Math.abs(yDiff) * 3)) {
           const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
 
           let currentIndex = 0;
