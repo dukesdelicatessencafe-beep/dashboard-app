@@ -2457,6 +2457,22 @@
         const cash = parseFloat($("entryCash")?.value) || 0;
         const card = parseFloat($("entryCard")?.value) || 0;
         const combined = cash + card;
+
+        const catIceCream = parseFloat($("catIceCream")?.value) || 0;
+        const catCounter = parseFloat($("catCounter")?.value) || 0;
+        const catKitchen = parseFloat($("catKitchen")?.value) || 0;
+        const catDrink = parseFloat($("catDrink")?.value) || 0;
+        const catDeli = parseFloat($("catDeli")?.value) || 0;
+        const catAlcohol = parseFloat($("catAlcohol")?.value) || 0;
+
+        const categorySum = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
+
+        // CONDITIONAL MATCH VERIFICATION (Only triggers if category inputs are non-zero / edited)
+        if (categorySum > 0 && Math.abs(combined - categorySum) > 0.01) {
+          alert(`⚠️ Category Sum Verification Error:\n\nCategory Sum: £${categorySum.toFixed(2)}\nCash + Card Total: £${combined.toFixed(2)}\n\nPlease ensure category amounts equal the combined total (£${combined.toFixed(2)}) before submitting.`);
+          return;
+        }
+
         if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
         
         const selectedDate = $("entryDate")?.value || new Date().toISOString().split('T')[0];
@@ -2477,12 +2493,12 @@
           cash: cash,
           card: card,
           categories: {
-            iceCream: parseFloat($("catIceCream")?.value) || 0,
-            counter: parseFloat($("catCounter")?.value) || 0,
-            kitchen: parseFloat($("catKitchen")?.value) || 0,
-            drink: parseFloat($("catDrink")?.value) || 0,
-            deli: parseFloat($("catDeli")?.value) || 0,
-            alcohol: parseFloat($("catAlcohol")?.value) || 0
+            iceCream: catIceCream,
+            counter: catCounter,
+            kitchen: catKitchen,
+            drink: catDrink,
+            deli: catDeli,
+            alcohol: catAlcohol
           }
         };
         
