@@ -291,15 +291,15 @@
     .weather-symbol-display { font-size: 22px; margin: 2px 0; display: block; }
 
     #tabsWrapper { overflow: hidden; width: 100%; position: relative; touch-action: pan-y; }
-    #tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; transition: transform 0.3s ease; }
+    #tabs { display: flex; width: 600%; transition: transform 0.3s ease; align-items: flex-start; }
 
     .tab-content {
-      flex: 0 0 calc(100% / 7);
-      width: calc(100% / 7);
-      min-width: 0;
+      width: 16.6667%;
+      flex-shrink: 0;
       box-sizing: border-box;
       padding: 0 2px;
       touch-action: pan-y;
+      align-self: flex-start;
     }
 
     .entry-form-card {
@@ -544,10 +544,10 @@
 
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 600%;">
+      <div id="tabs">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="weather-dashboard-section">
             <h3>Eastbourne Weather Forecast</h3>
             <div id="daily-stats-container">
@@ -603,7 +603,7 @@
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="controls">
             <div class="controls-top-row">
               <div class="control-group">
@@ -672,7 +672,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">💡 Select any past date to automatically load existing Cash & Card totals from your sheet.</p>
@@ -725,7 +725,7 @@
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
@@ -764,7 +764,7 @@
         </div>
 
         <!-- TAB 4: BANKED -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
@@ -786,7 +786,7 @@
         </div>
 
         <!-- TAB 5: MOM & YOY ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content">
           <div class="entry-form-card">
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
@@ -2211,6 +2211,9 @@
           tabs.style.transform = `translateX(-${index * 100}%)`;
         }
 
+        // AUTOMATICALLY SCROLL TO TOP OF TAB ON SWITCH
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         for (let i = 0; i <= 6; i++) {
           const btn = document.getElementById(`navBtn-${i}`);
           if (btn) {
@@ -2805,6 +2808,8 @@
 
       window.openWeatherTab = function() {
         if (tab6) tab6.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         for (let i = 0; i <= 6; i++) {
           const btn = document.getElementById('navBtn-' + i);
           if (btn) btn.classList.toggle('active', i === 6);
