@@ -2331,7 +2331,7 @@
 
           if (bankedRecords.length > 0) {
             STATE.banked = bankedRecords;
-            localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
+            localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
             renderBankedTable();
           }
 
@@ -2986,7 +2986,8 @@
         const xDiff = clientX - startX;
         const yDiff = clientY - startY;
 
-        if (Math.abs(xDiff) > 40 && Math.abs(xDiff) > Math.abs(yDiff)) {
+        // Less sensitive threshold: increased from 40px to 90px minimum horizontal distance
+        if (Math.abs(xDiff) > 90 && Math.abs(xDiff) > (Math.abs(yDiff) * 1.5)) {
           const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
 
           let currentIndex = 0;
