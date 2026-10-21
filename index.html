@@ -1045,6 +1045,69 @@
       }
     }
 
+    /* PUSH NOTIFICATION & 20:00 SCHEDULER SYSTEM */
+    function initPushNotifications() {
+      if ('serviceWorker' in navigator && 'Notification' in window) {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+          console.log('Service Worker registered successfully:', reg);
+        }).catch(err => {
+          console.warn('Service Worker registration failed:', err);
+        });
+
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              console.log('Notification permission granted.');
+            }
+          });
+        }
+
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data && event.data.action === 'openTab') {
+            DashboardApp.switchTab(event.data.tabIndex);
+          }
+        });
+      }
+    }
+
+    function triggerSalesReminderNotification() {
+      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification("⚠️ Sales Entry Reminder", {
+            body: "Daily sales entry has not been completed for today! Tap to open Sales Entry Sheet.",
+            icon: "Logo.svg",
+            badge: "Logo.svg",
+            tag: "sales-entry-reminder",
+            renotify: true,
+            data: { url: window.location.origin + window.location.pathname + "?tab=2" }
+          });
+        });
+      }
+    }
+
+    function checkDailySalesEntryStatus() {
+      const ukNow = getUKTime();
+      const todayInt = ukNow.getFullYear() * 10000 + (ukNow.getMonth() + 1) * 100 + ukNow.getDate();
+      const todayStr = formatDateLocal(ukNow);
+      
+      const lastNotifiedDate = localStorage.getItem('last_sales_reminder_date');
+      if (lastNotifiedDate === todayStr) return;
+
+      const hasTodayRecord = STATE.raw && STATE.raw.some(r => r.dateInt === todayInt && (r.dailyTotalCents > 0 || r.cashCents > 0 || r.cardCents > 0));
+
+      if (!hasTodayRecord && ukNow.getHours() >= 20) {
+        triggerSalesReminderNotification();
+        localStorage.setItem('last_sales_reminder_date', todayStr);
+      }
+    }
+
+    function start2000Scheduler() {
+      checkDailySalesEntryStatus();
+      setInterval(() => {
+        checkDailySalesEntryStatus();
+      }, 60000); // Check every minute
+    }
+
     function getWeatherDescription(code) {
       const weatherMap = {
         0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -1650,13 +1713,10 @@
       const vatThresholdCents = 90000 * 100;
       const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
 
-      // ESTIMATE DAILY VELOCITY (LAST 30 DAYS) TO CALCULATE 30-DAY FORWARD LOOK
       const daysSpan = Math.max(1, (anchorDate - startLookback) / (1000 * 60 * 60 * 24));
       const dailyVelocityCents = rollingSumCents / daysSpan;
-      const est30DayCents = dailyVelocityCents * 30;
       const estBreachDays = dailyVelocityCents > 0 ? Math.ceil(remainingCentsToThreshold / dailyVelocityCents) : 999;
 
-      // DISPLAY ROLLING TOTAL & REMAINING MARGIN
       if (remainingCentsToThreshold > 0) {
         rollingEl.innerHTML = `${fmt(rollingSumCents)}<br><span style="font-size:12px; font-weight:bold; color:var(--accent-gold);">Margin Left: ${fmt(remainingCentsToThreshold)}</span>`;
       } else {
@@ -1667,7 +1727,6 @@
       const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
       if (vBar) vBar.style.width = vatProgress + "%";
 
-      // HMRC PROACTIVE REGISTRATION WARNING CRITERIA
       if (vatStatusEl) {
         if (remainingCentsToThreshold <= 0) {
           vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">🚨 THRESHOLD EXCEEDED - HMRC VAT REGISTRATION REQUIRED</span>`;
@@ -1675,13 +1734,11 @@
           if (vBar) vBar.className = "progress-bar-fill vat-danger";
         } 
         else if (remainingCentsToThreshold <= 500000 || estBreachDays <= 30) { 
-          // Less than £5,000 margin OR expected breach within 30 days
           vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">⚠️ REGISTRATION WARNING: Register prior to crossing £90k limit! (Est. ${estBreachDays} days left)</span>`;
           if (vatCard) vatCard.style.borderLeftColor = "#ff4d4d";
           if (vBar) vBar.className = "progress-bar-fill vat-danger";
         } 
         else if (remainingCentsToThreshold <= 1500000) { 
-          // Less than £15,000 margin
           vatStatusEl.innerHTML = `<span style="color:#ffcc00; font-weight:bold;">⚡ Approaching Threshold. Monitor daily sales closely.</span>`;
           if (vatCard) vatCard.style.borderLeftColor = "#ffcc00";
           if (vBar) vBar.className = "progress-bar-fill vat-warning";
@@ -2082,6 +2139,8 @@
     }
 
     async function load() {
+      initPushNotifications();
+
       const now = getUKTime();
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -2123,6 +2182,13 @@
       }
 
       updateTabsWrapperHeight();
+
+      // CHECK URL FOR DIRECT TAB DIRECTIVE (E.G. FROM PUSH NOTIFICATION CLICK)
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam !== null && !isNaN(tabParam)) {
+        DashboardApp.switchTab(parseInt(tabParam, 10));
+      }
 
       try {
         const currentYear = new Date().getFullYear();
@@ -2170,8 +2236,10 @@
         DashboardApp.applyOverviewRange();
         DashboardApp.applyAnalyticsRange();
         updateTabsWrapperHeight();
+        start2000Scheduler();
       } catch (err) {
         console.warn("Background fetch failed, using local cache:", err);
+        start2000Scheduler();
       }
     }
 
