@@ -310,8 +310,9 @@
       min-width: 16.6667%;
       flex: 0 0 16.6667%;
       box-sizing: border-box;
-      padding: 0 2px;
+      padding: 0 2px 15px 2px;
       touch-action: pan-y;
+      height: auto;
     }
 
     .entry-form-card {
@@ -402,7 +403,9 @@
 
     .table-responsive {
       width: 100%;
+      max-height: 350px;
       overflow-x: auto;
+      overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       margin-bottom: 15px;
       border: 1px solid #333;
@@ -3028,14 +3031,12 @@
           }
 
           if (xDiff < 0) {
-            // SWIPE LEFT -> NEXT TAB
             if (currentIndex < 5) {
               changeTab(currentIndex + 1);
             } else if (currentIndex === 5) {
               changeTab(6);
             }
           } else {
-            // SWIPE RIGHT -> PREVIOUS TAB
             if (currentIndex === 6) {
               changeTab(5);
             } else if (currentIndex > 0) {
