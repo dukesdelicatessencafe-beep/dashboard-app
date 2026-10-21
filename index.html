@@ -105,7 +105,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       touch-action: pan-y;
     }
 
@@ -475,94 +475,24 @@
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
 
-    <!-- KPI SUMMARY HEADER (Overview Tab Only) -->
-    <div id="kpiSection" class="kpi-row">
-      <div class="kpi-card" style="border-left-color: var(--pos-green);">
-        <h3>BANKING CONSOLIDATION</h3>
-        <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
-        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-            <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
-          </div>
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-            <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
-          </div>
-          <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
-        <div class="val" id="todayTargetVal">Syncing...</div>
-        <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
-      </div>
-
-      <div class="kpi-card" style="border-left-color: var(--primary-gold);">
-        <h3>ESTIMATED MONTH-END TOTAL</h3>
-        <div class="val" id="projectedMonthVal">Syncing...</div>
-        <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>ROLLING 12-MONTH TOTAL</h3>
-        <div class="val" id="rollingTotal">Syncing...</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" id="vatBar"></div>
-        </div>
-        <div class="subtext" id="vatStatus">Loading history...</div>
-      </div>
-
-      <div class="kpi-card" style="border-left-color: var(--accent-gold);">
-        <h3>CASH VS CARD SPLIT</h3>
-        <div class="val" id="cashCardVal">Syncing...</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>FINANCIAL YTD VS PREV FYTD</h3>
-        <div class="val" id="fytdCompVal">Syncing...</div>
-        <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CALENDAR YTD (JAN 1)</h3>
-        <div class="val" id="ytdSales">Syncing...</div>
-        <div class="subtext">Jan 1 - Today</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CURRENT MONTH VS PREV YR (%)</h3>
-        <div class="val" id="mthPctCompVal">Syncing...</div>
-        <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>CURRENT MONTH TARGET (+10%)</h3>
-        <div class="val" id="mthTargetVal">Syncing...</div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" id="mthTargetBar"></div>
-        </div>
-        <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>ACTIVE DAYS / RECORDS</h3>
-        <div class="val" id="products">Syncing...</div>
-      </div>
-
-      <div class="kpi-card">
-        <h3>TOP CATEGORY</h3>
-        <div class="val" id="top">Syncing...</div>
-      </div>
-    </div>
-
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
       <div id="tabs">
         
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" id="tabContent-0">
+          
+          <!-- 1. CURRENT CALENDAR MONTH TOTAL BANNER -->
+          <div class="entry-form-card" style="margin-bottom: 12px; border-left: 4px solid var(--primary-gold);">
+            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 15px;">
+              <span>Current Calendar Month Total</span>
+              <span id="currentMonthNameLabel" style="font-size: 12px; color: var(--accent-gold);">Current Month</span>
+            </h2>
+            <div style="font-size: 24px; font-weight: bold; color: var(--accent-gold); margin-bottom: 4px;" id="overviewMonthTotalVal">£0.00</div>
+            <div style="font-size: 12px; color: #aaa;" id="overviewMonthSpanSub">Automatic current month daily run rate</div>
+          </div>
+
+          <!-- 2. EASTBOURNE WEATHER FORECAST SECTION -->
           <div class="weather-dashboard-section">
             <h3>Eastbourne Weather Forecast</h3>
             <div id="daily-stats-container">
@@ -581,16 +511,14 @@
             </div>
           </div>
 
-          <!-- CURRENT MONTH OVERVIEW BANNER -->
-          <div class="entry-form-card" style="margin-bottom: 12px; border-left: 4px solid var(--primary-gold);">
-            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 15px;">
-              <span>Current Calendar Month Total</span>
-              <span id="currentMonthNameLabel" style="font-size: 12px; color: var(--accent-gold);">Current Month</span>
-            </h2>
-            <div style="font-size: 24px; font-weight: bold; color: var(--accent-gold); margin-bottom: 4px;" id="overviewMonthTotalVal">£0.00</div>
-            <div style="font-size: 12px; color: #aaa;" id="overviewMonthSpanSub">Automatic current month daily run rate</div>
+          <!-- 3. TODAY'S TARGET CARD -->
+          <div class="kpi-card" style="margin-bottom: 12px;">
+            <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
+            <div class="val" id="todayTargetVal">Syncing...</div>
+            <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
           </div>
 
+          <!-- 4. WEEKLY PERFORMANCE BREAKDOWN -->
           <div class="entry-form-card" style="margin-bottom: 12px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
@@ -609,6 +537,66 @@
                 <div style="font-size: 11px; color: #aaa;">Week-on-Week Diff</div>
                 <div id="wkDiffTotal" style="font-size: 16px; font-weight: bold;">£0.00</div>
               </div>
+            </div>
+          </div>
+
+          <!-- 5. REMAINING OVERVIEW KPI CARDS -->
+          <div id="kpiSection" class="kpi-row">
+            <div class="kpi-card" style="border-left-color: var(--primary-gold);">
+              <h3>ESTIMATED MONTH-END TOTAL</h3>
+              <div class="val" id="projectedMonthVal">Syncing...</div>
+              <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>ROLLING 12-MONTH TOTAL</h3>
+              <div class="val" id="rollingTotal">Syncing...</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="vatBar"></div>
+              </div>
+              <div class="subtext" id="vatStatus">Loading history...</div>
+            </div>
+
+            <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+              <h3>CASH VS CARD SPLIT</h3>
+              <div class="val" id="cashCardVal">Syncing...</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>FINANCIAL YTD VS PREV FYTD</h3>
+              <div class="val" id="fytdCompVal">Syncing...</div>
+              <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>CALENDAR YTD (JAN 1)</h3>
+              <div class="val" id="ytdSales">Syncing...</div>
+              <div class="subtext">Jan 1 - Today</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>CURRENT MONTH VS PREV YR (%)</h3>
+              <div class="val" id="mthPctCompVal">Syncing...</div>
+              <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>CURRENT MONTH TARGET (+10%)</h3>
+              <div class="val" id="mthTargetVal">Syncing...</div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="mthTargetBar"></div>
+              </div>
+              <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>ACTIVE DAYS / RECORDS</h3>
+              <div class="val" id="products">Syncing...</div>
+            </div>
+
+            <div class="kpi-card">
+              <h3>TOP CATEGORY</h3>
+              <div class="val" id="top">Syncing...</div>
             </div>
           </div>
 
@@ -780,6 +768,23 @@
 
         <!-- TAB 4: BANKED -->
         <div class="tab-content" id="tabContent-4">
+          <!-- BANKING CONSOLIDATION MOVED HERE -->
+          <div class="kpi-card" style="border-left-color: var(--pos-green); margin-bottom: 12px;">
+            <h3>BANKING CONSOLIDATION</h3>
+            <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
+                <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
+                <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
+              </div>
+              <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
+            </div>
+          </div>
+
           <div class="entry-form-card" style="margin-bottom: 0;">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
@@ -2252,15 +2257,6 @@
           const btn = document.getElementById(`navBtn-${i}`);
           if (btn) {
             btn.classList.toggle("active", i === index);
-          }
-        }
-
-        const kpiSection = $("kpiSection");
-        if (kpiSection) {
-          if (index === 0) {
-            kpiSection.classList.remove("hidden");
-          } else {
-            kpiSection.classList.add("hidden");
           }
         }
 
