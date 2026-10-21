@@ -234,7 +234,7 @@
       border: 1px solid var(--primary-gold);
       border-radius: 8px;
       padding: 14px;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       touch-action: pan-y;
     }
 
@@ -294,7 +294,8 @@
       overflow: hidden; 
       width: 100%; 
       position: relative; 
-      touch-action: pan-y; 
+      touch-action: pan-y;
+      transition: height 0.3s ease;
     }
 
     #tabs { 
@@ -310,9 +311,8 @@
       min-width: 16.6667%;
       flex: 0 0 16.6667%;
       box-sizing: border-box;
-      padding: 0 2px 15px 2px;
+      padding: 0 2px 4px 2px;
       touch-action: pan-y;
-      height: auto;
     }
 
     .entry-form-card {
@@ -322,7 +322,7 @@
       padding: 16px;
       width: 100%;
       max-width: 100%;
-      margin: 0 auto 15px auto;
+      margin: 0 auto 12px auto;
       touch-action: pan-y;
     }
 
@@ -338,7 +338,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
 
     .form-group { display: flex; flex-direction: column; }
@@ -397,7 +397,7 @@
       background: var(--card-bg);
       padding: 12px;
       border-radius: 8px;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       touch-action: pan-y;
     }
 
@@ -407,7 +407,7 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       border: 1px solid #333;
       border-radius: 6px;
       background: var(--card-bg);
@@ -582,7 +582,7 @@
           </div>
 
           <!-- CURRENT MONTH OVERVIEW BANNER -->
-          <div class="entry-form-card" style="margin-bottom: 15px; border-left: 4px solid var(--primary-gold);">
+          <div class="entry-form-card" style="margin-bottom: 12px; border-left: 4px solid var(--primary-gold);">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 15px;">
               <span>Current Calendar Month Total</span>
               <span id="currentMonthNameLabel" style="font-size: 12px; color: var(--accent-gold);">Current Month</span>
@@ -591,7 +591,7 @@
             <div style="font-size: 12px; color: #aaa;" id="overviewMonthSpanSub">Automatic current month daily run rate</div>
           </div>
 
-          <div class="entry-form-card" style="margin-bottom: 15px;">
+          <div class="entry-form-card" style="margin-bottom: 12px;">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
               <span>Weekly Performance Breakdown (Mon - Sun)</span>
               <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
@@ -612,7 +612,7 @@
             </div>
           </div>
 
-          <div class="chart-container">
+          <div class="chart-container" style="margin-bottom: 0;">
             <canvas id="barChart"></canvas>
           </div>
         </div>
@@ -671,7 +671,7 @@
           </div>
 
           <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
-          <div class="table-responsive">
+          <div class="table-responsive" style="margin-bottom: 0;">
             <table>
               <thead>
                 <tr>
@@ -688,7 +688,7 @@
 
         <!-- TAB 2: SALES ENTRY SHEET -->
         <div class="tab-content" id="tabContent-2">
-          <div class="entry-form-card">
+          <div class="entry-form-card" style="margin-bottom: 0;">
             <h2>SALES ENTRY SHEET</h2>
             <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">💡 Select any past date to automatically load existing Cash & Card totals from your sheet.</p>
             <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
@@ -741,7 +741,7 @@
 
         <!-- TAB 3: ACCOUNTING -->
         <div class="tab-content" id="tabContent-3">
-          <div class="entry-form-card">
+          <div class="entry-form-card" style="margin-bottom: 0;">
             <h2>Accounting & Financial Year Export</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
             
@@ -755,7 +755,7 @@
               </div>
             </div>
 
-            <div class="table-responsive" style="max-height: 380px;">
+            <div class="table-responsive" style="max-height: 380px; margin-bottom: 0;">
               <table>
                 <thead>
                   <tr>
@@ -780,11 +780,11 @@
 
         <!-- TAB 4: BANKED -->
         <div class="tab-content" id="tabContent-4">
-          <div class="entry-form-card">
+          <div class="entry-form-card" style="margin-bottom: 0;">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
             
-            <div class="table-responsive" style="max-height: 400px;">
+            <div class="table-responsive" style="max-height: 400px; margin-bottom: 0;">
               <table>
                 <thead>
                   <tr>
@@ -802,7 +802,7 @@
 
         <!-- TAB 5: MOM & YOY ANALYTICS -->
         <div class="tab-content" id="tabContent-5">
-          <div class="entry-form-card">
+          <div class="entry-form-card" style="margin-bottom: 0;">
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
             
@@ -833,7 +833,7 @@
               </table>
             </div>
             <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
-            <div class="table-responsive mom-container" style="max-height: 380px;">
+            <div class="table-responsive mom-container" style="max-height: 380px; margin-bottom: 0;">
               <table>
                 <thead>
                   <tr>
@@ -1030,6 +1030,14 @@
       return { year: y, month: m, day: d, dateInt, dateObj };
     };
 
+    function updateTabsWrapperHeight() {
+      const activeContent = document.getElementById(`tabContent-${STATE.activeTabIndex}`);
+      const wrapper = document.getElementById('tabsWrapper');
+      if (activeContent && wrapper) {
+        wrapper.style.height = activeContent.scrollHeight + 'px';
+      }
+    }
+
     function getWeatherDescription(code) {
       const weatherMap = {
         0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -1215,6 +1223,7 @@
 
       if (!STATE.banked || STATE.banked.length === 0) {
         tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #aaa;">No banked records found in sheet.</td></tr>`;
+        updateTabsWrapperHeight();
         return;
       }
 
@@ -1227,6 +1236,7 @@
         `;
         tbody.appendChild(tr);
       });
+      updateTabsWrapperHeight();
     }
 
     function renderBankingKPI(allRecords) {
@@ -1757,6 +1767,7 @@
       renderWeeklySummary(STATE.raw);
       renderBarChart(records);
       renderBankedTable();
+      updateTabsWrapperHeight();
     }
 
     function renderAnalyticsDashboard(records) {
@@ -1832,6 +1843,7 @@
       }
 
       renderSalesChart(records);
+      updateTabsWrapperHeight();
     }
 
     function renderBarChart(records) {
@@ -2088,6 +2100,8 @@
         DashboardApp.applyAnalyticsRange();
       }
 
+      updateTabsWrapperHeight();
+
       try {
         const currentYear = new Date().getFullYear();
         STATE.currentYear = currentYear;
@@ -2133,6 +2147,7 @@
 
         DashboardApp.applyOverviewRange();
         DashboardApp.applyAnalyticsRange();
+        updateTabsWrapperHeight();
       } catch (err) {
         console.warn("Background fetch failed, using local cache:", err);
       }
@@ -2231,6 +2246,7 @@
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        updateTabsWrapperHeight();
 
         for (let i = 0; i <= 6; i++) {
           const btn = document.getElementById(`navBtn-${i}`);
@@ -2366,6 +2382,7 @@
           initBankedLock();
           DashboardApp.applyOverviewRange();
           DashboardApp.applyAnalyticsRange();
+          updateTabsWrapperHeight();
 
           toast("Data refreshed successfully!");
         } catch (err) {
@@ -2612,6 +2629,7 @@
         const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
         if (filtered.length === 0) {
           tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}.</td></tr>`;
+          updateTabsWrapperHeight();
           return;
         }
 
@@ -2633,6 +2651,7 @@
           `;
           tbody.appendChild(tr);
         });
+        updateTabsWrapperHeight();
       },
       exportAccountingCSV: () => {
         const select = $("accFySelect");
@@ -2720,6 +2739,7 @@
 
           prevMonthRev = revCur;
         });
+        updateTabsWrapperHeight();
       },
       exportMomYoyCSV: () => {
         const select = $("momYoyYearSelect");
@@ -2767,6 +2787,8 @@
         setTimeout(() => { document.body.classList.remove("printing-analytics"); }, 1000);
       }
     };
+
+    window.addEventListener('resize', updateTabsWrapperHeight);
   </script>
 
   <!-- MOBILE SWIPE & WEATHER TICKER SCRIPT -->
