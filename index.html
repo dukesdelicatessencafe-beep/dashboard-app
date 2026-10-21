@@ -38,7 +38,7 @@
       margin: 0;
       padding: 12px;
       -webkit-text-size-adjust: 100%;
-      touch-action: pan-y; /* PRIORITIZE VERTICAL SCROLLING */
+      touch-action: pan-y;
     }
 
     .hidden { display: none !important; }
@@ -290,13 +290,25 @@
     .weather-slot p { margin: 2px 0; font-size: 14px; font-weight: bold; color: #fff; }
     .weather-symbol-display { font-size: 22px; margin: 2px 0; display: block; }
 
-    #tabsWrapper { overflow: hidden; width: 100%; position: relative; touch-action: pan-y; }
-    #tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; transition: transform 0.3s ease; }
+    #tabsWrapper { 
+      overflow: hidden; 
+      width: 100%; 
+      position: relative; 
+      touch-action: pan-y; 
+    }
+
+    #tabs { 
+      display: flex; 
+      width: 600%; 
+      transition: transform 0.3s ease-in-out; 
+      align-items: flex-start;
+      will-change: transform;
+    }
 
     .tab-content {
-      flex: 0 0 calc(100% / 7);
-      width: calc(100% / 7);
-      min-width: 0;
+      width: 16.6667%;
+      min-width: 16.6667%;
+      flex: 0 0 16.6667%;
       box-sizing: border-box;
       padding: 0 2px;
       touch-action: pan-y;
@@ -544,10 +556,10 @@
 
     <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
-      <div id="tabs" style="width: 600%;">
+      <div id="tabs">
         
         <!-- TAB 0: OVERVIEW -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-0">
           <div class="weather-dashboard-section">
             <h3>Eastbourne Weather Forecast</h3>
             <div id="daily-stats-container">
@@ -603,7 +615,7 @@
         </div>
 
         <!-- TAB 1: ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-1">
           <div class="controls">
             <div class="controls-top-row">
               <div class="control-group">
@@ -672,7 +684,7 @@
         </div>
 
         <!-- TAB 2: SALES ENTRY SHEET -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-2">
           <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
             <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">💡 Select any past date to automatically load existing Cash & Card totals from your sheet.</p>
@@ -725,7 +737,7 @@
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-3">
           <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
@@ -764,7 +776,7 @@
         </div>
 
         <!-- TAB 4: BANKED -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-4">
           <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
@@ -786,7 +798,7 @@
         </div>
 
         <!-- TAB 5: MOM & YOY ANALYTICS -->
-        <div class="tab-content" style="width: 16.6667%;">
+        <div class="tab-content" id="tabContent-5">
           <div class="entry-form-card">
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
@@ -914,7 +926,8 @@
       barChart: null,
       salesChart: null,
       pendingPayload: null,
-      currentYear: new Date().getFullYear()
+      currentYear: new Date().getFullYear(),
+      activeTabIndex: 0
     };
 
     const $ = (id) => document.getElementById(id);
@@ -2206,19 +2219,20 @@
         }
       },
       switchTab(index) {
+        if (index < 0 || index > 6) return;
+        STATE.activeTabIndex = index;
+
         const tabs = document.getElementById("tabs");
         if (tabs) {
-          tabs.style.transform = `translateX(-${index * 100}%)`;
+          tabs.style.transform = `translateX(-${(index % 6) * 16.6667}%)`;
         }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         for (let i = 0; i <= 6; i++) {
           const btn = document.getElementById(`navBtn-${i}`);
           if (btn) {
-            if (i === index) {
-              btn.classList.add("active");
-            } else {
-              btn.classList.remove("active");
-            }
+            btn.classList.toggle("active", i === index);
           }
         }
 
@@ -2462,7 +2476,6 @@
           if ($("entryDay")) $("entryDay").value = days[d.getDay()];
         }
 
-        // AUTO-LOOKUP EXISTING SHEET DATA FOR PAST DATES
         const parsed = parseDateString(entryDateVal);
         if (parsed && STATE.raw && STATE.raw.length > 0) {
           const existing = STATE.raw.find(r => r.dateInt === parsed.dateInt);
@@ -2504,7 +2517,6 @@
 
         const categorySum = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
 
-        // CONDITIONAL MATCH VERIFICATION (Only triggers if category inputs are non-zero / edited)
         if (categorySum > 0 && Math.abs(combined - categorySum) > 0.01) {
           alert(`⚠️ Category Sum Verification Error:\n\nCategory Sum: £${categorySum.toFixed(2)}\nCash + Card Total: £${combined.toFixed(2)}\n\nPlease ensure category amounts equal the combined total (£${combined.toFixed(2)}) before submitting.`);
           return;
@@ -2805,6 +2817,8 @@
 
       window.openWeatherTab = function() {
         if (tab6) tab6.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         for (let i = 0; i <= 6; i++) {
           const btn = document.getElementById('navBtn-' + i);
           if (btn) btn.classList.toggle('active', i === 6);
@@ -2996,27 +3010,13 @@
         const xDiff = clientX - startX;
         const yDiff = clientY - startY;
 
-        // IGNORE SWIPES IF SIGNIFICANT VERTICAL SCROLL OCCURRED
-        if (Math.abs(yDiff) > 30) return;
+        if (Math.abs(yDiff) > 40) return;
 
-        // STRICT HORIZONTAL CHECK: 100px MIN DISTANCE & MUST BE 3X MORE HORIZONTAL THAN VERTICAL
-        if (Math.abs(xDiff) > 100 && Math.abs(xDiff) > (Math.abs(yDiff) * 3)) {
+        if (Math.abs(xDiff) > 60 && Math.abs(xDiff) > (Math.abs(yDiff) * 2)) {
           const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
+          let currentIndex = isWeatherOpen ? 6 : STATE.activeTabIndex;
 
-          let currentIndex = 0;
-          if (isWeatherOpen) {
-            currentIndex = 6;
-          } else {
-            for (let i = 0; i <= 5; i++) {
-              const btn = document.getElementById('navBtn-' + i);
-              if (btn && (btn.classList.contains('active') || btn.classList.contains('selected') || btn.getAttribute('aria-selected') === 'true')) {
-                currentIndex = i;
-                break;
-              }
-            }
-          }
-
-          function switchTab(idx) {
+          function changeTab(idx) {
             if (idx === 6) {
               window.openWeatherTab();
             } else {
@@ -3028,20 +3028,18 @@
           }
 
           if (xDiff < 0) {
-            if (currentIndex === 6) {
-              switchTab(5);
-            } else if (currentIndex === 0) {
-              switchTab(6);
-            } else if (currentIndex > 0 && currentIndex <= 5) {
-              switchTab(currentIndex - 1);
+            // SWIPE LEFT -> NEXT TAB
+            if (currentIndex < 5) {
+              changeTab(currentIndex + 1);
+            } else if (currentIndex === 5) {
+              changeTab(6);
             }
           } else {
+            // SWIPE RIGHT -> PREVIOUS TAB
             if (currentIndex === 6) {
-              switchTab(0);
-            } else if (currentIndex === 5) {
-              switchTab(6);
-            } else if (currentIndex < 5) {
-              switchTab(currentIndex + 1);
+              changeTab(5);
+            } else if (currentIndex > 0) {
+              changeTab(currentIndex - 1);
             }
           }
         }
