@@ -147,7 +147,8 @@
     }
 
     .progress-bar-fill { height: 100%; background-color: var(--primary-gold); width: 0%; transition: width 0.4s ease; }
-    .progress-bar-fill.vat-warning { background-color: var(--neg-red); }
+    .progress-bar-fill.vat-warning { background-color: #ffcc00; }
+    .progress-bar-fill.vat-danger { background-color: var(--neg-red); }
     .progress-bar-fill.success { background-color: var(--pos-green); }
 
     .controls {
@@ -548,8 +549,9 @@
               <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
             </div>
 
-            <div class="kpi-card">
-              <h3>ROLLING 12-MONTH TOTAL</h3>
+            <!-- ENHANCED ROLLING 12-MONTH TURNOVER & VAT THRESHOLD MONITOR -->
+            <div class="kpi-card" id="vatCard">
+              <h3>ROLLING 12-MONTH TOTAL (£90K VAT LIMIT)</h3>
               <div class="val" id="rollingTotal">Syncing...</div>
               <div class="progress-bar-container">
                 <div class="progress-bar-fill" id="vatBar"></div>
@@ -1615,6 +1617,7 @@
     function renderRolling12MonthKPI(allRecords) {
       const rollingEl = $("rollingTotal");
       const vatStatusEl = $("vatStatus");
+      const vatCard = $("vatCard");
       if (!rollingEl) return;
 
       if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
@@ -1644,36 +1647,50 @@
         }
       }
 
-      rollingEl.innerText = fmt(rollingSumCents);
-
       const vatThresholdCents = 90000 * 100;
-      if (vatStatusEl) {
-        if (rollingSumCents >= vatThresholdCents) {
-          vatStatusEl.innerText = "⚠ VAT Threshold Reached (£90k)";
-          vatStatusEl.style.color = "#ff4d4d";
-        } else {
-          const daysSpan = (anchorDate - startLookback) / (1000 * 60 * 60 * 24);
-          const dailyVelocity = rollingSumCents / Math.max(1, daysSpan);
-          const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
-          
-          if (dailyVelocity > 0) {
-            const daysToBreach = Math.ceil(remainingCentsToThreshold / dailyVelocity);
-            const breachDate = new Date(anchorDate);
-            breachDate.setDate(breachDate.getDate() + daysToBreach);
-            vatStatusEl.innerText = `Est. Breach: ${breachDate.toLocaleDateString("en-GB")}`;
-            vatStatusEl.style.color = "#ffcc00";
-          } else {
-            vatStatusEl.innerText = "Safe (Below £90,000)";
-            vatStatusEl.style.color = "#4cd137";
-          }
-        }
+      const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
+
+      // ESTIMATE DAILY VELOCITY (LAST 30 DAYS) TO CALCULATE 30-DAY FORWARD LOOK
+      const daysSpan = Math.max(1, (anchorDate - startLookback) / (1000 * 60 * 60 * 24));
+      const dailyVelocityCents = rollingSumCents / daysSpan;
+      const est30DayCents = dailyVelocityCents * 30;
+      const estBreachDays = dailyVelocityCents > 0 ? Math.ceil(remainingCentsToThreshold / dailyVelocityCents) : 999;
+
+      // DISPLAY ROLLING TOTAL & REMAINING MARGIN
+      if (remainingCentsToThreshold > 0) {
+        rollingEl.innerHTML = `${fmt(rollingSumCents)}<br><span style="font-size:12px; font-weight:bold; color:var(--accent-gold);">Margin Left: ${fmt(remainingCentsToThreshold)}</span>`;
+      } else {
+        rollingEl.innerHTML = `${fmt(rollingSumCents)}<br><span style="font-size:12px; font-weight:bold; color:var(--neg-red);">Over Limit by ${fmt(-remainingCentsToThreshold)}</span>`;
       }
 
-      const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
       const vBar = $("vatBar");
-      if (vBar) {
-        vBar.style.width = vatProgress + "%";
-        vBar.className = "progress-bar-fill " + (rollingSumCents >= vatThresholdCents ? "vat-warning" : "");
+      const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
+      if (vBar) vBar.style.width = vatProgress + "%";
+
+      // HMRC PROACTIVE REGISTRATION WARNING CRITERIA
+      if (vatStatusEl) {
+        if (remainingCentsToThreshold <= 0) {
+          vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">🚨 THRESHOLD EXCEEDED - HMRC VAT REGISTRATION REQUIRED</span>`;
+          if (vatCard) vatCard.style.borderLeftColor = "var(--neg-red)";
+          if (vBar) vBar.className = "progress-bar-fill vat-danger";
+        } 
+        else if (remainingCentsToThreshold <= 500000 || estBreachDays <= 30) { 
+          // Less than £5,000 margin OR expected breach within 30 days
+          vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">⚠️ REGISTRATION WARNING: Register prior to crossing £90k limit! (Est. ${estBreachDays} days left)</span>`;
+          if (vatCard) vatCard.style.borderLeftColor = "#ff4d4d";
+          if (vBar) vBar.className = "progress-bar-fill vat-danger";
+        } 
+        else if (remainingCentsToThreshold <= 1500000) { 
+          // Less than £15,000 margin
+          vatStatusEl.innerHTML = `<span style="color:#ffcc00; font-weight:bold;">⚡ Approaching Threshold. Monitor daily sales closely.</span>`;
+          if (vatCard) vatCard.style.borderLeftColor = "#ffcc00";
+          if (vBar) vBar.className = "progress-bar-fill vat-warning";
+        } 
+        else {
+          vatStatusEl.innerHTML = `<span style="color:#4cd137;">Safe: Buffer remaining (${fmt(remainingCentsToThreshold)})</span>`;
+          if (vatCard) vatCard.style.borderLeftColor = "var(--primary-gold)";
+          if (vBar) vBar.className = "progress-bar-fill";
+        }
       }
     }
 
