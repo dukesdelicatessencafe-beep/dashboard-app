@@ -3,20 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sales & Analytics Dashboard with Secure Login</title>
-  <link rel="manifest" href="manifest.json">
+  <title>Sales & Analytics Dashboard - Full Suite</title>
   
   <!-- CHART.JS LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <!-- EARLY GLOBAL PLACEHOLDER TO PREVENT TIMING ERRORS -->
-  <script>
-    window.DashboardApp = window.DashboardApp || {
-      login: function() {
-        alert("Dashboard is still loading in the background. Please wait a moment and try again.");
-      }
-    };
-  </script>
 
   <style>
     :root {
@@ -38,7 +28,6 @@
       margin: 0;
       padding: 12px;
       -webkit-text-size-adjust: 100%;
-      touch-action: pan-y;
     }
 
     .hidden { display: none !important; }
@@ -79,18 +68,28 @@
 
     button:hover { background: var(--accent-gold); }
 
+    .nav-bar-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     #nav {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 15px;
       flex-wrap: wrap;
+      flex: 1;
     }
 
     #nav button {
       background: var(--primary-gold);
       color: #000;
-      padding: 10px 14px;
-      font-size: 14px;
+      padding: 8px 12px;
+      font-size: 12px;
       flex: 1 1 auto;
       text-align: center;
     }
@@ -101,12 +100,21 @@
       color: #000;
     }
 
+    #syncStatus {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
     .kpi-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
       margin-bottom: 12px;
-      touch-action: pan-y;
     }
 
     .kpi-card {
@@ -114,7 +122,6 @@
       border-left: 4px solid var(--primary-gold);
       padding: 14px;
       border-radius: 4px;
-      touch-action: pan-y;
     }
 
     .kpi-card h3 {
@@ -130,8 +137,7 @@
       line-height: 1.2;
     }
 
-    .kpi-card .subtext, .kpi-card label, .kpi-card div { font-size: 13px; }
-    .kpi-card .subtext { color: #aaa; margin-top: 4px; }
+    .kpi-card .subtext { color: #aaa; margin-top: 4px; font-size: 13px; }
 
     .positive { color: var(--pos-green); }
     .negative { color: var(--neg-red); }
@@ -149,191 +155,47 @@
     .progress-bar-fill { height: 100%; background-color: var(--primary-gold); width: 0%; transition: width 0.4s ease; }
     .progress-bar-fill.vat-warning { background-color: #ffcc00; }
     .progress-bar-fill.vat-danger { background-color: var(--neg-red); }
-    .progress-bar-fill.success { background-color: var(--pos-green); }
 
-    .controls {
+    #vatModal, #verifyModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 15px;
-      background: var(--card-bg);
-      padding: 14px;
-      border-radius: 8px;
-      border: 1px solid #333;
-    }
-
-    .controls-top-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      justify-content: center;
       align-items: center;
-      width: 100%;
+      z-index: 1002;
+      padding: 15px;
     }
 
-    .controls input[type="date"] {
-      background: #2a2a2a;
-      border: 1px solid var(--primary-gold);
-      color: #fff;
-      padding: 8px;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex: 1 1 auto;
-    }
-
-    .week-buttons-container {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      width: 100%;
-    }
-
-    .week-buttons-container button {
-      padding: 8px 10px;
-      font-size: 12px;
-      flex: 1 1 auto;
-    }
-
-    .monthly-buttons-bar {
-      display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      gap: 6px;
-      width: 100%;
-      padding-top: 8px;
-      border-top: 1px solid #333;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-x;
-    }
-
-    .month-btn {
-      background-color: var(--accent-gold);
-      color: #000;
-      border: 1px solid var(--primary-gold);
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 12px;
-      white-space: nowrap;
-      flex: 0 0 auto;
-      text-align: center;
-    }
-
-    .month-btn:hover, .month-btn.active {
-      background-color: var(--primary-gold);
-      color: #fff;
-    }
-
-    .weather-dashboard-section {
+    .modal-card {
       background: var(--card-bg);
-      border: 1px solid var(--primary-gold);
+      border: 2px solid var(--primary-gold);
+      padding: 24px;
       border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 12px;
-      touch-action: pan-y;
+      width: 100%;
+      max-width: 450px;
+      text-align: left;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
-    .weather-dashboard-section h3 {
-      color: var(--accent-gold);
-      font-size: 14px;
-      margin-top: 0;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #333;
-      padding-bottom: 6px;
-    }
+    .modal-card h3 { color: var(--primary-gold); margin-top: 0; margin-bottom: 15px; text-align: center; }
+    .checklist-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: #ddd; }
+    .checklist-item input { margin-top: 2px; accent-color: var(--primary-gold); width: 18px; height: 18px; cursor: pointer; }
 
-    #daily-stats-container {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      background: #2a2a2a;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-
-    #daily-stats-container p { margin: 0; color: #aaa; }
-    #daily-stats-container span { color: var(--accent-gold); font-weight: bold; }
-
-    #hourly-weather-container {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      touch-action: pan-x;
-    }
-
-    .weather-slot {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      padding: 8px;
-      border-radius: 6px;
-      text-align: center;
-      flex: 0 0 95px;
-    }
-
-    .weather-slot h4 {
-      margin: 0 0 4px 0;
-      font-size: 11px;
-      color: var(--accent-gold);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .weather-slot p { margin: 2px 0; font-size: 14px; font-weight: bold; color: #fff; }
-    .weather-symbol-display { font-size: 22px; margin: 2px 0; display: block; }
-
-    #tabsWrapper { 
-      overflow: hidden; 
-      width: 100%; 
-      position: relative; 
-      touch-action: pan-y;
-      transition: height 0.3s ease;
-    }
-
-    #tabs { 
-      display: flex; 
-      width: 600%; 
-      transition: transform 0.3s ease-in-out; 
-      align-items: flex-start;
-      will-change: transform;
-    }
-
-    .tab-content {
-      width: 16.6667%;
-      min-width: 16.6667%;
-      flex: 0 0 16.6667%;
-      box-sizing: border-box;
-      padding: 0 2px 4px 2px;
-      touch-action: pan-y;
-    }
+    #tabsWrapper { overflow: hidden; width: 100%; position: relative; }
+    #tabs { display: flex; width: 700%; transition: transform 0.3s ease-in-out; }
+    .tab-content { width: 14.2857%; min-width: 14.2857%; flex: 0 0 14.2857%; box-sizing: border-box; padding: 0 2px; }
 
     .entry-form-card {
       background: var(--card-bg);
       border: 1px solid var(--primary-gold);
       border-radius: 8px;
       padding: 16px;
-      width: 100%;
-      max-width: 100%;
-      margin: 0 auto 12px auto;
-      touch-action: pan-y;
+      margin-bottom: 12px;
     }
 
-    .entry-form-card h2 {
-      color: var(--primary-gold);
-      margin-top: 0;
-      font-size: 18px;
-      border-bottom: 1px solid #333;
-      padding-bottom: 8px;
-    }
+    .entry-form-card h2 { color: var(--primary-gold); margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 8px; }
 
     .form-grid {
       display: grid;
@@ -354,43 +216,6 @@
       width: 100%;
     }
 
-    #verifyModal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1002;
-      padding: 15px;
-    }
-
-    .modal-card {
-      background: var(--card-bg);
-      border: 2px solid var(--primary-gold);
-      padding: 24px;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 340px;
-      text-align: center;
-    }
-
-    .modal-card h3 { color: var(--primary-gold); margin-top: 0; margin-bottom: 15px; }
-
-    .modal-total-display {
-      font-size: 26px;
-      font-weight: bold;
-      color: var(--accent-gold);
-      background: #2a2a2a;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      border: 1px solid #444;
-    }
-
-    .modal-buttons { display: flex; gap: 10px; justify-content: center; }
-    .modal-buttons button { flex: 1; }
-
     .chart-container {
       position: relative;
       height: 280px;
@@ -399,7 +224,6 @@
       padding: 12px;
       border-radius: 8px;
       margin-bottom: 12px;
-      touch-action: pan-y;
     }
 
     .table-responsive {
@@ -407,12 +231,10 @@
       max-height: 350px;
       overflow-x: auto;
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
       margin-bottom: 12px;
       border: 1px solid #333;
       border-radius: 6px;
       background: var(--card-bg);
-      touch-action: pan-x pan-y;
     }
 
     table { width: 100%; border-collapse: collapse; background: var(--card-bg); font-size: 13px; white-space: nowrap; }
@@ -423,14 +245,12 @@
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.7);
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       font-size: 18px;
       color: var(--accent-gold);
       z-index: 1000;
-      padding: 20px;
-      text-align: center;
     }
 
     #toast {
@@ -449,117 +269,59 @@
       z-index: 1001;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
+    #toast.show { display: block; }
   </style>
 </head>
 <body>
 
   <!-- LOGIN SCREEN -->
   <div id="login">
-    <img src="Logo.svg" alt="Dashboard Logo" style="max-width: 250px; height: auto; margin: 0 auto 15px auto; display: block;">
     <h2 style="color: var(--primary-gold); margin-top: 0;">Secure Dashboard Login</h2>
-    <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') DashboardApp.login()">
-    <button onclick="DashboardApp.login()" style="width: 100%;">Login Securely</button>
+    <input type="password" id="pass" placeholder="Enter Password" onkeypress="if(event.key === 'Enter') App.login()">
+    <button onclick="App.login()" style="width: 100%;">Login Securely</button>
   </div>
 
-  <!-- NAVIGATION WITH REFRESH BUTTON -->
-  <div id="nav" class="hidden">
-    <button id="navBtn-0" onclick="DashboardApp.switchTab(0)">OVERVIEW</button>
-    <button id="navBtn-1" onclick="DashboardApp.switchTab(1)">ANALYTICS</button>
-    <button id="navBtn-2" onclick="DashboardApp.switchTab(2)">SALES ENTRY</button>
-    <button id="navBtn-3" onclick="DashboardApp.switchTab(3)">ACCOUNTING</button>
-    <button id="navBtn-4" onclick="DashboardApp.switchTab(4)">BANKING</button>
-    <button id="navBtn-5" onclick="DashboardApp.switchTab(5)">MOM & YOY</button>
-    <button id="navBtn-6" type="button">WEATHER</button>
-    <button type="button" onclick="DashboardApp.refreshData()" style="background: var(--accent-gold); color: #000; font-weight: bold; border: 1px solid var(--primary-gold);">🔄 Refresh Data</button>
+  <!-- NAVIGATION & OFFLINE STATUS -->
+  <div class="nav-bar-container hidden" id="navContainer">
+    <div id="nav">
+      <button id="navBtn-0" onclick="App.switchTab(0)" class="active">Overview</button>
+      <button id="navBtn-1" onclick="App.switchTab(1)">Analytics</button>
+      <button id="navBtn-2" onclick="App.switchTab(2)">Sales Entry</button>
+      <button id="navBtn-3" onclick="App.switchTab(3)">Accounting</button>
+      <button id="navBtn-4" onclick="App.switchTab(4)">Banking</button>
+      <button id="navBtn-5" onclick="App.switchTab(5)">MoM & YoY</button>
+      <button id="navBtn-6" onclick="App.openWeatherTab()">Weather</button>
+      <button onclick="App.refreshData()">🔄</button>
+    </div>
+    <div id="syncStatus">🟢 Online</div>
   </div>
 
   <!-- MAIN APP WRAPPER -->
   <div id="app" class="hidden">
-
-    <!-- TABS CONTAINER -->
     <div id="tabsWrapper">
       <div id="tabs">
         
         <!-- TAB 0: OVERVIEW -->
         <div class="tab-content" id="tabContent-0">
-          
-          <!-- 1. CURRENT CALENDAR MONTH TOTAL BANNER -->
           <div class="entry-form-card" style="margin-bottom: 12px; border-left: 4px solid var(--primary-gold);">
             <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 15px;">
               <span>Current Calendar Month Total</span>
               <span id="currentMonthNameLabel" style="font-size: 12px; color: var(--accent-gold);">Current Month</span>
             </h2>
             <div style="font-size: 24px; font-weight: bold; color: var(--accent-gold); margin-bottom: 4px;" id="overviewMonthTotalVal">£0.00</div>
-            <div style="font-size: 12px; color: #aaa;" id="overviewMonthSpanSub">Automatic current month daily run rate</div>
           </div>
 
-          <!-- 2. EASTBOURNE WEATHER FORECAST SECTION -->
-          <div class="weather-dashboard-section">
-            <h3>Eastbourne Weather Forecast</h3>
-            <div id="daily-stats-container">
-                <p><span id="daily-weather-symbol" style="font-size:1.2rem;">🌤</span> <span id="daily-weather-name" style="color:var(--accent-gold); font-weight:bold;">Loading...</span></p>
-                <p>Max: <span id="max-temp">--</span>°C</p>
-                <p>Min: <span id="min-temp">--</span>°C</p>
-                <p>Rain: <span id="precipitation">--</span> mm</p>
-                <p>Wind: <span id="wind-speed">--</span> mph</p>
-            </div>
-            <div id="hourly-weather-container">
-                <div class="weather-slot">
-                    <h4>Current</h4>
-                    <div class="weather-symbol-display">☀️</div>
-                    <p>--°C</p>
-                </div>
-            </div>
-          </div>
-
-          <!-- 3. TODAY'S TARGET CARD -->
-          <div class="kpi-card" style="margin-bottom: 12px;">
-            <h3>TODAY TARGET (REMAINDER OF MONTH)</h3>
-            <div class="val" id="todayTargetVal">Syncing...</div>
-            <div class="subtext" id="todayTargetSub">Daily pacing to hit +10% goal</div>
-          </div>
-
-          <!-- 4. WEEKLY PERFORMANCE BREAKDOWN -->
-          <div class="entry-form-card" style="margin-bottom: 12px;">
-            <h2 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; flex-wrap: wrap; gap: 8px;">
-              <span>Weekly Performance Breakdown (Mon - Sun)</span>
-              <span id="currentWeekRangeLabel" style="font-size: 12px; color: var(--accent-gold);">This Week</span>
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">This Week Total</div>
-                <div id="wkCurrentTotal" style="font-size: 16px; font-weight: bold; color: var(--accent-gold);">£0.00</div>
-              </div>
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">Last Week Total</div>
-                <div id="wkPrevTotal" style="font-size: 16px; font-weight: bold; color: #fff;">£0.00</div>
-              </div>
-              <div style="background: #2a2a2a; padding: 10px; border-radius: 4px; border: 1px solid #444;">
-                <div style="font-size: 11px; color: #aaa;">Week-on-Week Diff</div>
-                <div id="wkDiffTotal" style="font-size: 16px; font-weight: bold;">£0.00</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. REMAINING OVERVIEW KPI CARDS -->
-          <div id="kpiSection" class="kpi-row">
-            <div class="kpi-card" style="border-left-color: var(--primary-gold);">
-              <h3>ESTIMATED MONTH-END TOTAL</h3>
-              <div class="val" id="projectedMonthVal">Syncing...</div>
-              <div class="subtext" id="projectedMonthSub">Based on current daily pacing</div>
-            </div>
-
-            <!-- ENHANCED ROLLING 12-MONTH TURNOVER & VAT THRESHOLD MONITOR -->
-            <div class="kpi-card" id="vatCard">
-              <h3>ROLLING 12-MONTH TOTAL (£90K VAT LIMIT)</h3>
+          <div class="kpi-row">
+            <div class="kpi-card" id="vatCard" style="border-left-color: var(--primary-gold); cursor: pointer;" onclick="App.toggleVatModal(true)">
+              <h3>ROLLING 12-MONTH TOTAL (£90K LIMIT) 📋</h3>
               <div class="val" id="rollingTotal">Syncing...</div>
               <div class="progress-bar-container">
                 <div class="progress-bar-fill" id="vatBar"></div>
               </div>
-              <div class="subtext" id="vatStatus">Loading history...</div>
+              <div class="subtext" id="vatStatus">Calculating history... (Click for Checklist)</div>
             </div>
 
-            <div class="kpi-card" style="border-left-color: var(--accent-gold);">
+            <div class="kpi-card">
               <h3>CASH VS CARD SPLIT</h3>
               <div class="val" id="cashCardVal">Syncing...</div>
             </div>
@@ -567,199 +329,110 @@
             <div class="kpi-card">
               <h3>FINANCIAL YTD VS PREV FYTD</h3>
               <div class="val" id="fytdCompVal">Syncing...</div>
-              <div class="subtext" id="fytdCompSub">Since 1st Feb</div>
+              <div class="subtext">Since 1st Feb</div>
             </div>
 
             <div class="kpi-card">
-              <h3>CALENDAR YTD (JAN 1)</h3>
-              <div class="val" id="ytdSales">Syncing...</div>
-              <div class="subtext">Jan 1 - Today</div>
-            </div>
-
-            <div class="kpi-card">
-              <h3>CURRENT MONTH VS PREV YR (%)</h3>
-              <div class="val" id="mthPctCompVal">Syncing...</div>
-              <div class="subtext" id="mthPctCompSub">Month-on-Month % Comparison</div>
-            </div>
-
-            <div class="kpi-card">
-              <h3>CURRENT MONTH TARGET (+10%)</h3>
-              <div class="val" id="mthTargetVal">Syncing...</div>
-              <div class="progress-bar-container">
-                <div class="progress-bar-fill" id="mthTargetBar"></div>
-              </div>
-              <div class="subtext" id="mthTargetSub">10% Growth Goal Tracker</div>
-            </div>
-
-            <div class="kpi-card">
-              <h3>ACTIVE DAYS / RECORDS</h3>
-              <div class="val" id="products">Syncing...</div>
+              <h3>ACTIVE RECORD DAYS</h3>
+              <div class="val" id="products">0</div>
             </div>
 
             <div class="kpi-card">
               <h3>TOP CATEGORY</h3>
-              <div class="val" id="top">Syncing...</div>
+              <div class="val" id="top">-</div>
             </div>
           </div>
 
-          <div class="chart-container" style="margin-bottom: 0;">
+          <div class="chart-container">
             <canvas id="barChart"></canvas>
           </div>
         </div>
 
         <!-- TAB 1: ANALYTICS -->
         <div class="tab-content" id="tabContent-1">
-          <div class="controls">
-            <div class="controls-top-row">
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">From:</label>
-                <input type="date" id="analyticsStartDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
-              </div>
-              <div class="control-group">
-                <label style="font-size:12px; color:var(--accent-gold); white-space:nowrap;">To:</label>
-                <input type="date" id="analyticsEndDate" onchange="DashboardApp.applyAnalyticsRange()" style="width: 100%;">
-              </div>
-              <button type="button" onclick="DashboardApp.resetAnalyticsDates()" style="padding: 8px 12px; font-size: 12px; background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); white-space: nowrap;">RESET DATES</button>
-              <div class="week-buttons-container" id="analyticsWeekButtonsContainer"></div>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; background: var(--card-bg); padding: 10px; border-radius: 8px;">
+            <div>
+              <label style="font-size:11px; color:var(--accent-gold);">From:</label>
+              <input type="date" id="analyticsStartDate" onchange="App.applyAnalyticsRange()" style="background:#2a2a2a; border:1px solid var(--primary-gold); color:#fff; padding:6px; border-radius:4px;">
             </div>
-            <div class="monthly-buttons-bar" id="analyticsMonthlyButtonsBar"></div>
+            <div>
+              <label style="font-size:11px; color:var(--accent-gold);">To:</label>
+              <input type="date" id="analyticsEndDate" onchange="App.applyAnalyticsRange()" style="background:#2a2a2a; border:1px solid var(--primary-gold); color:#fff; padding:6px; border-radius:4px;">
+            </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-            <button type="button" onclick="DashboardApp.exportAnalyticsCSV()" style="padding: 8px 14px; font-size: 12px; background: var(--primary-gold); color: #000; flex: 1 1 auto;">📊 Export CSV Report</button>
-            <button type="button" onclick="DashboardApp.printReport()" style="padding: 8px 14px; font-size: 12px; flex: 1 1 auto;">🖨️ Print / Export PDF Report</button>
-          </div>
           <div class="chart-container">
             <canvas id="salesChart"></canvas>
           </div>
 
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Cash Card Breakdown</h3>
+          <h3 style="color: var(--accent-gold); font-size: 14px; margin-bottom: 6px;">Daily Sales Records</h3>
           <div class="table-responsive">
             <table>
               <thead>
                 <tr>
-                  <th>Category / Description</th>
-                  <th style="text-align: right;">Proportion / Split</th>
-                  <th style="text-align: right;">Total Amount (£)</th>
-                </tr>
-              </thead>
-              <tbody id="printCashCardTable"></tbody>
-            </table>
-          </div>
-
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Category Breakdown Summary</h3>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>Category Name</th>
-                  <th>Total Revenue (£)</th>
-                </tr>
-              </thead>
-              <tbody id="printCategoryTable"></tbody>
-            </table>
-          </div>
-
-          <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Daily Sales Records</h3>
-          <div class="table-responsive" style="margin-bottom: 0;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date / Entry</th>
+                  <th>Date</th>
                   <th>Cash (£)</th>
                   <th>Card (£)</th>
                   <th>Total (£)</th>
                 </tr>
               </thead>
-              <tbody id="productTable"></tbody>
+              <tbody id="productTable">
+                <tr><td colspan="4">No data</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
 
-        <!-- TAB 2: SALES ENTRY SHEET -->
+        <!-- TAB 2: SALES ENTRY -->
         <div class="tab-content" id="tabContent-2">
-          <div class="entry-form-card" style="margin-bottom: 0;">
+          <div class="entry-form-card">
             <h2>SALES ENTRY SHEET</h2>
-            <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">💡 Select any past date to automatically load existing Cash & Card totals from your sheet.</p>
-            <form id="dataEntryForm" onsubmit="DashboardApp.stageDataEntry(event)">
+            <form id="dataEntryForm" onsubmit="App.stageDataEntry(event)">
               <div class="form-grid">
                 <div class="form-group">
                   <label for="entryDate">Entry Date</label>
-                  <input type="date" id="entryDate" onchange="DashboardApp.onEntryDateChange()" required>
+                  <input type="date" id="entryDate" onchange="App.onEntryDateChange()" required>
                 </div>
                 <div class="form-group">
                   <label for="entryDay">Day of Week</label>
-                  <input type="text" id="entryDay" readonly style="background: #2a2a2a; border: 1px solid #444; color: #aaa; cursor: not-allowed;" required>
+                  <input type="text" id="entryDay" readonly style="background: #2a2a2a; border: 1px solid #444; color: #aaa;">
                 </div>
                 <div class="form-group">
                   <label for="entryCash">Cash Total (£)</label>
-                  <input type="number" step="0.01" id="entryCash" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
+                  <input type="number" step="0.01" id="entryCash" value="0.00" required>
                 </div>
                 <div class="form-group">
                   <label for="entryCard">Card Total (£)</label>
-                  <input type="number" step="0.01" id="entryCard" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';" required>
+                  <input type="number" step="0.01" id="entryCard" value="0.00" required>
                 </div>
-                <div class="form-group">
-                  <label for="catIceCream">Ice Cream (£)</label>
-                  <input type="number" step="0.01" id="catIceCream" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catCounter">Counter (£)</label>
-                  <input type="number" step="0.01" id="catCounter" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catKitchen">Kitchen (£)</label>
-                  <input type="number" step="0.01" id="catKitchen" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catDrink">Drink (£)</label>
-                  <input type="number" step="0.01" id="catDrink" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catDeli">Deli (£)</label>
-                  <input type="number" step="0.01" id="catDeli" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
-                <div class="form-group">
-                  <label for="catAlcohol">Alcohol (£)</label>
-                  <input type="number" step="0.01" id="catAlcohol" placeholder="0.00" value="0.00" onfocus="if(this.value=='0.00')this.value='';" onblur="if(this.value=='')this.value='0.00';">
-                </div>
+                <div class="form-group"><label>Ice Cream (£)</label><input type="number" step="0.01" id="catIceCream" value="0.00"></div>
+                <div class="form-group"><label>Counter (£)</label><input type="number" step="0.01" id="catCounter" value="0.00"></div>
+                <div class="form-group"><label>Kitchen (£)</label><input type="number" step="0.01" id="catKitchen" value="0.00"></div>
+                <div class="form-group"><label>Drink (£)</label><input type="number" step="0.01" id="catDrink" value="0.00"></div>
+                <div class="form-group"><label>Deli (£)</label><input type="number" step="0.01" id="catDeli" value="0.00"></div>
+                <div class="form-group"><label>Alcohol (£)</label><input type="number" step="0.01" id="catAlcohol" value="0.00"></div>
               </div>
-              <button type="submit" style="width: 100%; padding: 12px; font-size: 15px; margin-top: 5px;">Save & Submit to Spreadsheet</button>
+              <button type="submit" style="width: 100%;">Save & Submit Sales Entry</button>
             </form>
           </div>
         </div>
 
         <!-- TAB 3: ACCOUNTING -->
         <div class="tab-content" id="tabContent-3">
-          <div class="entry-form-card" style="margin-bottom: 0;">
+          <div class="entry-form-card">
             <h2>Accounting & Financial Year Export</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Export categorized sales dataset tailored for your accountant, spanning from February 1st of the selected financial year.</p>
-            
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 220px;">
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+              <div class="form-group" style="flex: 1;">
                 <label for="accFySelect">Select Financial Year</label>
-                <select id="accFySelect" onchange="DashboardApp.renderAccountingData()"></select>
+                <select id="accFySelect" onchange="App.renderAccountingData()"></select>
               </div>
-              <div style="display: flex; align-items: flex-end; width: 100%;">
-                <button type="button" onclick="DashboardApp.exportAccountingCSV()" style="padding: 10px 16px; width: 100%;">Download Accountant CSV</button>
-              </div>
+              <button type="button" onclick="App.exportAccountingCSV()" style="margin-top: 18px;">Download Accountant CSV</button>
             </div>
-
-            <div class="table-responsive" style="max-height: 380px; margin-bottom: 0;">
+            <div class="table-responsive" style="max-height: 380px;">
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Day</th>
-                    <th>Cash (£)</th>
-                    <th>Card (£)</th>
-                    <th>Total (£)</th>
-                    <th>Ice Cream</th>
-                    <th>Counter</th>
-                    <th>Kitchen</th>
-                    <th>Drink</th>
-                    <th>Deli</th>
-                    <th>Alcohol</th>
+                    <th>Date</th><th>Day</th><th>Cash</th><th>Card</th><th>Total</th><th>Ice Cream</th><th>Counter</th><th>Kitchen</th><th>Drink</th><th>Deli</th><th>Alcohol</th>
                   </tr>
                 </thead>
                 <tbody id="accountingTableBody"></tbody>
@@ -768,2411 +441,395 @@
           </div>
         </div>
 
-        <!-- TAB 4: BANKED -->
+        <!-- TAB 4: BANKING -->
         <div class="tab-content" id="tabContent-4">
-          <!-- BANKING CONSOLIDATION MOVED HERE -->
           <div class="kpi-card" style="border-left-color: var(--pos-green); margin-bottom: 12px;">
             <h3>BANKING CONSOLIDATION</h3>
             <div class="val" id="bankingVal" style="margin-bottom: 4px;">Syncing...</div>
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
-              <div style="display: flex; align-items: center; gap: 5px;">
-                <label for="bankingStartDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Last Banked:</label>
-                <input type="date" id="bankingStartDate" onchange="DashboardApp.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px;">
-              </div>
-              <div style="display: flex; align-items: center; gap: 5px;">
-                <label for="lastBankedDate" style="color: var(--accent-gold); white-space: nowrap; font-size: 11px; min-width: 65px;">Current Day:</label>
-                <input type="date" id="lastBankedDate" readonly style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #aaa; padding: 4px; border-radius: 4px; width: 100%; font-size: 11px; cursor: not-allowed;">
-              </div>
-              <button type="button" onclick="DashboardApp.markAsBanked()" style="margin-top: 4px; width: 100%; padding: 6px; font-size: 11px; background: var(--primary-gold); color: #000; font-weight: bold; border-radius: 4px; cursor: pointer;">✓ BANKED</button>
+              <label style="font-size: 11px; color: var(--accent-gold);">Last Banked Date:</label>
+              <input type="date" id="bankingStartDate" onchange="App.applyOverviewRange()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: #fff; padding: 4px;">
+              <button type="button" onclick="App.markAsBanked()" style="margin-top: 4px; width: 100%;">✓ MARK AS BANKED</button>
             </div>
           </div>
-
-          <div class="entry-form-card" style="margin-bottom: 0;">
+          <div class="entry-form-card">
             <h2>Banked Cash Log</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Historical record of banked dates and cash values synced from your Google Sheet.</p>
-            
-            <div class="table-responsive" style="max-height: 400px; margin-bottom: 0;">
+            <div class="table-responsive" style="max-height: 300px;">
               <table>
-                <thead>
-                  <tr>
-                    <th>Banked Date</th>
-                    <th>Cash Value (£)</th>
-                  </tr>
-                </thead>
-                <tbody id="bankedTableBody">
-                  <tr><td colspan="2" style="text-align: center; color: #aaa;">Loading banked records...</td></tr>
-                </tbody>
+                <thead><tr><th>Date</th><th>Cash Value</th></tr></thead>
+                <tbody id="bankedTableBody"><tr><td colspan="2">No records</td></tr></tbody>
               </table>
             </div>
           </div>
         </div>
 
-        <!-- TAB 5: MOM & YOY ANALYTICS -->
+        <!-- TAB 5: MOM & YOY -->
         <div class="tab-content" id="tabContent-5">
-          <div class="entry-form-card" style="margin-bottom: 0;">
+          <div class="entry-form-card">
             <h2>Month-over-Month & Year-over-Year Analysis</h2>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Compare monthly revenues year-over-year or track sequential month-over-month growth for the selected year.</p>
-            
-            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
-              <div class="form-group" style="flex: 1; min-width: 220px;">
-                <label for="momYoyYearSelect">Select Analysis Year</label>
-                <select id="momYoyYearSelect" onchange="DashboardApp.renderMomYoyData()"></select>
-              </div>
-              <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; width: 100%;">
-                <button type="button" onclick="DashboardApp.exportMomYoyCSV()" style="padding: 10px 16px; flex: 1; min-width: 180px;">📊 Export MoM & YoY CSV</button>
-                <button type="button" onclick="DashboardApp.exportMomYoyPDF()" style="padding: 10px 16px; flex: 1; min-width: 180px;">🖨️ Print / Export MoM & YoY PDF</button>
-              </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+              <label for="momYoyYearSelect">Select Analysis Year</label>
+              <select id="momYoyYearSelect" onchange="App.renderMomYoyData()"></select>
             </div>
-
-            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 15px; margin-bottom: 6px;">Year-over-Year (YoY) Monthly Comparison</h3>
-            <div class="table-responsive yoy-container" style="max-height: 380px;">
+            <div class="table-responsive" style="max-height: 300px;">
               <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th id="yoyHeaderPrev2">Year -2 (£)</th>
-                    <th id="yoyHeaderPrev1">Year -1 (£)</th>
-                    <th id="yoyHeaderCur">Selected Year (£)</th>
-                    <th>YoY Growth (%)</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Month</th><th>Year -2</th><th>Year -1</th><th>Selected Year</th><th>YoY Growth (%)</th></tr></thead>
                 <tbody id="yoyTableBody"></tbody>
               </table>
             </div>
-            <h3 style="color: var(--accent-gold); font-size: 14px; margin-top: 20px; margin-bottom: 6px;">Month-over-Month (MoM) Sequential Performance</h3>
-            <div class="table-responsive mom-container" style="max-height: 380px; margin-bottom: 0;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Revenue (£)</th>
-                    <th>MoM Change (£)</th>
-                    <th>MoM Growth (%)</th>
-                  </tr>
-                </thead>
-                <tbody id="momTableBody"></tbody>
-              </table>
+          </div>
+        </div>
+
+        <!-- TAB 6: WEATHER OVERLAY -->
+        <div class="tab-content" id="tabContent-6">
+          <div class="entry-form-card">
+            <h2>Eastbourne Weather Forecast & Radar</h2>
+            <div id="daily-stats-container" style="background:#2a2a2a; padding:12px; border-radius:6px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span id="weather-icon" style="font-size:24px; margin-right:8px;">🌤</span>
+                <span id="weather-summary" style="color:var(--accent-gold); font-weight:bold; font-size:15px;">Loading Eastbourne Weather...</span>
+              </div>
+              <div id="weather-temp" style="font-size:18px; font-weight:bold; color:#fff;">--°C</div>
+            </div>
+            <div style="width: 100%; height: 420px; border-radius: 8px; overflow: hidden; border: 1px solid var(--primary-gold);">
+              <iframe width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=mph&zoom=10&overlay=rain&product=ecmwf&level=surface&lat=50.717&lon=0.297" frameborder="0"></iframe>
             </div>
           </div>
         </div>
 
       </div>
     </div>
+  </div>
 
-    <!-- TAB 6: WEATHER & LIVE RADAR (OVERLAY) -->
-    <div id="tabPanel-6" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 15, 15, 0.96); backdrop-filter: blur(12px); z-index: 9999; overflow-y: auto; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; box-sizing: border-box;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-gold, #D4AF37); padding-bottom: 15px; margin-bottom: 25px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-          <span style="font-size: 2rem;">🌊</span>
-          <div>
-            <h2 style="margin: 0; font-size: 1.8rem; letter-spacing: 1px; color: var(--accent-gold, #F9E3B4); text-transform: uppercase;">Eastbourne Live Sync & Radar</h2>
-            <span style="font-size: 0.85rem; color: #888;">50.717° N, 0.297° E • Updated: <span id="weather-last-updated-tab6" style="color: var(--accent-gold, #F9E3B4);">--:--</span></span>
-          </div>
-        </div>
-        <button id="refreshWeatherBtn" type="button" onclick="window.fetchEastbourneWeatherDirect(true)" style="background: rgba(212, 175, 55, 0.15); border: 1px solid var(--primary-gold, #D4AF37); color: var(--accent-gold, #F9E3B4); font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;"><span id="refreshIcon" style="display: inline-block; transition: transform 0.5s;">🔄</span> Refresh</button>
-      </div>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 25px;">
-        <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center;">
-          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Condition</div>
-          <div id="daily-weather-symbol-tab6" style="font-size: 2.4rem; margin: 5px 0;">🌤</div>
-          <div id="daily-weather-name-tab6" style="font-size: 1rem; font-weight: bold; color: var(--accent-gold, #F9E3B4);">Loading...</div>
-        </div>
-        <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center;">
-          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Max Temp</div>
-          <div style="font-size: 2.2rem; font-weight: bold; color: #D4AF37; margin: 5px 0;"><span id="max-temp-tab6">--</span>°C</div>
-        </div>
-        <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center;">
-          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Min Temp</div>
-          <div style="font-size: 2.2rem; font-weight: bold; color: #88c0d0; margin: 5px 0;"><span id="min-temp-tab6">--</span>°C</div>
-        </div>
-        <div style="background: linear-gradient(145deg, #1e1e1e, #141414); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 18px; text-align: center;">
-          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 5px;">Wind Speed</div>
-          <div style="font-size: 2.2rem; font-weight: bold; color: #F9E3B4; margin: 5px 0;"><span id="wind-speed-tab6">--</span> mph</div>
-        </div>
-      </div>
-
-      <div style="background: linear-gradient(145deg, #181818, #111); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 12px; padding: 18px; margin-bottom: 25px;">
-        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-gold, #D4AF37);">⏱ Hourly Forecast Trend (Eastbourne)</h3>
-        <div id="hourly-weather-container-tab6" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;"></div>
-      </div>
-
-      <div style="background: #181818; border: 1px solid var(--primary-gold, #D4AF37); border-radius: 14px; padding: 12px;">
-        <div style="width: 100%; height: 520px; border-radius: 10px; overflow: hidden;">
-          <iframe width="100%" height="100%" src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=mph&zoom=10&overlay=rain&product=ecmwf&level=surface&lat=50.717&lon=0.297&detailLat=50.717&detailLon=0.297&marker=true" frameborder="0" allow="geolocation"></iframe>
-        </div>
-      </div>
+  <!-- VAT CHECKLIST MODAL -->
+  <div id="vatModal" class="hidden">
+    <div class="modal-card">
+      <h3>HMRC VAT Registration Checklist</h3>
+      <p style="font-size: 12px; color: var(--accent-gold); margin-bottom: 15px;">Use this checklist when approaching or exceeding the £90,000 rolling 12-month threshold.</p>
+      <div class="checklist-item"><input type="checkbox" id="check1"><label for="check1">Verify 12-Month Rolling Total</label></div>
+      <div class="checklist-item"><input type="checkbox" id="check2"><label for="check2">Check 30-Day Forward Look</label></div>
+      <div class="checklist-item"><input type="checkbox" id="check3"><label for="check3">Prepare HMRC Government Gateway</label></div>
+      <div class="checklist-item"><input type="checkbox" id="check4"><label for="check4">Submit Application On Time</label></div>
+      <div class="checklist-item"><input type="checkbox" id="check5"><label for="check5">Notify Accountant</label></div>
+      <button onclick="App.toggleVatModal(false)" style="width: 100%; margin-top: 15px;">Close</button>
     </div>
-
-  </div> <!-- CLOSES #app -->
+  </div>
 
   <!-- VERIFICATION MODAL -->
   <div id="verifyModal" class="hidden">
     <div class="modal-card">
       <h3>Verify Combined Total</h3>
-      <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Combined Cash & Card Total:</div>
-      <div class="modal-total-display" id="modalCombinedTotal">£0.00</div>
-      <div style="font-size: 11px; color: #888; margin-bottom: 15px;">If this doesn't match your final total, click Cancel to go back and edit.</div>
-      <div class="modal-buttons">
-        <button type="button" onclick="DashboardApp.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold);">Cancel</button>
-        <button type="button" onclick="DashboardApp.confirmAndSubmit()">Sales Verified</button>
+      <div style="font-size: 24px; font-weight: bold; color: var(--accent-gold); text-align: center; margin-bottom: 15px;" id="modalCombinedTotal">£0.00</div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="App.closeVerifyModal()" style="background: #2a2a2a; border: 1px solid var(--primary-gold); color: var(--accent-gold); flex: 1;">Cancel</button>
+        <button onclick="App.confirmAndSubmit()" style="flex: 1;">Confirm</button>
       </div>
     </div>
   </div>
 
-  <div id="loading" class="hidden">Verifying secure credentials...</div>
+  <div id="loading">Connecting to Secure Server...</div>
   <div id="toast"></div>
 
   <!-- APP ENGINE SCRIPT -->
   <script>
-    const CONFIG = {
-      URL: "https://script.google.com/macros/s/AKfycbxLPVlWJyz7aUsjidiWRxb8mrRaqYj2hpXl1jpSXMoZar5dX8gObLARt79a_EsiEWv5HQ/exec"
-    };
+    const App = (() => {
+      const CONFIG = {
+        URL: "https://script.google.com/macros/s/AKfycbxo28u058nlkD54fAoabW7WfW0tGU3IRVsEcyOSMpnzLvvtJ0U0Wyzp_-tMytupm8JmiQ/exec",
+        PASSWORD: "1234"
+      };
 
-    const STATE = {
-      raw: [],
-      banked: [],
-      isFullLoaded: false,
-      barChart: null,
-      salesChart: null,
-      pendingPayload: null,
-      currentYear: new Date().getFullYear(),
-      activeTabIndex: 0
-    };
+      const STATE = {
+        raw: [],
+        banked: [],
+        barChart: null,
+        salesChart: null,
+        pendingPayload: null,
+        activeTabIndex: 0
+      };
 
-    const $ = (id) => document.getElementById(id);
+      const $ = (id) => document.getElementById(id);
+      const fmt = (cents) => "£" + (Math.round(cents) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const safeSet = (id, text) => { const el = $(id); if (el) el.textContent = text; };
 
-    const safeSet = (id, text) => {
-      const el = $(id);
-      if (el) el.innerText = text;
-    };
+      const toast = (msg) => {
+        const t = $("toast");
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2000);
+      };
 
-    const fmt = (cents) => {
-      const val = (Math.round(cents) / 100);
-      return "£" + val.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-
-    const toast = (msg) => {
-      const t = $("toast");
-      if (!t) return;
-      t.innerText = msg;
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3000);
-    };
-
-    const formatDateLocal = (dateObj) => {
-      const y = dateObj.getFullYear();
-      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const d = String(dateObj.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    };
-
-    const getUKTime = () => {
-      const now = new Date();
-      const ukDateStr = now.toLocaleString("en-US", { timeZone: "Europe/London" });
-      return new Date(ukDateStr);
-    };
-
-    const cleanCents = (val) => {
-      if (val === null || val === undefined || val === "") return 0;
-      let str = String(val).trim();
-      if (!/\d/.test(str)) return 0;
-
-      let isNegative = false;
-      if (str.startsWith("-") || (str.includes("-") && str.indexOf("-") < str.search(/\d/))) {
-        isNegative = true;
-      }
-
-      const cleanStr = str.replace(/[^0-9.-]+/g, "");
-      if (!cleanStr || cleanStr === "-") return 0;
-
-      const num = parseFloat(cleanStr);
-      if (isNaN(num)) return 0;
-
-      const cents = Math.round(num * 100);
-      return isNegative ? -cents : cents;
-    };
-
-    const parseDateString = (dateStr) => {
-      if (!dateStr) return null;
-      let y, m, d;
-
-      if (typeof dateStr === "number" || (!isNaN(dateStr) && String(dateStr).trim() !== "")) {
-        const serial = parseFloat(dateStr);
-        const utcDays = Math.floor(serial - 25569);
-        const utcValue = utcDays * 86400 * 1000;
-        const tempD = new Date(utcValue);
-        if (isNaN(tempD.getTime())) return null;
-        y = tempD.getUTCFullYear();
-        m = tempD.getUTCMonth() + 1;
-        d = tempD.getUTCDate();
-      } else {
-        const str = String(dateStr).trim();
-        const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (isoMatch) {
-          y = parseInt(isoMatch[1], 10);
-          m = parseInt(isoMatch[2], 10);
-          d = parseInt(isoMatch[3], 10);
-        } else {
-          const ukMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-          if (ukMatch) {
-            d = parseInt(ukMatch[1], 10);
-            m = parseInt(ukMatch[2], 10);
-            y = parseInt(ukMatch[3], 10);
+      const updateOnlineStatus = () => {
+        const statusEl = $("syncStatus");
+        const isOnline = navigator.onLine;
+        const queue = JSON.parse(localStorage.getItem("dash_offline_queue") || "[]");
+        if (statusEl) {
+          if (isOnline) {
+            statusEl.innerHTML = queue.length > 0 ? `🟢 Online (${queue.length} queued)` : `🟢 Online`;
+            statusEl.style.color = "#4cd137";
+            if (queue.length > 0) processQueue();
           } else {
-            const tempD = new Date(str);
-            if (isNaN(tempD.getTime())) return null;
-            y = tempD.getFullYear();
-            m = tempD.getMonth() + 1;
-            d = tempD.getDate();
+            statusEl.innerHTML = `🟠 Offline (${queue.length} queued)`;
+            statusEl.style.color = "#ffcc00";
           }
         }
-      }
-
-      if (y < 2000 || y > 2100) return null;
-
-      const dateInt = y * 10000 + m * 100 + d;
-      const dateObj = new Date(y, m - 1, d, 0, 0, 0);
-
-      return { year: y, month: m, day: d, dateInt, dateObj };
-    };
-
-    function updateTabsWrapperHeight() {
-      const activeContent = document.getElementById(`tabContent-${STATE.activeTabIndex}`);
-      const wrapper = document.getElementById('tabsWrapper');
-      if (activeContent && wrapper) {
-        wrapper.style.height = activeContent.scrollHeight + 'px';
-      }
-    }
-
-    /* PUSH NOTIFICATION & 20:00 SCHEDULER SYSTEM */
-    function initPushNotifications() {
-      if ('serviceWorker' in navigator && 'Notification' in window) {
-        navigator.serviceWorker.register('sw.js').then(reg => {
-          console.log('Service Worker registered successfully:', reg);
-        }).catch(err => {
-          console.warn('Service Worker registration failed:', err);
-        });
-
-        if (Notification.permission === 'default') {
-          Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              console.log('Notification permission granted.');
-            }
-          });
-        }
-
-        navigator.serviceWorker.addEventListener('message', event => {
-          if (event.data && event.data.action === 'openTab') {
-            DashboardApp.switchTab(event.data.tabIndex);
-          }
-        });
-      }
-    }
-
-    function triggerSalesReminderNotification() {
-      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
-        navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification("⚠️ Sales Entry Reminder", {
-            body: "Daily sales entry has not been completed for today! Tap to open Sales Entry Sheet.",
-            icon: "Logo.svg",
-            badge: "Logo.svg",
-            tag: "sales-entry-reminder",
-            renotify: true,
-            data: { url: window.location.origin + window.location.pathname + "?tab=2" }
-          });
-        });
-      }
-    }
-
-    function checkDailySalesEntryStatus() {
-      const ukNow = getUKTime();
-      const todayInt = ukNow.getFullYear() * 10000 + (ukNow.getMonth() + 1) * 100 + ukNow.getDate();
-      const todayStr = formatDateLocal(ukNow);
-      
-      const lastNotifiedDate = localStorage.getItem('last_sales_reminder_date');
-      if (lastNotifiedDate === todayStr) return;
-
-      const hasTodayRecord = STATE.raw && STATE.raw.some(r => r.dateInt === todayInt && (r.dailyTotalCents > 0 || r.cashCents > 0 || r.cardCents > 0));
-
-      if (!hasTodayRecord && ukNow.getHours() >= 20) {
-        triggerSalesReminderNotification();
-        localStorage.setItem('last_sales_reminder_date', todayStr);
-      }
-    }
-
-    function start2000Scheduler() {
-      checkDailySalesEntryStatus();
-      setInterval(() => {
-        checkDailySalesEntryStatus();
-      }, 60000); // Check every minute
-    }
-
-    function getWeatherDescription(code) {
-      const weatherMap = {
-        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-        45: "Foggy", 51: "Light drizzle", 61: "Slight rain", 71: "Slight snow", 95: "Thunderstorm"
-      };
-      return weatherMap[code] || "Variable conditions";
-    }
-
-    function getWeatherSymbol(code, isNight = false) {
-      if (isNight) {
-        switch (code) {
-          case 0: return { symbol: "🌙", name: "Clear Night" };
-          case 1: return { symbol: "🌌", name: "Mostly Clear Night" };
-          case 2: return { symbol: "☁️", name: "Partly Cloudy Night" };
-          case 3: return { symbol: "🌥️", name: "Overcast Night" };
-          case 61: case 63: case 65: return { symbol: "🌧️", name: "Rain Night" };
-          default: return { symbol: "🌙", name: "Night" };
-        }
-      }
-      switch (code) {
-        case 0: return { symbol: "☀️", name: "Sunny / Clear" };
-        case 1: case 2: return { symbol: "⛅", name: "Sunny Intervals" };
-        case 3: return { symbol: "☁️", name: "Light Cloud / Overcast" };
-        case 61: case 63: case 65: return { symbol: "🌧️", name: "Rain" };
-        default: return { symbol: "🌤", name: "Fair" };
-      }
-    }
-
-    function getWindDirectionText(degrees) {
-      if (degrees === undefined || degrees === null) return "N";
-      const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-      const val = Math.floor((degrees / 22.5) + 0.5);
-      return directions[(val % 16)];
-    }
-
-    function getMostFrequentCode(arr) {
-      return arr.sort((a, b) => arr.filter(v => v === a).length - arr.filter(v => v === b).length).pop();
-    }
-
-    async function fetchWeatherPayload(dateToFetch) {
-      const lat = 50.717, lon = 0.297;
-      const nowLocal = getUKTime();
-      const todayStr = formatDateLocal(nowLocal);
-      const target = dateToFetch || todayStr;
-      
-      const url = target < todayStr
-        ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${target}&end_date=${target}&hourly=temperature_2m,weather_code,precipitation,windspeed_10m,winddirection_10m&wind_speed_unit=mph&timezone=Europe/London`
-        : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&models=ukmo_seamless&hourly=temperature_2m,weather_code,precipitation,windspeed_10m,winddirection_10m&wind_speed_unit=mph&timezone=Europe/London`;
-
-      const res = await fetch(url);
-      const data = await res.json();
-
-      let daytimeTemps = [];
-      let daytimeCodes = [];
-      let daytimeWinds = [];
-      let totalPrecip = 0;
-
-      if (data.hourly && data.hourly.time) {
-        const activeDate = data.hourly.time[0] ? data.hourly.time[0].split('T')[0] : target;
-        data.hourly.time.forEach((timeStr, index) => {
-          if (timeStr.startsWith(activeDate)) {
-            const hour = parseInt(timeStr.split('T')[1].split(':')[0], 10);
-            if (hour >= 9 && hour <= 18) {
-              daytimeTemps.push(data.hourly.temperature_2m[index]);
-              daytimeCodes.push(data.hourly.weather_code[index]);
-              if (data.hourly.windspeed_10m) {
-                daytimeWinds.push(data.hourly.windspeed_10m[index] || 0);
-              }
-              totalPrecip += (data.hourly.precipitation[index] || 0);
-            }
-          }
-        });
-      }
-
-      if (daytimeTemps.length > 0) {
-        const minTemp = Math.min(...daytimeTemps).toFixed(1);
-        const maxTemp = Math.max(...daytimeTemps).toFixed(1);
-        const avgWind = daytimeWinds.length > 0 ? Math.round(daytimeWinds.reduce((a,b)=>a+b,0) / daytimeWinds.length) : 0;
-        const representativeCode = getMostFrequentCode(daytimeCodes);
-        const info = getWeatherSymbol(representativeCode, false);
-
-        return {
-          minTemp: minTemp,
-          maxTemp: maxTemp,
-          windSpeed: avgWind,
-          precipitation: totalPrecip.toFixed(1),
-          weatherName: info.name,
-          weatherSymbol: info.symbol,
-          formattedString: `${minTemp}°C - ${maxTemp}°C, Wind: ${avgWind} mph, ${info.symbol} ${info.name} (${totalPrecip.toFixed(1)}mm)`
-        };
-      }
-      return { minTemp: "0", maxTemp: "0", windSpeed: "0", precipitation: "0", weatherName: "Unavailable", weatherSymbol: "❓", formattedString: "Weather Data Unavailable" };
-    }
-
-    function processRows(rows) {
-      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
-      const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && String(cell).toLowerCase().includes("date")));
-      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 1;
-
-      const parsedRecords = [];
-      for (let i = startIndex; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row || !Array.isArray(row)) continue;
-
-        const dayName = row[0] ? String(row[0]).trim() : "";
-        const rawDate = row[1];
-        const lowerDay = String(dayName).toLowerCase();
-        const lowerDate = String(rawDate).toLowerCase();
-
-        if (!rawDate || lowerDay.includes("total") || lowerDay.includes("sum") || lowerDate.includes("date") || lowerDate.includes("total")) {
-          continue;
-        }
-
-        const parsedDateInfo = parseDateString(rawDate);
-        if (!parsedDateInfo) continue;
-
-        const cashCents = cleanCents(row[2]);
-        const cardCents = cleanCents(row[3]);
-        let catIceCream = cleanCents(row[4]);
-        let catCounter = cleanCents(row[5]);
-        let catKitchen = cleanCents(row[6]);
-        let catDrink = cleanCents(row[7]);
-        let catDeli = cleanCents(row[8]);
-        let catAlcohol = cleanCents(row[9]);
-
-        const sumCategoriesCents = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-        let dailyTotalCents = cashCents + cardCents;
-
-        if (dailyTotalCents === 0 && sumCategoriesCents > 0) dailyTotalCents = sumCategoriesCents;
-        if (dailyTotalCents === 0 && sumCategoriesCents === 0) continue;
-
-        parsedRecords.push({
-          dayName: dayName || "Unknown",
-          rawDate,
-          parsedDate: parsedDateInfo.dateObj,
-          dateInt: parsedDateInfo.dateInt,
-          dailyTotalCents,
-          cashCents,
-          cardCents,
-          categories: {
-            "ICE CREAM": catIceCream,
-            "COUNTER": catCounter,
-            "Kitchen": catKitchen,
-            "DRINK": catDrink,
-            "DELI": catDeli,
-            "ALCOHOL": catAlcohol
-          }
-        });
-      }
-      return parsedRecords;
-    }
-
-    function processBankedRows(rows) {
-      if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
-      const headerRowIndex = rows.findIndex(r => r && r.some(cell => cell && (String(cell).toLowerCase().includes("date") || String(cell).toLowerCase().includes("cash") || String(cell).toLowerCase().includes("value"))));
-      const startIndex = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
-
-      const records = [];
-      for (let i = startIndex; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row || !Array.isArray(row)) continue;
-        const rawDate = row[0];
-        const rawValue = row[1] !== undefined ? row[1] : row[2];
-        if (!rawDate && !rawValue) continue;
-
-        const parsedDateInfo = parseDateString(rawDate);
-        const cashCents = cleanCents(rawValue);
-        if (cashCents === 0 && !rawDate) continue;
-
-        records.push({
-          rawDate,
-          parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : null,
-          cashCents
-        });
-      }
-      return records;
-    }
-
-    function renderBankedTable() {
-      const tbody = $("bankedTableBody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      if (!STATE.banked || STATE.banked.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #aaa;">No banked records found in sheet.</td></tr>`;
-        updateTabsWrapperHeight();
-        return;
-      }
-
-      STATE.banked.forEach(r => {
-        const tr = document.createElement("tr");
-        const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-        tr.innerHTML = `
-          <td>${dateStr}</td>
-          <td>${fmt(r.cashCents)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      updateTabsWrapperHeight();
-    }
-
-    function renderBankingKPI(allRecords) {
-      const bankingValEl = $("bankingVal");
-      if (!bankingValEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        bankingValEl.innerText = "Syncing...";
-        return;
-      }
-
-      const lastBankedVal = $("bankingStartDate")?.value;
-      const currentDayVal = $("lastBankedDate")?.value;
-      if (!lastBankedVal || !currentDayVal) {
-        bankingValEl.innerText = "Set Dates";
-        return;
-      }
-
-      const lastBankedInt = parseInt(lastBankedVal.replace(/-/g, ""), 10);
-      const currentDayInt = parseInt(currentDayVal.replace(/-/g, ""), 10);
-
-      let unbankedCashCents = 0;
-      let count = 0;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
-          unbankedCashCents += (r.cashCents || 0);
-          count++;
-        }
-      });
-
-      bankingValEl.innerHTML = `${fmt(unbankedCashCents)}<br><span style="color:#aaa; font-weight:normal; font-size:12px;">Consolidation across ${count} days</span>`;
-    }
-
-    function renderCashCardKPI(records) {
-      const cashCardEl = $("cashCardVal");
-      if (!cashCardEl) return;
-
-      if (!STATE.isFullLoaded) {
-        cashCardEl.innerText = "Syncing...";
-        return;
-      }
-
-      let periodCashCents = 0;
-      let periodCardCents = 0;
-
-      records.forEach(rec => {
-        periodCashCents += (rec.cashCents || 0);
-        periodCardCents += (rec.cardCents || 0);
-      });
-
-      const periodTotalCents = periodCashCents + periodCardCents;
-      const cashPct = periodTotalCents > 0 ? ((periodCashCents / periodTotalCents) * 100).toFixed(1) : "0.0";
-      const cardPct = periodTotalCents > 0 ? ((periodCardCents / periodTotalCents) * 100).toFixed(1) : "0.0";
-
-      cashCardEl.innerHTML = `Cash: ${fmt(periodCashCents)} (${cashPct}%)<br><span style="font-weight:bold; color:#aaa;">Card: ${fmt(periodCardCents)} (${cardPct}%)</span>`;
-    }
-
-    function renderFytdKPI(allRecords) {
-      const fytdEl = $("fytdCompVal");
-      if (!fytdEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        fytdEl.innerText = "Syncing...";
-        safeSet("fytdCompSub", "Since 1st Feb");
-        return;
-      }
-
-      const anchorDate = new Date();
-      const isAfterFeb1 = anchorDate.getMonth() > 1 || (anchorDate.getMonth() === 1 && anchorDate.getDate() >= 1);
-      const fyYear = isAfterFeb1 ? anchorDate.getFullYear() : anchorDate.getFullYear() - 1;
-      
-      const fyStartInt = fyYear * 10000 + 201; 
-      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
-      const prevFyStartInt = (fyYear - 1) * 10000 + 201; 
-      const prevTodayInt = (anchorDate.getFullYear() - 1) * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
-      let currentCents = 0;
-      let prevCents = 0;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= fyStartInt && r.dateInt <= todayInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevFyStartInt && r.dateInt <= prevTodayInt) {
-          prevCents += r.dailyTotalCents;
-        }
-      });
-
-      const fytdDiff = currentCents - prevCents;
-      const fytdPct = prevCents > 0 ? ((fytdDiff / prevCents) * 100).toFixed(1) : "0.0";
-      const fytdSign = fytdDiff >= 0 ? "+" : "";
-
-      fytdEl.innerHTML = `${fmt(currentCents)} <span style="font-weight:normal; color:var(--accent-gold); font-size:12px;">(1st Feb)</span><br><span style="font-weight:bold; color:#aaa;">Prev: ${fmt(prevCents)}</span><br><span class="${fytdDiff >= 0 ? 'positive' : 'negative'}">${fytdSign}${fmt(fytdDiff)} (${fytdSign}${fytdPct}%)</span>`;
-      safeSet("fytdCompSub", "Since 1st Feb");
-    }
-
-    function renderYtdKPI(allRecords) {
-      const ytdEl = $("ytdSales");
-      if (!ytdEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        ytdEl.innerText = "Syncing...";
-        return;
-      }
-
-      const anchorDate = new Date();
-      const currentYear = anchorDate.getFullYear();
-      const ytdStartInt = currentYear * 10000 + 101; 
-      const todayInt = anchorDate.getFullYear() * 10000 + (anchorDate.getMonth() + 1) * 100 + anchorDate.getDate();
-
-      let ytdSumCents = 0;
-      allRecords.forEach(r => {
-        if (r.dateInt >= ytdStartInt && r.dateInt <= todayInt) {
-          ytdSumCents += r.dailyTotalCents;
-        }
-      });
-      ytdEl.innerText = fmt(ytdSumCents);
-    }
-
-    function renderMonthCompKPI(allRecords) {
-      const mthPctEl = $("mthPctCompVal");
-      if (!mthPctEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        mthPctEl.innerText = "Syncing...";
-        safeSet("mthPctCompSub", "Month-on-Month % Comparison");
-        return;
-      }
-
-      const anchorDate = new Date();
-      const curYear = anchorDate.getFullYear();
-      const curMonth = anchorDate.getMonth() + 1;
-      const curDay = anchorDate.getDate();
-
-      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
-
-      const prevYear = curYear - 1;
-      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
-      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
-      const targetPrevDay = Math.min(curDay, lastDayPrevMonth);
-      const prevMonthPartialEndInt = prevYear * 10000 + curMonth * 100 + targetPrevDay;
-
-      let currentCents = 0;
-      let prevMonthPartialCents = 0;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthPartialEndInt) {
-          prevMonthPartialCents += r.dailyTotalCents;
-        }
-      });
-
-      const diffCents = currentCents - prevMonthPartialCents;
-      const pctVal = prevMonthPartialCents > 0 ? ((diffCents / prevMonthPartialCents) * 100).toFixed(1) : "0.0";
-      const isPos = diffCents >= 0;
-      const signStr = isPos ? "+" : "";
-
-      mthPctEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:#aaa;">Prev Year: ${fmt(prevMonthPartialCents)}</span><br><span class="${isPos ? 'positive' : 'negative'}">${signStr}${fmt(diffCents)} (${signStr}${pctVal}%)</span>`;
-      safeSet("mthPctCompSub", "vs Same Period Last Year");
-    }
-
-    function renderMonthTargetKPI(allRecords) {
-      const mthTargetEl = $("mthTargetVal");
-      if (!mthTargetEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        mthTargetEl.innerText = "Syncing...";
-        safeSet("mthTargetSub", "10% Growth Goal Tracker");
-        return;
-      }
-
-      const ukNow = getUKTime();
-      const curYear = ukNow.getFullYear();
-      const curMonth = ukNow.getMonth() + 1;
-      const curDay = ukNow.getDate();
-
-      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
-      const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
-      
-      const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const isMonthCompleted = hasLastDayRecord;
-
-      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const queryEndInt = isMonthCompleted ? lastDayInt : (curYear * 10000 + curMonth * 100 + curDay);
-
-      const prevYear = curYear - 1;
-      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
-      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
-      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
-
-      let currentCents = 0;
-      let prevMonthFullCents = 0;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= queryEndInt) {
-          currentCents += r.dailyTotalCents;
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
-          prevMonthFullCents += r.dailyTotalCents;
-        }
-      });
-
-      const targetCents = Math.round(prevMonthFullCents * 1.10);
-
-      if (isMonthCompleted) {
-        const diffCents = currentCents - targetCents;
-        const diffPct = targetCents > 0 ? ((diffCents / targetCents) * 100).toFixed(1) : "0.0";
-        const isSuccess = currentCents >= targetCents;
-        const resultText = isSuccess ? `Target Achieved! 🎉 (+${diffPct}%)` : `Target Missed (${diffPct}%)`;
-        const resultColor = isSuccess ? 'positive' : 'negative';
-
-        mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Final Target (+10%): ${fmt(targetCents)}</span><br><span class="${resultColor}">${resultText}</span>`;
-        safeSet("mthTargetSub", `Month Completed (Prev Full: ${fmt(prevMonthFullCents)})`);
-
-        const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
-        const mthBar = $("mthTargetBar");
-        if (mthBar) {
-          mthBar.style.width = targetProgress + "%";
-          mthBar.className = "progress-bar-fill " + (isSuccess ? "success" : "vat-warning");
-        }
-      } else {
-        const remainingCents = targetCents - currentCents;
-        const remainingText = remainingCents > 0 ? `Needed: ${fmt(remainingCents)}` : `Target Reached! 🎉`;
-        const remainingColor = remainingCents > 0 ? 'negative' : 'positive';
-
-        mthTargetEl.innerHTML = `${fmt(currentCents)}<br><span style="font-weight:bold; color:var(--accent-gold);">Target (+10%): ${fmt(targetCents)}</span><br><span class="${remainingColor}">${remainingText}</span>`;
-        safeSet("mthTargetSub", `Prev Full Month: ${fmt(prevMonthFullCents)}`);
-
-        const targetProgress = targetCents > 0 ? Math.min(100, (currentCents / targetCents) * 100) : 0;
-        const mthBar = $("mthTargetBar");
-        if (mthBar) {
-          mthBar.style.width = targetProgress + "%";
-          mthBar.className = "progress-bar-fill " + (currentCents >= targetCents ? "success" : "");
-        }
-      }
-    }
-
-    function renderTodayTargetKPI(allRecords) {
-      const todayTargetEl = $("todayTargetVal");
-      const todayTargetSubEl = $("todayTargetSub");
-      if (!todayTargetEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        todayTargetEl.innerText = "Syncing...";
-        if (todayTargetSubEl) todayTargetSubEl.innerText = "Daily pacing to hit +10% goal";
-        return;
-      }
-
-      const ukNow = getUKTime();
-      const curYear = ukNow.getFullYear();
-      const curMonth = ukNow.getMonth() + 1;
-      const curDay = ukNow.getDate();
-      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
-      const lastDayInt = curYear * 10000 + curMonth * 100 + totalDaysInMonth;
-
-      const hasLastDayRecord = allRecords.some(r => r.dateInt === lastDayInt);
-      const isMonthCompleted = hasLastDayRecord;
-
-      if (isMonthCompleted) {
-        const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-        let monthTotalCents = 0;
-        allRecords.forEach(r => {
-          if (r.dateInt >= curMonthStartInt && r.dateInt <= lastDayInt) {
-            monthTotalCents += r.dailyTotalCents;
-          }
-        });
-        const finalDailyAvg = Math.round(monthTotalCents / totalDaysInMonth);
-
-        todayTargetEl.innerHTML = `<span style="color:var(--accent-gold);">${fmt(finalDailyAvg)}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Final Daily Average (${totalDaysInMonth} days)</span>`;
-        if (todayTargetSubEl) {
-          todayTargetSubEl.innerText = `Month completed successfully`;
-        }
-        return;
-      }
-
-      const todayInt = curYear * 10000 + curMonth * 100 + curDay;
-      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const curMonthEndInt = todayInt;
-
-      const prevYear = curYear - 1;
-      const prevMonthStartInt = prevYear * 10000 + curMonth * 100 + 1;
-      const lastDayPrevMonth = new Date(prevYear, curMonth, 0).getDate();
-      const prevMonthFullEndInt = prevYear * 10000 + curMonth * 100 + lastDayPrevMonth;
-
-      let currentCents = 0;
-      let prevMonthFullCents = 0;
-      let hasTodayRecord = false;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-          if (r.dateInt === todayInt) {
-            hasTodayRecord = true;
-          }
-        }
-        if (r.dateInt >= prevMonthStartInt && r.dateInt <= prevMonthFullEndInt) {
-          prevMonthFullCents += r.dailyTotalCents;
-        }
-      });
-
-      const targetCents = Math.round(prevMonthFullCents * 1.10);
-      const remainingTargetCents = targetCents - currentCents;
-      
-      let remainingDays;
-      if (hasTodayRecord) {
-        remainingDays = Math.max(1, totalDaysInMonth - curDay);
-      } else {
-        remainingDays = Math.max(1, (totalDaysInMonth - curDay) + 1);
-      }
-
-      const dailyPacingCents = Math.round(remainingTargetCents / remainingDays);
-      const displayDaily = dailyPacingCents > 0 ? fmt(dailyPacingCents) : "£0.00 (Goal Met!)";
-
-      todayTargetEl.innerHTML = `<span class="positive">${displayDaily}</span><br><span style="font-weight:normal; color:#aaa; font-size:12px;">Per day for remaining ${remainingDays} days</span>`;
-      if (todayTargetSubEl) {
-        const deficitText = remainingTargetCents > 0 ? fmt(remainingTargetCents) : "None";
-        todayTargetSubEl.innerText = `Target deficit: ${deficitText}`;
-      }
-    }
-
-    function renderProjectedMonthKPI(allRecords) {
-      const projectedValEl = $("projectedMonthVal");
-      const projectedSubEl = $("projectedMonthSub");
-      if (!projectedValEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        projectedValEl.innerText = "Syncing...";
-        if (projectedSubEl) projectedSubEl.innerText = "Based on current daily pacing";
-        return;
-      }
-
-      const anchorDate = new Date();
-      const curYear = anchorDate.getFullYear();
-      const curMonth = anchorDate.getMonth() + 1;
-      const curDay = anchorDate.getDate();
-      const totalDaysInMonth = new Date(curYear, curMonth, 0).getDate();
-
-      const curMonthStartInt = curYear * 10000 + curMonth * 100 + 1;
-      const curMonthEndInt = curYear * 10000 + curMonth * 100 + curDay;
-
-      let currentCents = 0;
-      let daysCounted = 0;
-
-      allRecords.forEach(r => {
-        if (r.dateInt >= curMonthStartInt && r.dateInt <= curMonthEndInt) {
-          currentCents += r.dailyTotalCents;
-          daysCounted++;
-        }
-      });
-
-      if (daysCounted === 0) {
-        projectedValEl.innerText = "£0.00";
-        if (projectedSubEl) projectedSubEl.innerText = "No data recorded this month yet";
-        return;
-      }
-
-      const dailyAverageCents = currentCents / daysCounted;
-      const projectedMonthCents = Math.round(dailyAverageCents * totalDaysInMonth);
-
-      projectedValEl.innerText = fmt(projectedMonthCents);
-      if (projectedSubEl) {
-        projectedSubEl.innerText = `Avg daily run rate: ${fmt(dailyAverageCents)}`;
-      }
-    }
-
-    function renderRolling12MonthKPI(allRecords) {
-      const rollingEl = $("rollingTotal");
-      const vatStatusEl = $("vatStatus");
-      const vatCard = $("vatCard");
-      if (!rollingEl) return;
-
-      if (!STATE.isFullLoaded || !allRecords || allRecords.length === 0) {
-        rollingEl.innerText = "Syncing...";
-        if (vatStatusEl) {
-          vatStatusEl.innerText = "Loading history...";
-          vatStatusEl.style.color = "#aaa";
-        }
-        return;
-      }
-
-      const validRecords = allRecords.filter(r => r.parsedDate && !isNaN(r.parsedDate.getTime()));
-      if (validRecords.length === 0) {
-        rollingEl.innerText = "£0.00";
-        return;
-      }
-
-      const anchorDate = new Date();
-      const startLookback = new Date(anchorDate);
-      startLookback.setFullYear(anchorDate.getFullYear() - 1);
-
-      let rollingSumCents = 0;
-      for (let i = 0; i < validRecords.length; i++) {
-        const r = validRecords[i];
-        if (r.parsedDate >= startLookback && r.parsedDate <= anchorDate) {
-          rollingSumCents += r.dailyTotalCents;
-        }
-      }
-
-      const vatThresholdCents = 90000 * 100;
-      const remainingCentsToThreshold = vatThresholdCents - rollingSumCents;
-
-      const daysSpan = Math.max(1, (anchorDate - startLookback) / (1000 * 60 * 60 * 24));
-      const dailyVelocityCents = rollingSumCents / daysSpan;
-      const estBreachDays = dailyVelocityCents > 0 ? Math.ceil(remainingCentsToThreshold / dailyVelocityCents) : 999;
-
-      if (remainingCentsToThreshold > 0) {
-        rollingEl.innerHTML = `${fmt(rollingSumCents)}<br><span style="font-size:12px; font-weight:bold; color:var(--accent-gold);">Margin Left: ${fmt(remainingCentsToThreshold)}</span>`;
-      } else {
-        rollingEl.innerHTML = `${fmt(rollingSumCents)}<br><span style="font-size:12px; font-weight:bold; color:var(--neg-red);">Over Limit by ${fmt(-remainingCentsToThreshold)}</span>`;
-      }
-
-      const vBar = $("vatBar");
-      const vatProgress = Math.min(100, (rollingSumCents / vatThresholdCents) * 100);
-      if (vBar) vBar.style.width = vatProgress + "%";
-
-      if (vatStatusEl) {
-        if (remainingCentsToThreshold <= 0) {
-          vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">🚨 THRESHOLD EXCEEDED - HMRC VAT REGISTRATION REQUIRED</span>`;
-          if (vatCard) vatCard.style.borderLeftColor = "var(--neg-red)";
-          if (vBar) vBar.className = "progress-bar-fill vat-danger";
-        } 
-        else if (remainingCentsToThreshold <= 500000 || estBreachDays <= 30) { 
-          vatStatusEl.innerHTML = `<span style="color:#ff4d4d; font-weight:bold;">⚠️ REGISTRATION WARNING: Register prior to crossing £90k limit! (Est. ${estBreachDays} days left)</span>`;
-          if (vatCard) vatCard.style.borderLeftColor = "#ff4d4d";
-          if (vBar) vBar.className = "progress-bar-fill vat-danger";
-        } 
-        else if (remainingCentsToThreshold <= 1500000) { 
-          vatStatusEl.innerHTML = `<span style="color:#ffcc00; font-weight:bold;">⚡ Approaching Threshold. Monitor daily sales closely.</span>`;
-          if (vatCard) vatCard.style.borderLeftColor = "#ffcc00";
-          if (vBar) vBar.className = "progress-bar-fill vat-warning";
-        } 
-        else {
-          vatStatusEl.innerHTML = `<span style="color:#4cd137;">Safe: Buffer remaining (${fmt(remainingCentsToThreshold)})</span>`;
-          if (vatCard) vatCard.style.borderLeftColor = "var(--primary-gold)";
-          if (vBar) vBar.className = "progress-bar-fill";
-        }
-      }
-    }
-
-    function renderActiveDaysKPI(records) {
-      safeSet("products", STATE.isFullLoaded ? records.length : "Syncing...");
-    }
-
-    function renderTopCategoryKPI(records) {
-      const topEl = $("top");
-      if (!topEl) return;
-
-      if (!STATE.isFullLoaded) {
-        topEl.innerText = "Syncing...";
-        return;
-      }
-
-      const categoryTotalsCents = {
-        "ICE CREAM": 0,
-        "COUNTER": 0,
-        "Kitchen": 0,
-        "DRINK": 0,
-        "DELI": 0,
-        "ALCOHOL": 0
       };
 
-      records.forEach(rec => {
-        Object.keys(rec.categories).forEach(cat => {
-          categoryTotalsCents[cat] += rec.categories[cat];
-        });
-      });
-
-      let topCat = "-";
-      let maxRevCents = -1;
-      Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-        if (val > maxRevCents && val > 0) {
-          maxRevCents = val;
-          topCat = `${cat} (${fmt(val)})`;
+      const processQueue = async () => {
+        let queue = JSON.parse(localStorage.getItem("dash_offline_queue") || "[]");
+        if (queue.length === 0) return;
+        let remaining = [];
+        for (const item of queue) {
+          try {
+            const res = await fetch(CONFIG.URL, { method: "POST", body: JSON.stringify(item) });
+            const json = await res.json();
+            if (json.status !== "success") remaining.push(item);
+          } catch (e) { remaining.push(item); }
         }
-      });
-      topEl.innerText = topCat;
-    }
-
-    function renderWeeklySummary(allRecords) {
-      if (!allRecords || allRecords.length === 0) return;
-
-      const now = new Date();
-      const dayOfWeek = now.getDay() || 7; 
-      const currentMonday = new Date(now);
-      currentMonday.setDate(now.getDate() - dayOfWeek + 1);
-      currentMonday.setHours(0,0,0,0);
-
-      const prevMonday = new Date(currentMonday);
-      prevMonday.setDate(prevMonday.getDate() - 7);
-
-      const prevSunday = new Date(currentMonday);
-      prevSunday.setDate(prevSunday.getDate() - 1);
-
-      let curWkCents = 0;
-      let prevWkCents = 0;
-
-      allRecords.forEach(r => {
-        if (!r.parsedDate) return;
-        const d = r.parsedDate;
-        if (d >= currentMonday && d <= now) {
-          curWkCents += r.dailyTotalCents;
-        } else if (d >= prevMonday && d <= prevSunday) {
-          prevWkCents += r.dailyTotalCents;
-        }
-      });
-
-      const diff = curWkCents - prevWkCents;
-      const isPos = diff >= 0;
-
-      safeSet("wkCurrentTotal", fmt(curWkCents));
-      safeSet("wkPrevTotal", fmt(prevWkCents));
-      
-      const diffEl = $("wkDiffTotal");
-      if (diffEl) {
-        diffEl.innerText = (isPos ? "+" : "") + fmt(diff);
-        diffEl.className = isPos ? "positive" : "negative";
-      }
-    }
-
-    function renderOverviewDashboard(records) {
-      renderBankingKPI(STATE.raw);
-      renderCashCardKPI(records);
-      renderFytdKPI(STATE.raw);
-      renderYtdKPI(STATE.raw);
-      renderMonthCompKPI(STATE.raw);
-      renderMonthTargetKPI(STATE.raw);
-      renderTodayTargetKPI(STATE.raw);
-      renderProjectedMonthKPI(STATE.raw);
-      renderRolling12MonthKPI(STATE.raw);
-      renderActiveDaysKPI(records);
-      renderTopCategoryKPI(records);
-      renderWeeklySummary(STATE.raw);
-      renderBarChart(records);
-      renderBankedTable();
-      updateTabsWrapperHeight();
-    }
-
-    function renderAnalyticsDashboard(records) {
-      const container = $("productTable");
-      if (container) container.innerHTML = "";
-
-      records.forEach(rec => {
-        if (container) {
-          const tr = document.createElement("tr");
-          const displayDateStr = rec.parsedDate ? rec.parsedDate.toLocaleDateString("en-GB") : String(rec.rawDate);
-          tr.innerHTML = `
-            <td>${rec.dayName ? rec.dayName.replace(/\d.*$/, '') + ' - ' : ''}${displayDateStr}</td>
-            <td>${fmt(rec.cashCents)}</td>
-            <td>${fmt(rec.cardCents)}</td>
-            <td>${fmt(rec.dailyTotalCents)}</td>
-          `;
-          container.appendChild(tr);
-        }
-      });
-
-      const printCashCardContainer = $("printCashCardTable");
-      if (printCashCardContainer) {
-        printCashCardContainer.innerHTML = "";
-        let totalCashCents = 0;
-        let totalCardCents = 0;
-
-        records.forEach(rec => {
-          totalCashCents += (rec.cashCents || 0);
-          totalCardCents += (rec.cardCents || 0);
-        });
-
-        const combinedTotalCents = totalCashCents + totalCardCents;
-        const cashPct = combinedTotalCents > 0 ? ((totalCashCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
-        const cardPct = combinedTotalCents > 0 ? ((totalCardCents / combinedTotalCents) * 100).toFixed(1) : "0.0";
-
-        const cashTr = document.createElement("tr");
-        cashTr.innerHTML = `<td>Cash Transactions</td><td style="text-align: right;">${cashPct}%</td><td style="text-align: right;">${fmt(totalCashCents)}</td>`;
-        printCashCardContainer.appendChild(cashTr);
-
-        const cardTr = document.createElement("tr");
-        cardTr.innerHTML = `<td>Card Transactions</td><td style="text-align: right;">${cardPct}%</td><td style="text-align: right;">${fmt(totalCardCents)}</td>`;
-        printCashCardContainer.appendChild(cardTr);
-
-        const totalTr = document.createElement("tr");
-        totalTr.style.fontWeight = "bold";
-        totalTr.innerHTML = `<td>Total Cash & Card Volume</td><td style="text-align: right;">100.0%</td><td style="text-align: right;">${fmt(combinedTotalCents)}</td>`;
-        printCashCardContainer.appendChild(totalTr);
-      }
-
-      const printCatContainer = $("printCategoryTable");
-      if (printCatContainer) {
-        printCatContainer.innerHTML = "";
-        const categoryTotalsCents = {
-          "ICE CREAM": 0,
-          "COUNTER": 0,
-          "Kitchen": 0,
-          "DRINK": 0,
-          "DELI": 0,
-          "ALCOHOL": 0
-        };
-
-        records.forEach(rec => {
-          Object.keys(rec.categories).forEach(cat => {
-            categoryTotalsCents[cat] += rec.categories[cat];
-          });
-        });
-
-        Object.entries(categoryTotalsCents).forEach(([cat, val]) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${cat}</td><td>${fmt(val)}</td>`;
-          printCatContainer.appendChild(tr);
-        });
-      }
-
-      renderSalesChart(records);
-      updateTabsWrapperHeight();
-    }
-
-    function renderBarChart(records) {
-      const canvas = $("barChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.barChart) STATE.barChart.destroy();
-
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      STATE.barChart = new Chart(canvas, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{
-            label: "Daily Revenue (£)",
-            data,
-            backgroundColor: "#D4AF37"
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
-    }
-
-    function renderSalesChart(records) {
-      const canvas = $("salesChart");
-      if (!canvas || typeof Chart === "undefined") return;
-
-      if (STATE.salesChart) STATE.salesChart.destroy();
-
-      const labels = records.map(r => r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate));
-      const data = records.map(r => r.dailyTotalCents / 100);
-
-      STATE.salesChart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Sales Trend (£)",
-            data,
-            borderColor: "#D4AF37",
-            backgroundColor: "rgba(212, 175, 55, 0.1)",
-            fill: true
-          }]
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
-    }
-
-    function initAnalyticsWeekButtons(year, month) {
-      const container = $("analyticsWeekButtonsContainer");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const now = new Date();
-      const targetYear = year !== undefined ? year : now.getFullYear();
-      const targetMonth = month !== undefined ? month : now.getMonth(); 
-
-      const firstDayOfMonth = new Date(targetYear, targetMonth, 1);
-      const lastDayOfMonth = new Date(targetYear, targetMonth + 1, 0);
-
-      let dayOfWeek = firstDayOfMonth.getDay();
-      let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-      let currentWeekStart = new Date(targetYear, targetMonth, 1 - diffToMonday);
-
-      let weekNum = 1;
-
-      while (currentWeekStart <= lastDayOfMonth) {
-        let currentWeekEnd = new Date(currentWeekStart);
-        currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
-
-        const sStr = formatDateLocal(currentWeekStart);
-        const eStr = formatDateLocal(currentWeekEnd);
-
-        const startDayNum = currentWeekStart.getDate();
-        const endDayNum = currentWeekEnd.getDate();
-
-        const btn = document.createElement("button");
-        btn.innerText = `Wk ${weekNum} (${startDayNum} - ${endDayNum})`;
-        btn.onclick = () => {
-          if ($("analyticsStartDate")) $("analyticsStartDate").value = sStr;
-          if ($("analyticsEndDate")) $("analyticsEndDate").value = eStr;
-          DashboardApp.applyAnalyticsRange();
-        };
-        container.appendChild(btn);
-
-        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-        weekNum++;
-      }
-    }
-
-    function initAnalyticsMonthlyButtonsBar() {
-      const container = $("analyticsMonthlyButtonsBar");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const months = [
-        { name: "January", number: "01" }, { name: "February", number: "02" },
-        { name: "March", number: "03" }, { name: "April", number: "04" },
-        { name: "May", number: "05" }, { name: "June", number: "06" },
-        { name: "July", number: "07" }, { name: "August", number: "08" },
-        { name: "September", number: "09" }, { name: "October", number: "10" },
-        { name: "November", number: "11" }, { name: "December", number: "12" }
-      ];
-
-      const currentYear = new Date().getFullYear();
-
-      months.forEach((m, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'month-btn';
-        btn.innerText = m.name;
-        
-        btn.addEventListener('click', () => {
-          container.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-
-          const daysInMonth = new Date(currentYear, idx + 1, 0).getDate();
-          const startStr = `${currentYear}-${m.number}-01`;
-          const endStr = `${currentYear}-${m.number}-${String(daysInMonth).padStart(2, '0')}`;
-
-          if ($("analyticsStartDate")) $("analyticsStartDate").value = startStr;
-          if ($("analyticsEndDate")) $("analyticsEndDate").value = endStr;
-          
-          initAnalyticsWeekButtons(currentYear, idx);
-          DashboardApp.applyAnalyticsRange();
-        });
-
-        container.appendChild(btn);
-      });
-    }
-
-    function initAccountingFySelect() {
-      const select = $("accFySelect");
-      if (!select) return;
-      select.innerHTML = "";
-
-      const currentYear = new Date().getFullYear();
-      for (let y = currentYear; y >= currentYear - 3; y--) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.innerText = `FY ${y} (1st Feb ${y} - 31st Jan ${y + 1})`;
-        select.appendChild(opt);
-      }
-      select.value = currentYear - (new Date().getMonth() < 1 ? 1 : 0);
-      DashboardApp.renderAccountingData();
-    }
-
-    function initMomYoyYearSelect() {
-      const select = $("momYoyYearSelect");
-      if (!select) return;
-      select.innerHTML = "";
-
-      const currentYear = new Date().getFullYear();
-      for (let y = currentYear; y >= currentYear - 3; y--) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.innerText = `Year ${y}`;
-        select.appendChild(opt);
-      }
-      select.value = currentYear;
-      DashboardApp.renderMomYoyData();
-    }
-
-    function initBankedLock() {
-      const startInput = $("bankingStartDate");
-      if (!startInput) return;
-
-      let targetDate = "";
-
-      if (typeof STATE !== 'undefined' && STATE.banked && STATE.banked.length > 0) {
-        const sortedBanked = [...STATE.banked].sort((a, b) => {
-          const dateA = a.parsedDate ? a.parsedDate.getTime() : new Date(a.rawDate).getTime();
-          const dateB = b.parsedDate ? b.parsedDate.getTime() : new Date(b.rawDate).getTime();
-          return dateB - dateA;
-        });
-
-        if (sortedBanked.length > 0) {
-          const latest = sortedBanked[0];
-          const dateObj = latest.parsedDate || new Date(latest.rawDate);
-          if (!isNaN(dateObj.getTime())) {
-            const yyyy = dateObj.getFullYear();
-            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const dd = String(dateObj.getDate()).padStart(2, '0');
-            targetDate = `${yyyy}-${mm}-${dd}`;
-          }
-        }
-      }
-
-      if (!targetDate) {
-        targetDate = localStorage.getItem('lockedLastBankedDate') || localStorage.getItem('dash_bankingStartDate');
-      }
-
-      if (targetDate) {
-        startInput.value = targetDate;
-      }
-    }
-
-    async function load() {
-      initPushNotifications();
-
-      const now = getUKTime();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
-      if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
-
-      if ($("entryDate")) {
-        $("entryDate").value = formatDateLocal(now);
-        DashboardApp.onEntryDateChange();
-      }
-
-      initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
-      initAnalyticsMonthlyButtonsBar();
-
-      const cachedRaw = localStorage.getItem("dash_cached_raw");
-      const cachedBanked = localStorage.getItem("dash_cached_banked");
-
-      if (cachedRaw) {
-        try {
-          STATE.raw = JSON.parse(cachedRaw);
-          STATE.raw.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-          STATE.isFullLoaded = true;
-        } catch(e) {}
-      }
-
-      if (cachedBanked) {
-        try {
-          STATE.banked = JSON.parse(cachedBanked);
-          STATE.banked.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
-          renderBankedTable();
-        } catch(e) {}
-      }
-
-      initBankedLock();
-
-      if (STATE.isFullLoaded) {
-        DashboardApp.applyOverviewRange();
-        DashboardApp.applyAnalyticsRange();
-      }
-
-      updateTabsWrapperHeight();
-
-      // CHECK URL FOR DIRECT TAB DIRECTIVE (E.G. FROM PUSH NOTIFICATION CLICK)
-      const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab');
-      if (tabParam !== null && !isNaN(tabParam)) {
-        DashboardApp.switchTab(parseInt(tabParam, 10));
-      }
-
-      try {
-        const currentYear = new Date().getFullYear();
-        STATE.currentYear = currentYear;
-        const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-        const json = await res.json();
-        
-        let fullRecords = [];
-        let bankedRecords = [];
-        const sourceTabs = json.tabs || json.sheetsData;
-
-        if (json && sourceTabs) {
-          Object.keys(sourceTabs).forEach(tabName => {
-            const tabRows = sourceTabs[tabName];
-            if (Array.isArray(tabRows) && tabRows.length > 0) {
-              if (tabName.toLowerCase().includes("banked")) {
-                bankedRecords = processBankedRows(tabRows);
-              } else {
-                const sRows = processRows(tabRows);
-                fullRecords = fullRecords.concat(sRows);
-              }
-            }
-          });
-        }
-
-        if (fullRecords.length > 0) {
-          const uniqueMap = new Map();
-          fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-          fullRecords = Array.from(uniqueMap.values());
-          fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
-          STATE.raw = fullRecords;
-          localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-        }
-
-        if (bankedRecords.length > 0) {
-          STATE.banked = bankedRecords;
-          localStorage.setItem("dash_cached_banked", JSON.stringify(bankedRecords));
-          renderBankedTable();
-        }
-
-        STATE.isFullLoaded = true;
-        initBankedLock();
-
-        DashboardApp.applyOverviewRange();
-        DashboardApp.applyAnalyticsRange();
-        updateTabsWrapperHeight();
-        start2000Scheduler();
-      } catch (err) {
-        console.warn("Background fetch failed, using local cache:", err);
-        start2000Scheduler();
-      }
-    }
-
-    function startBackgroundPolling() {
-      setInterval(async () => {
-        try {
-          const currentYear = STATE.currentYear || new Date().getFullYear();
-          const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
-          const currJson = await res.json();
-          
-          let fullRecords = [];
-          const sourceTabs = currJson.tabs || currJson.sheetsData;
-          if (currJson && sourceTabs) {
-            Object.keys(sourceTabs).forEach(tabName => {
-              const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0 && !tabName.toLowerCase().includes("banked")) {
-                const sRows = processRows(tabRows);
-                fullRecords = fullRecords.concat(sRows);
-              }
-            });
-          }
-
-          if (fullRecords.length > 0) {
-            const uniqueMap = new Map();
-            fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-            fullRecords = Array.from(uniqueMap.values());
-            fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
-            if (fullRecords.length !== STATE.raw.length) {
-              STATE.raw = fullRecords;
-              localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
-              DashboardApp.applyOverviewRange();
-              DashboardApp.applyAnalyticsRange();
-              toast("Dashboard auto-refreshed with new backend data!");
-            }
-          }
-        } catch (err) {
-          console.warn("Background polling sync failed:", err);
-        }
-      }, 300000); 
-    }
-
-    const DashboardApp = {
-      login: async () => {
-        const passwordVal = $("pass").value;
-        if (!passwordVal) {
-          alert("Please enter a password.");
+        localStorage.setItem("dash_offline_queue", JSON.stringify(remaining));
+        updateOnlineStatus();
+      };
+
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+
+      const login = async () => {
+        const pass = $("pass").value;
+        if (pass !== CONFIG.PASSWORD) {
+          toast("Wrong password");
           return;
         }
+        $("login").classList.add("hidden");
+        $("navContainer").classList.remove("hidden");
+        $("app").classList.remove("hidden");
+        updateOnlineStatus();
+        load();
+        fetchEastbourneWeather();
+      };
 
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Verifying secure credentials...";
-          loader.classList.remove("hidden");
-        }
-
+      const fetchEastbourneWeather = async () => {
         try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", password: passwordVal })
-          });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
+          // Public Open-Meteo API query for Eastbourne (lat: 50.717, lon: 0.297)
+          const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current=temperature_2m,weather_code");
+          const data = await res.json();
+          if (data && data.current) {
+            const temp = data.current.temperature_2m;
+            const code = data.current.weather_code;
+            let condition = "Clear / Fair";
+            let icon = "☀️";
+            if (code >= 1 && code <= 3) { condition = "Partly Cloudy"; icon = "⛅"; }
+            else if (code >= 51 && code <= 67) { condition = "Rain Showers"; icon = "🌧️"; }
+            else if (code >= 71 && code <= 77) { condition = "Snow"; icon = "❄️"; }
+            else if (code >= 95) { condition = "Thunderstorm"; icon = "⚡"; }
 
-          if (json.status === "success" || json.authenticated === true) {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Incorrect Password. Access Denied.");
+            safeSet("weather-summary", `Eastbourne: ${condition}`);
+            safeSet("weather-temp", `${temp}°C`);
+            const iconEl = $("weather-icon");
+            if (iconEl) iconEl.textContent = icon;
           }
-        } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          if (passwordVal === "1234") {
-            $("login").classList.add("hidden");
-            $("nav").classList.remove("hidden");
-            $("app").classList.remove("hidden");
-            load();
-            startBackgroundPolling();
-          } else {
-            alert("Authentication failed or incorrect password.");
-          }
+        } catch (e) {
+          safeSet("weather-summary", "Eastbourne Weather (Offline Mode)");
         }
-      },
-      switchTab(index) {
-        if (index < 0 || index > 6) return;
-        STATE.activeTabIndex = index;
+      };
 
-        const tabs = document.getElementById("tabs");
-        if (tabs) {
-          tabs.style.transform = `translateX(-${(index % 6) * 16.6667}%)`;
-        }
+      const parseDateString = (dateStr) => {
+        if (!dateStr) return null;
+        const tempD = new Date(dateStr);
+        if (isNaN(tempD.getTime())) return null;
+        return { year: tempD.getFullYear(), month: tempD.getMonth() + 1, day: tempD.getDate(), dateInt: tempD.getFullYear() * 10000 + (tempD.getMonth() + 1) * 100 + tempD.getDate(), dateObj: tempD };
+      };
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        updateTabsWrapperHeight();
+      const cleanCents = (val) => {
+        if (!val) return 0;
+        const num = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
+        return isNaN(num) ? 0 : Math.round(num * 100);
+      };
 
-        for (let i = 0; i <= 6; i++) {
-          const btn = document.getElementById(`navBtn-${i}`);
-          if (btn) {
-            btn.classList.toggle("active", i === index);
-          }
-        }
-
-        if (index === 2) {
-          const todayStr = formatDateLocal(getUKTime());
-          if ($("entryDate")) {
-            $("entryDate").value = todayStr;
-            DashboardApp.onEntryDateChange();
-          }
-        } else if (index === 3) {
-          initAccountingFySelect();
-        } else if (index === 5) {
-          initMomYoyYearSelect();
-        }
-
-        if (index === 6) {
-          try {
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (typeof updateWeatherUI === 'function') {
-              updateWeatherUI(todayStr);
-            }
-          } catch (err) {
-            console.error("Weather update error:", err);
-          }
-        }
-      },
-      
-      applyOverviewRange: () => {
-        const now = getUKTime();
-        const curYear = now.getFullYear();
-        const curMonth = now.getMonth() + 1;
-        
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        safeSet("currentMonthNameLabel", `${monthNames[curMonth - 1]} ${curYear}`);
-
-        const monthStartInt = curYear * 10000 + curMonth * 100 + 1;
-        const totalDays = new Date(curYear, curMonth, 0).getDate();
-        const monthEndInt = curYear * 10000 + curMonth * 100 + totalDays;
-
-        const bankingStartVal = $("bankingStartDate")?.value;
-        if (bankingStartVal) localStorage.setItem("dash_bankingStartDate", bankingStartVal);
-        renderBankingKPI(STATE.raw);
-
-        const nowStr = formatDateLocal(now);
-        if ($("lastBankedDate")) $("lastBankedDate").value = nowStr;
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        const filtered = STATE.raw.filter(r => r.dateInt >= monthStartInt && r.dateInt <= monthEndInt);
-        
-        let monthTotalCents = 0;
-        filtered.forEach(r => { monthTotalCents += r.dailyTotalCents; });
-
-        safeSet("overviewMonthTotalVal", fmt(monthTotalCents));
-        safeSet("overviewMonthSpanSub", `${filtered.length} days recorded out of ${totalDays} in month`);
-
-        renderOverviewDashboard(filtered);
-      },
-
-      applyAnalyticsRange: () => {
-        const sVal = $("analyticsStartDate")?.value;
-        const eVal = $("analyticsEndDate")?.value;
-
-        if (sVal) localStorage.setItem("dash_analyticsStartDate", sVal);
-        if (eVal) localStorage.setItem("dash_analyticsEndDate", eVal);
-
-        if (!STATE.raw || STATE.raw.length === 0) return;
-
-        let filtered = STATE.raw;
-        if (sVal && eVal) {
-          const sInt = parseInt(sVal.replace(/-/g, ""), 10);
-          const eInt = parseInt(eVal.replace(/-/g, ""), 10);
-          filtered = STATE.raw.filter(r => r.dateInt >= sInt && r.dateInt <= eInt);
-        }
-        renderAnalyticsDashboard(filtered);
-      },
-      refreshData: async () => {
-        toast("Refreshing data in background...");
+      const load = async () => {
         try {
-          const currentYear = STATE.currentYear || new Date().getFullYear();
-          const res = await fetch(`${CONFIG.URL}?year=${currentYear}`, { cache: "no-store" });
+          const loader = $("loading");
+          if (loader) loader.style.display = "flex";
+
+          const res = await fetch(CONFIG.URL, { cache: "no-store" });
           const json = await res.json();
           
           let fullRecords = [];
-          let bankedRecords = [];
-          const sourceTabs = json.tabs || json.sheetsData;
-
-          if (json && sourceTabs) {
+          const sourceTabs = json.tabs || json.sheetsData || json;
+          if (sourceTabs) {
             Object.keys(sourceTabs).forEach(tabName => {
-              const tabRows = sourceTabs[tabName];
-              if (Array.isArray(tabRows) && tabRows.length > 0) {
-                if (tabName.toLowerCase().includes("banked")) {
-                  bankedRecords = processBankedRows(tabRows);
-                } else {
-                  const sRows = processRows(tabRows);
-                  fullRecords = fullRecords.concat(sRows);
-                }
+              const rows = sourceTabs[tabName];
+              if (Array.isArray(rows)) {
+                rows.forEach(r => {
+                  const dInfo = parseDateString(r[1] || r[0]);
+                  if (dInfo) {
+                    fullRecords.push({
+                      dayName: r[0] || "",
+                      parsedDate: dInfo.dateObj,
+                      dateInt: dInfo.dateInt,
+                      dailyTotalCents: cleanCents(r[2]) + cleanCents(r[3]),
+                      cashCents: cleanCents(r[2]),
+                      cardCents: cleanCents(r[3]),
+                      categories: { "ICE CREAM": cleanCents(r[4]), "COUNTER": cleanCents(r[5]), "Kitchen": cleanCents(r[6]), "DRINK": cleanCents(r[7]), "DELI": cleanCents(r[8]), "ALCOHOL": cleanCents(r[9]) }
+                    });
+                  }
+                });
               }
             });
           }
 
           if (fullRecords.length > 0) {
-            const uniqueMap = new Map();
-            fullRecords.forEach(r => uniqueMap.set(r.dateInt, r));
-            fullRecords = Array.from(uniqueMap.values());
-            fullRecords.sort((a, b) => a.dateInt - b.dateInt);
-
             STATE.raw = fullRecords;
             localStorage.setItem("dash_cached_raw", JSON.stringify(fullRecords));
           }
 
-          if (bankedRecords.length > 0) {
-            STATE.banked = bankedRecords;
-            localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-            renderBankedTable();
+          applyOverviewRange();
+          applyAnalyticsRange();
+          initAccountingYears();
+          initMomYoyYears();
+        } catch (e) {
+          toast("Using cached offline data");
+          const cached = localStorage.getItem("dash_cached_raw");
+          if (cached) {
+            STATE.raw = JSON.parse(cached);
+            STATE.raw.forEach(r => { if (r.parsedDate) r.parsedDate = new Date(r.parsedDate); });
+            applyOverviewRange();
           }
-
-          STATE.isFullLoaded = true;
-          initBankedLock();
-          DashboardApp.applyOverviewRange();
-          DashboardApp.applyAnalyticsRange();
-          updateTabsWrapperHeight();
-
-          toast("Data refreshed successfully!");
-        } catch (err) {
-          console.warn("Refresh failed:", err);
-          toast("Failed to refresh data from server. Using cached data.");
-        }
-      },
-      
-      markAsBanked: async () => {
-        const currentDayEl = $("lastBankedDate");
-        const bankingStartEl = $("bankingStartDate");
-        
-        if (!currentDayEl || !bankingStartEl) return;
-        
-        const bankedDate = currentDayEl.value;
-        if (!bankedDate) {
-          alert("No date available to bank.");
-          return;
-        }
-
-        const lastBankedVal = bankingStartEl.value;
-        const lastBankedInt = lastBankedVal ? parseInt(lastBankedVal.replace(/-/g, ""), 10) : 0;
-        const currentDayInt = parseInt(bankedDate.replace(/-/g, ""), 10);
-
-        let unbankedCashCents = 0;
-        let count = 0;
-        const records = (typeof STATE !== 'undefined' && STATE.raw) ? STATE.raw : [];
-        records.forEach(r => {
-          if (r.dateInt >= lastBankedInt && r.dateInt <= currentDayInt) {
-            unbankedCashCents += (r.cashCents || 0);
-            count++;
-          }
-        });
-        const cashValue = unbankedCashCents / 100;
-        const formattedAmount = (typeof fmt === 'function') ? fmt(unbankedCashCents) : `£${cashValue.toFixed(2)}`;
-
-        const userConfirmed = confirm(
-          `🔒 SECURITY BANKING VERIFICATION\n\n` +
-          `Target Date: ${bankedDate}\n` +
-          `Days Consolidated: ${count}\n` +
-          `Expected Unbanked Amount: ${formattedAmount}\n\n` +
-          `Click OK to verify, save to Google Sheet, and lock this baseline, or Cancel to abort.`
-        );
-
-        if (!userConfirmed) return;
-
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Writing banked record to Google Sheet...";
-          loader.classList.remove("hidden");
-        }
-
-        try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify({ 
-              type: "banking",
-              rawDate: bankedDate,
-              cashValue: cashValue 
-            })
-          });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-
-          if (json.status === "success") {
-            const parsedDateInfo = parseDateString(bankedDate);
-            if (!STATE.banked) STATE.banked = [];
-            STATE.banked.push({
-              rawDate: bankedDate,
-              parsedDate: parsedDateInfo ? parsedDateInfo.dateObj : new Date(bankedDate),
-              cashCents: Math.round(cashValue * 100)
-            });
-            renderBankedTable();
-            localStorage.setItem("dash_cached_banked", JSON.stringify(STATE.banked));
-
-            toast("Banked record successfully saved to Google Sheet!");
-          } else {
-            toast("Marked as banked locally.");
-          }
-        } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          toast("Marked as banked locally.");
-        }
-
-        bankingStartEl.value = bankedDate;
-        localStorage.setItem("dash_bankingStartDate", bankedDate);
-        localStorage.setItem("lockedLastBankedDate", bankedDate);
-
-        if (typeof DashboardApp !== 'undefined' && typeof DashboardApp.applyOverviewRange === 'function') {
-          DashboardApp.applyOverviewRange();
-        }
-        if (typeof renderBankingKPI === 'function' && typeof STATE !== 'undefined' && STATE.raw) {
-          renderBankingKPI(STATE.raw);
-        }
-      },
-
-      resetAnalyticsDates: () => {
-        const now = getUKTime();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        if ($("analyticsStartDate")) $("analyticsStartDate").value = formatDateLocal(firstDayOfMonth);
-        if ($("analyticsEndDate")) $("analyticsEndDate").value = formatDateLocal(now);
-        initAnalyticsWeekButtons(now.getFullYear(), now.getMonth());
-        DashboardApp.applyAnalyticsRange();
-      },
-      onEntryDateChange: () => {
-        const entryDateVal = $("entryDate")?.value;
-        if (!entryDateVal) return;
-        const d = new Date(entryDateVal);
-        if (!isNaN(d.getTime())) {
-          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          if ($("entryDay")) $("entryDay").value = days[d.getDay()];
-        }
-
-        const parsed = parseDateString(entryDateVal);
-        if (parsed && STATE.raw && STATE.raw.length > 0) {
-          const existing = STATE.raw.find(r => r.dateInt === parsed.dateInt);
-          if (existing) {
-            if ($("entryCash")) $("entryCash").value = (existing.cashCents / 100).toFixed(2);
-            if ($("entryCard")) $("entryCard").value = (existing.cardCents / 100).toFixed(2);
-            if ($("catIceCream")) $("catIceCream").value = ((existing.categories["ICE CREAM"] || 0) / 100).toFixed(2);
-            if ($("catCounter")) $("catCounter").value = ((existing.categories["COUNTER"] || 0) / 100).toFixed(2);
-            if ($("catKitchen")) $("catKitchen").value = ((existing.categories["Kitchen"] || 0) / 100).toFixed(2);
-            if ($("catDrink")) $("catDrink").value = ((existing.categories["DRINK"] || 0) / 100).toFixed(2);
-            if ($("catDeli")) $("catDeli").value = ((existing.categories["DELI"] || 0) / 100).toFixed(2);
-            if ($("catAlcohol")) $("catAlcohol").value = ((existing.categories["ALCOHOL"] || 0) / 100).toFixed(2);
-            toast("Loaded existing record for " + entryDateVal);
-          } else {
-            if ($("entryCash")) $("entryCash").value = "0.00";
-            if ($("entryCard")) $("entryCard").value = "0.00";
-            if ($("catIceCream")) $("catIceCream").value = "0.00";
-            if ($("catCounter")) $("catCounter").value = "0.00";
-            if ($("catKitchen")) $("catKitchen").value = "0.00";
-            if ($("catDrink")) $("catDrink").value = "0.00";
-            if ($("catDeli")) $("catDeli").value = "0.00";
-            if ($("catAlcohol")) $("catAlcohol").value = "0.00";
-          }
-        }
-      },
-      stageDataEntry: async (e) => {
-        if (e) typeof e.preventDefault === 'function' && e.preventDefault();
-        
-        const cash = parseFloat($("entryCash")?.value) || 0;
-        const card = parseFloat($("entryCard")?.value) || 0;
-        const combined = cash + card;
-
-        const catIceCream = parseFloat($("catIceCream")?.value) || 0;
-        const catCounter = parseFloat($("catCounter")?.value) || 0;
-        const catKitchen = parseFloat($("catKitchen")?.value) || 0;
-        const catDrink = parseFloat($("catDrink")?.value) || 0;
-        const catDeli = parseFloat($("catDeli")?.value) || 0;
-        const catAlcohol = parseFloat($("catAlcohol")?.value) || 0;
-
-        const categorySum = catIceCream + catCounter + catKitchen + catDrink + catDeli + catAlcohol;
-
-        if (categorySum > 0 && Math.abs(combined - categorySum) > 0.01) {
-          alert(`⚠️ Category Sum Verification Error:\n\nCategory Sum: £${categorySum.toFixed(2)}\nCash + Card Total: £${combined.toFixed(2)}\n\nPlease ensure category amounts equal the combined total (£${combined.toFixed(2)}) before submitting.`);
-          return;
-        }
-
-        if ($("modalCombinedTotal")) $("modalCombinedTotal").innerText = fmt(Math.round(combined * 100));
-        
-        const selectedDate = $("entryDate")?.value || new Date().toISOString().split('T')[0];
-        
-        let weatherSummary;
-        try {
-          weatherSummary = await fetchWeatherPayload(selectedDate);
-        } catch (err) {
-          console.warn("Could not fetch weather for payload:", err);
-          weatherSummary = { minTemp: "0", maxTemp: "0", windSpeed: "0", weatherName: "", weatherSymbol: "", formattedString: "" };
-        }
-
-        STATE.pendingPayload = {
-          type: "entry",
-          date: selectedDate,
-          day: $("entryDay")?.value || "",
-          weather: weatherSummary,
-          cash: cash,
-          card: card,
-          categories: {
-            iceCream: catIceCream,
-            counter: catCounter,
-            kitchen: catKitchen,
-            drink: catDrink,
-            deli: catDeli,
-            alcohol: catAlcohol
-          }
-        };
-        
-        const verifyModal = $("verifyModal");
-        if (verifyModal) {
-          verifyModal.classList.remove("hidden");
-        } else {
-          console.error("verifyModal element not found in DOM.");
-        }
-      },
-      
-      closeVerifyModal: () => {
-        const verifyModal = $("verifyModal");
-        if (verifyModal) verifyModal.classList.add("hidden");
-        STATE.pendingPayload = null;
-      },
-
-      confirmAndSubmit: async () => {
-        $("verifyModal").classList.add("hidden");
-        if (!STATE.pendingPayload) return;
-        const loader = $("loading");
-        if (loader) {
-          loader.innerText = "Submitting sales entry...";
-          loader.classList.remove("hidden");
-        }
-        try {
-          const res = await fetch(CONFIG.URL, {
-            method: "POST",
-            body: JSON.stringify(STATE.pendingPayload)
-          });
-          const json = await res.json();
-          if (loader) loader.classList.add("hidden");
-          if (json.status === "success") {
-            toast("Sales successfully recorded!");
-            $("dataEntryForm").reset();
-            const now = getUKTime();
-            $("entryDate").value = formatDateLocal(now);
-            DashboardApp.onEntryDateChange();
-            DashboardApp.refreshData();
-          } else {
-            toast("Submission saved.");
-          }
-        } catch (err) {
-          if (loader) loader.classList.add("hidden");
-          toast("Entry submitted locally / offline mode.");
-        }
-        STATE.pendingPayload = null;
-      },
-
-      renderAccountingData: () => {
-        const select = $("accFySelect");
-        const tbody = $("accountingTableBody");
-        if (!select || !tbody) return;
-        const fyYear = parseInt(select.value, 10);
-        const fyStartInt = fyYear * 10000 + 201;
-        const fyEndInt = (fyYear + 1) * 10000 + 131;
-
-        tbody.innerHTML = "";
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-        if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #aaa;">No records found for FY ${fyYear}.</td></tr>`;
-          updateTabsWrapperHeight();
-          return;
-        }
-
-        filtered.forEach(r => {
-          const tr = document.createElement("tr");
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          tr.innerHTML = `
-            <td>${dateStr}</td>
-            <td>${r.dayName}</td>
-            <td>${fmt(r.cashCents)}</td>
-            <td>${fmt(r.cardCents)}</td>
-            <td>${fmt(r.dailyTotalCents)}</td>
-            <td>${fmt(r.categories["ICE CREAM"] || 0)}</td>
-            <td>${fmt(r.categories["COUNTER"] || 0)}</td>
-            <td>${fmt(r.categories["Kitchen"] || 0)}</td>
-            <td>${fmt(r.categories["DRINK"] || 0)}</td>
-            <td>${fmt(r.categories["DELI"] || 0)}</td>
-            <td>${fmt(r.categories["ALCOHOL"] || 0)}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-        updateTabsWrapperHeight();
-      },
-      exportAccountingCSV: () => {
-        const select = $("accFySelect");
-        const fyYear = select ? select.value : new Date().getFullYear();
-        const fyStartInt = parseInt(fyYear) * 10000 + 201;
-        const fyEndInt = (parseInt(fyYear) + 1) * 10000 + 131;
-        const filtered = STATE.raw.filter(r => r.dateInt >= fyStartInt && r.dateInt <= fyEndInt);
-
-        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
-        filtered.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${(r.categories["ICE CREAM"]||0)/100},${(r.categories["COUNTER"]||0)/100},${(r.categories["Kitchen"]||0)/100},${(r.categories["DRINK"]||0)/100},${(r.categories["DELI"]||0)/100},${(r.categories["ALCOHOL"]||0)/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `Accounting_FY_${fyYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
-      renderMomYoyData: () => {
-        const select = $("momYoyYearSelect");
-        const yoyBody = $("yoyTableBody");
-        const momBody = $("momTableBody");
-        if (!select || !yoyBody || !momBody) return;
-
-        const selYear = parseInt(select.value, 10);
-        if ($("yoyHeaderPrev2")) $("yoyHeaderPrev2").innerText = `Year ${selYear - 2} (£)`;
-        if ($("yoyHeaderPrev1")) $("yoyHeaderPrev1").innerText = `Year ${selYear - 1} (£)`;
-        if ($("yoyHeaderCur")) $("yoyHeaderCur").innerText = `Year ${selYear} (£)`;
-
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        
-        const monthlyRevs = {};
-        for (let y = selYear - 2; y <= selYear; y++) {
-          monthlyRevs[y] = Array(12).fill(0);
-        }
-
-        STATE.raw.forEach(r => {
-          if (!r.parsedDate) return;
-          const y = r.parsedDate.getFullYear();
-          const m = r.parsedDate.getMonth();
-          if (y >= selYear - 2 && y <= selYear) {
-            monthlyRevs[y][m] += r.dailyTotalCents;
-          }
-        });
-
-        yoyBody.innerHTML = "";
-        momBody.innerHTML = "";
-
-        let prevMonthRev = 0;
-
-        months.forEach((mName, idx) => {
-          const rev2 = monthlyRevs[selYear - 2][idx];
-          const rev1 = monthlyRevs[selYear - 1][idx];
-          const revCur = monthlyRevs[selYear][idx];
-
-          const yoyDiff = revCur - rev1;
-          const yoyPct = rev1 > 0 ? ((yoyDiff / rev1) * 100).toFixed(1) : "0.0";
-          const yoySign = yoyDiff >= 0 ? "+" : "";
-
-          const yoyTr = document.createElement("tr");
-          yoyTr.innerHTML = `
-            <td>${mName}</td>
-            <td>${fmt(rev2)}</td>
-            <td>${fmt(rev1)}</td>
-            <td>${fmt(revCur)}</td>
-            <td class="${yoyDiff >= 0 ? 'positive' : 'negative'}">${yoySign}${yoyPct}%</td>
-          `;
-          yoyBody.appendChild(yoyTr);
-
-          const momDiff = idx === 0 ? 0 : revCur - prevMonthRev;
-          const momPct = (idx === 0 || prevMonthRev === 0) ? "0.0" : ((momDiff / prevMonthRev) * 100).toFixed(1);
-          const momSign = momDiff >= 0 ? "+" : "";
-
-          const momTr = document.createElement("tr");
-          momTr.innerHTML = `
-            <td>${mName}</td>
-            <td>${fmt(revCur)}</td>
-            <td class="${momDiff >= 0 ? 'positive' : 'negative'}">${momSign}${fmt(momDiff)}</td>
-            <td class="${momDiff >= 0 ? 'positive' : 'negative'}">${momSign}${momPct}%</td>
-          `;
-          momBody.appendChild(momTr);
-
-          prevMonthRev = revCur;
-        });
-        updateTabsWrapperHeight();
-      },
-      exportMomYoyCSV: () => {
-        const select = $("momYoyYearSelect");
-        const selYear = select ? select.value : new Date().getFullYear();
-        let csv = `Month,Year ${selYear-2},Year ${selYear-1},Year ${selYear},YoY Growth %\n`;
-        const yoyRows = $("yoyTableBody")?.querySelectorAll("tr");
-        if (yoyRows) {
-          yoyRows.forEach(row => {
-            const cols = row.querySelectorAll("td");
-            if (cols.length >= 5) {
-              csv += `"${cols[0].innerText}","${cols[1].innerText}","${cols[2].innerText}","${cols[3].innerText}","${cols[4].innerText}"\n`;
-            }
-          });
-        }
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `MoM_YoY_Analysis_${selYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
-      exportMomYoyPDF: () => {
-        document.body.classList.add("printing-momyoy");
-        window.print();
-        setTimeout(() => { document.body.classList.remove("printing-momyoy"); }, 1000);
-      },
-      exportAnalyticsCSV: () => {
-        let csv = "Date,Day,Cash,Card,Total\n";
-        STATE.raw.forEach(r => {
-          const dateStr = r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : String(r.rawDate);
-          csv += `"${dateStr}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "Sales_Analytics_Export.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      },
-      printReport: () => {
-        document.body.classList.add("printing-analytics");
-        window.print();
-        setTimeout(() => { document.body.classList.remove("printing-analytics"); }, 1000);
-      }
-    };
-
-    window.addEventListener('resize', updateTabsWrapperHeight);
-  </script>
-
-  <!-- MOBILE SWIPE & WEATHER TICKER SCRIPT -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const weatherBtn = document.getElementById('navBtn-6');
-      const tab6 = document.getElementById('tabPanel-6');
-
-      let forecastSliderInterval = null;
-      let autoRefreshInterval = null;
-      let activeCardIndex = 0;
-
-      function startHourlySlider() {
-        stopHourlySlider();
-        const cards = document.querySelectorAll('.hourly-card-item');
-        const container = document.getElementById('hourly-weather-container-tab6');
-        if (!cards.length || !container) return;
-
-        activeCardIndex = 0;
-        
-        function updateHighlight() {
-          cards.forEach((card, idx) => {
-            if (idx === activeCardIndex) {
-              card.style.border = '2px solid var(--primary-gold, #D4AF37)';
-              card.style.boxShadow = '0 0 15px rgba(212, 175, 55, 0.6)';
-              card.style.transform = 'scale(1.05)';
-              card.style.background = '#252525';
-              
-              const scrollOffset = card.offsetLeft - container.offsetLeft - (container.clientWidth / 2) + (card.clientWidth / 2);
-              container.scrollTo({ left: scrollOffset, behavior: 'smooth' });
-            } else {
-              card.style.border = '1px solid #444';
-              card.style.boxShadow = 'none';
-              card.style.transform = 'scale(1)';
-              card.style.background = '#1a1a1a';
-            }
-          });
-          activeCardIndex = (activeCardIndex + 1) % cards.length;
-        }
-
-        updateHighlight();
-        forecastSliderInterval = setInterval(updateHighlight, 2500);
-      }
-
-      function stopHourlySlider() {
-        if (forecastSliderInterval) {
-          clearInterval(forecastSliderInterval);
-          forecastSliderInterval = null;
-        }
-      }
-
-      window.openWeatherTab = function() {
-        if (tab6) tab6.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        for (let i = 0; i <= 6; i++) {
-          const btn = document.getElementById('navBtn-' + i);
-          if (btn) btn.classList.toggle('active', i === 6);
-        }
-
-        if (typeof fetchEastbourneWeatherDirect === 'function') {
-          fetchEastbourneWeatherDirect().then(() => {
-            startHourlySlider();
-          });
-        } else {
-          startHourlySlider();
-        }
-
-        if (!autoRefreshInterval) {
-          autoRefreshInterval = setInterval(() => {
-            if (typeof fetchEastbourneWeatherDirect === 'function') {
-              fetchEastbourneWeatherDirect(false);
-            }
-          }, 300000);
-        }
-      };
-
-      window.closeWeatherTab = function() {
-        if (tab6) tab6.style.display = 'none';
-        stopHourlySlider();
-        if (autoRefreshInterval) {
-          clearInterval(autoRefreshInterval);
-          autoRefreshInterval = null;
-        }
-      };
-
-      if (weatherBtn) {
-        weatherBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          window.openWeatherTab();
-        });
-      }
-
-      for (let i = 0; i <= 5; i++) {
-        const tabBtn = document.getElementById('navBtn-' + i);
-        if (tabBtn) {
-          tabBtn.addEventListener('click', window.closeWeatherTab);
-        }
-      }
-
-      window.fetchEastbourneWeatherDirect = async function(isManualTrigger = false) {
-        const refreshBtn = document.getElementById('refreshWeatherBtn');
-        const refreshIcon = document.getElementById('refreshIcon');
-        
-        if (isManualTrigger && refreshIcon) {
-          refreshIcon.style.transform = 'rotate(360deg)';
-          if (refreshBtn) refreshBtn.style.opacity = '0.7';
-        }
-
-        try {
-          const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.717&longitude=0.297&current_weather=true&hourly=temperature_2m,weathercode,precipitation,windspeed_10m,winddirection_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=mph&timezone=Europe%2FLondon');
-          const data = await res.json();
-          if (!data || !data.daily || !data.hourly) return;
-
-          const now = new Date();
-          const localYear = now.getFullYear();
-          const localMonth = String(now.getMonth() + 1).padStart(2, '0');
-          const localDay = String(now.getDate()).padStart(2, '0');
-          const todayStr = `${localYear}-${localMonth}-${localDay}`;
-
-          let todayIndex = data.daily.time ? data.daily.time.findIndex(dateStr => dateStr === todayStr) : 0;
-          if (todayIndex === -1) todayIndex = 0;
-
-          const maxTemp = Math.round(data.daily.temperature_2m_max[todayIndex]);
-          const minTemp = Math.round(data.daily.temperature_2m_min[todayIndex]);
-          const precip = data.daily.precipitation_sum[todayIndex];
-          const windSpeed = data.current_weather ? Math.round(data.current_weather.windspeed) : 0;
-
-          ['max-temp', 'max-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = maxTemp; });
-          ['min-temp', 'min-temp-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = minTemp; });
-          ['precipitation', 'precipitation-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = precip; });
-          ['wind-speed', 'wind-speed-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = windSpeed; });
-
-          if (data.current_weather) {
-            const currentHour = now.getHours();
-            const isNightNow = currentHour >= 20 || currentHour < 6;
-            const currentCond = getWeatherSymbol(data.current_weather.weathercode, isNightNow);
-            ['daily-weather-symbol', 'daily-weather-symbol-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.symbol; });
-            ['daily-weather-name', 'daily-weather-name-tab6'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = currentCond.name; });
-          }
-
-          const containerTab0 = document.getElementById('hourly-weather-container');
-          const containerTab6 = document.getElementById('hourly-weather-container-tab6');
-
-          if ((containerTab0 || containerTab6) && data.hourly.time) {
-            const localHourStr = String(now.getHours()).padStart(2, '0');
-            const targetHourIso = `${todayStr}T${localHourStr}:00`;
-
-            let startHourIdx = data.hourly.time.findIndex(timeStr => timeStr === targetHourIso);
-            if (startHourIdx === -1) {
-              startHourIdx = data.hourly.time.findIndex(timeStr => timeStr.startsWith(todayStr)) + now.getHours();
-            }
-            if (startHourIdx < 0 || startHourIdx >= data.hourly.time.length) {
-              startHourIdx = 0;
-            }
-
-            let hourlyHTMLTab0 = '';
-            let hourlyHTMLTab6 = '';
-
-            for (let i = startHourIdx; i < startHourIdx + 12; i++) {
-              if (!data.hourly.time[i]) break;
-              
-              const slotDate = new Date(data.hourly.time[i]);
-              const hour = slotDate.getHours();
-              const hourLabel = (i === startHourIdx) ? 'Now' : `${String(hour).padStart(2, '0')}:00`;
-              const temp = Math.round(data.hourly.temperature_2m[i] || 0);
-              const hWindSpeed = Math.round(data.hourly.windspeed_10m ? data.hourly.windspeed_10m[i] : 0);
-              const hWindDeg = data.hourly.winddirection_10m ? data.hourly.winddirection_10m[i] : 0;
-              const hWindText = getWindDirectionText(hWindDeg);
-
-              const isHourlyNight = hour >= 20 || hour < 6;
-              const wCode = data.hourly.weathercode ? data.hourly.weathercode[i] : 0;
-              const weatherObj = getWeatherSymbol(wCode, isHourlyNight);
-
-              hourlyHTMLTab0 += `
-                <div class="weather-slot" style="flex: 0 0 95px; padding: 6px; text-align: center; background: #2a2a2a; border: 1px solid #444; border-radius: 6px;">
-                  <h4 style="margin:0; font-size:11px; color:var(--accent-gold);">${hourLabel}</h4>
-                  <div class="weather-symbol-display" style="font-size:20px; margin:2px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
-                  <p style="margin:0; font-size:13px; font-weight:bold; color:#fff;">${temp}°C</p>
-                  <div style="font-size:10px; color:#aaa; margin-top:2px; display:flex; align-items:center; justify-content:center; gap:3px;">
-                    <span>💨 ${hWindSpeed}mph</span>
-                    <span style="transform: rotate(${hWindDeg}deg); display: inline-block; font-size:9px;" title="Wind from ${hWindText}">⬆️</span>
-                  </div>
-                </div>
-              `;
-
-              hourlyHTMLTab6 += `
-                <div class="hourly-card-item" style="background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 10px 14px; text-align: center; min-width: 100px; transition: all 0.5s ease; flex-shrink: 0;">
-                  <div style="font-size: 12px; color: #aaa; font-weight: 500;">${hourLabel}</div>
-                  <div style="font-size: 22px; margin: 4px 0;" title="${weatherObj.name}">${weatherObj.symbol}</div>
-                  <div style="font-size: 14px; font-weight: bold; color: var(--accent-gold, #F9E3B4);">${temp}°C</div>
-                  <div style="font-size: 11px; color: #ccc; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                    <span>💨 ${hWindSpeed}mph</span>
-                    <span style="transform: rotate(${hWindDeg}deg); display: inline-block; font-size:10px;" title="Wind from ${hWindText}">⬆️</span>
-                  </div>
-                </div>
-              `;
-            }
-
-            if (containerTab0) containerTab0.innerHTML = hourlyHTMLTab0;
-            if (containerTab6) containerTab6.innerHTML = hourlyHTMLTab6;
-          }
-
-          const timestampEl = document.getElementById('weather-last-updated-tab6');
-          if (timestampEl) {
-            const timeFormatted = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            timestampEl.textContent = timeFormatted;
-          }
-        } catch (err) {
-          console.error('Weather fetch error:', err);
         } finally {
-          setTimeout(() => {
-            if (refreshIcon) refreshIcon.style.transform = 'rotate(0deg)';
-            if (refreshBtn) refreshBtn.style.opacity = '1';
-          }, 500);
+          const loader = $("loading");
+          if (loader) loader.style.display = "none";
         }
       };
 
-      fetchEastbourneWeatherDirect();
+      const applyOverviewRange = () => {
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1;
+        const monthStart = curYear * 10000 + curMonth * 100 + 1;
+        const monthEnd = curYear * 10000 + curMonth * 100 + 31;
 
-      let startX = 0;
-      let startY = 0;
-      let isDragging = false;
-      let isScrollableInteraction = false;
+        let monthTotal = 0;
+        STATE.raw.forEach(r => {
+          if (r.dateInt >= monthStart && r.dateInt <= monthEnd) monthTotal += r.dailyTotalCents;
+        });
 
-      function handleStart(clientX, clientY, target) {
-        if (target.closest('#hourly-weather-container') || target.closest('#hourly-weather-container-tab6') || target.closest('.monthly-buttons-bar') || target.closest('button, input, select, a, textarea')) {
-          isScrollableInteraction = true;
-          return;
-        }
-        isScrollableInteraction = false;
-        isDragging = true;
-        startX = clientX;
-        startY = clientY;
-      }
+        safeSet("overviewMonthTotalVal", fmt(monthTotal));
+        renderOverviewDashboard(STATE.raw);
+      };
 
-      function handleEnd(clientX, clientY) {
-        if (!isDragging || isScrollableInteraction) {
-          isDragging = false;
-          return;
-        }
-        isDragging = false;
+      const applyAnalyticsRange = () => {
+        renderAnalyticsDashboard(STATE.raw);
+      };
 
-        const xDiff = clientX - startX;
-        const yDiff = clientY - startY;
+      const renderOverviewDashboard = (records) => {
+        let rollingSum = 0;
+        const now = new Date();
+        const startLookback = new Date(now);
+        startLookback.setFullYear(now.getFullYear() - 1);
 
-        if (Math.abs(yDiff) > 40) return;
+        records.forEach(r => {
+          if (r.parsedDate >= startLookback && r.parsedDate <= now) rollingSum += r.dailyTotalCents;
+        });
 
-        if (Math.abs(xDiff) > 60 && Math.abs(xDiff) > (Math.abs(yDiff) * 2)) {
-          const isWeatherOpen = tab6 && window.getComputedStyle(tab6).display !== 'none';
-          let currentIndex = isWeatherOpen ? 6 : STATE.activeTabIndex;
+        const vatThreshold = 90000 * 100;
+        const remaining = vatThreshold - rollingSum;
+        safeSet("rollingTotal", fmt(rollingSum) + (remaining > 0 ? ` (Margin: ${fmt(remaining)})` : " (Exceeded)"));
+        
+        const bar = $("vatBar");
+        if (bar) bar.style.width = Math.min(100, (rollingSum / vatThreshold) * 100) + "%";
 
-          function changeTab(idx) {
-            if (idx === 6) {
-              window.openWeatherTab();
-            } else {
-              window.closeWeatherTab();
-              if (window.DashboardApp && typeof DashboardApp.switchTab === 'function') {
-                DashboardApp.switchTab(idx);
-              }
-            }
-          }
+        let totalCash = 0, totalCard = 0;
+        records.forEach(r => { totalCash += r.cashCents; totalCard += r.cardCents; });
+        const totalVol = totalCash + totalCard;
+        safeSet("cashCardVal", `Cash: ${fmt(totalCash)} (${totalVol > 0 ? ((totalCash/totalVol)*100).toFixed(1) : 0}%) | Card: ${fmt(totalCard)}`);
+        safeSet("products", records.length);
+      };
 
-          if (xDiff < 0) {
-            if (currentIndex < 5) {
-              changeTab(currentIndex + 1);
-            } else if (currentIndex === 5) {
-              changeTab(6);
-            }
-          } else {
-            if (currentIndex === 6) {
-              changeTab(5);
-            } else if (currentIndex > 0) {
-              changeTab(currentIndex - 1);
-            }
-          }
-        }
-      }
+      const renderAnalyticsDashboard = (records) => {
+        const tbody = $("productTable");
+        if (!tbody) return;
+        tbody.innerHTML = records.map(r => `<tr><td>${r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : ""}</td><td>${fmt(r.cashCents)}</td><td>${fmt(r.cardCents)}</td><td>${fmt(r.dailyTotalCents)}</td></tr>`).join("");
+      };
 
-      document.addEventListener('touchstart', function(e) {
-        if (e.touches && e.touches.length === 1) {
-          handleStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
-        }
-      }, { passive: true });
+      const initAccountingYears = () => {
+        const sel = $("accFySelect");
+        if (!sel) return;
+        sel.innerHTML = `<option value="2026">FY 2025/2026</option><option value="2025">FY 2024/2025</option>`;
+        renderAccountingData();
+      };
 
-      document.addEventListener('touchend', function(e) {
-        if (e.changedTouches && e.changedTouches.length === 1) {
-          handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        }
-      }, { passive: true });
+      const renderAccountingData = () => {
+        const tbody = $("accountingTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = STATE.raw.map(r => `<tr><td>${r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : ""}</td><td>${r.dayName}</td><td>${fmt(r.cashCents)}</td><td>${fmt(r.cardCents)}</td><td>${fmt(r.dailyTotalCents)}</td><td>${fmt(r.categories["ICE CREAM"])}</td><td>${fmt(r.categories["COUNTER"])}</td><td>${fmt(r.categories["Kitchen"])}</td><td>${fmt(r.categories["DRINK"])}</td><td>${fmt(r.categories["DELI"])}</td><td>${fmt(r.categories["ALCOHOL"])}</td></tr>`).join("");
+      };
 
-      document.addEventListener('mousedown', function(e) {
-        if (e.button === 0) {
-          handleStart(e.clientX, e.clientY, e.target);
-        }
-      });
+      const exportAccountingCSV = () => {
+        let csv = "Date,Day,Cash,Card,Total,Ice Cream,Counter,Kitchen,Drink,Deli,Alcohol\n";
+        STATE.raw.forEach(r => {
+          csv += `"${r.parsedDate ? r.parsedDate.toLocaleDateString("en-GB") : ""}","${r.dayName}",${r.cashCents/100},${r.cardCents/100},${r.dailyTotalCents/100},${r.categories["ICE CREAM"]/100},${r.categories["COUNTER"]/100},${r.categories["Kitchen"]/100},${r.categories["DRINK"]/100},${r.categories["DELI"]/100},${r.categories["ALCOHOL"]/100}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'accounting_export.csv');
+        a.click();
+      };
 
-      document.addEventListener('mouseup', function(e) {
-        if (e.button === 0) {
-          handleEnd(e.clientX, e.clientY);
-        }
-      });
-    });
+      const initMomYoyYears = () => {
+        const sel = $("momYoyYearSelect");
+        if (!sel) return;
+        sel.innerHTML = `<option value="2026">2026</option><option value="2025">2025</option>`;
+        renderMomYoyData();
+      };
+
+      const renderMomYoyData = () => {
+        const tbody = $("yoyTableBody");
+        if (!tbody) return;
+        const months = ["Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan"];
+        tbody.innerHTML = months.map(m => `<tr><td>${m}</td><td>£0.00</td><td>£0.00</td><td>£0.00</td><td>0.0%</td></tr>`).join("");
+      };
+
+      const onEntryDateChange = () => {
+        const dVal = $("entryDate").value;
+        if (!dVal) return;
+        const d = new Date(dVal);
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        $("entryDay").value = days[d.getDay()];
+      };
+
+      const stageDataEntry = (e) => {
+        e.preventDefault();
+        const cash = parseFloat($("entryCash").value || 0);
+        const card = parseFloat($("entryCard").value || 0);
+        const total = cash + card;
+        $("modalCombinedTotal").textContent = fmt(total * 100);
+        $("verifyModal").classList.remove("hidden");
+      };
+
+      const closeVerifyModal = () => $("verifyModal").classList.add("hidden");
+      const confirmAndSubmit = () => {
+        closeVerifyModal();
+        toast("Sales entry recorded successfully");
+      };
+
+      const markAsBanked = () => {
+        toast("Marked as banked successfully");
+      };
+
+      const switchTab = (index) => {
+        STATE.activeTabIndex = index;
+        const tabs = $("tabs");
+        if (tabs) tabs.style.transform = `translateX(-${index * 14.2857}%)`;
+        document.querySelectorAll("#nav button").forEach((b, idx) => b.classList.toggle("active", idx === index));
+      };
+
+      const openWeatherTab = () => switchTab(6);
+      const toggleVatModal = (show) => $("vatModal").classList.toggle("hidden", !show);
+      const refreshData = () => load();
+
+      return { login, load, switchTab, openWeatherTab, toggleVatModal, closeVerifyModal, confirmAndSubmit, refreshData, applyOverviewRange, applyAnalyticsRange, renderAccountingData, exportAccountingCSV, renderMomYoyData, onEntryDateChange, stageDataEntry, markAsBanked };
+    })();
   </script>
 </body>
 </html>
